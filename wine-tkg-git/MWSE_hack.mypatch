@@ -13,8 +13,8 @@ index 69d8b38b71..5c6bebc02e 100644
 +++ b/dlls/dbghelp/symbol.c
 @@ -658,6 +658,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                  case VT_I4:  sym_info->Value = (ULONG)data->u.value.n1.n2.n3.lVal; break;
-                 case VT_I2:  sym_info->Value = (ULONG)(long)data->u.value.n1.n2.n3.iVal; break;
-                 case VT_I1:  sym_info->Value = (ULONG)(long)data->u.value.n1.n2.n3.cVal; break;
+                 case VT_I2:  sym_info->Value = (ULONG)(LONG_PTR)data->u.value.n1.n2.n3.iVal; break;
+                 case VT_I1:  sym_info->Value = (ULONG)(LONG_PTR)data->u.value.n1.n2.n3.cVal; break;
 +                case VT_UI8: sym_info->Value = (ULONG64)data->u.value.n1.n2.n3.ullVal;  break;
                  case VT_UI4: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.ulVal; break;
                  case VT_UI2: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.uiVal; break;
