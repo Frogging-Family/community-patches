@@ -16,6 +16,7 @@
 - MWSE_hack.mypatch : Hack to allow Morrowind Script Extender to work - https://bugs.winehq.org/show_bug.cgi?id=47940#c24
 - blackops2_unhandled_exception_fix.mypatch : Fix for the Unhandled Exception crash of Call of Duty - Black Ops 2 on start up - https://bugs.winehq.org/show_bug.cgi?id=46472
 - NFSWLauncherfix.mypatch : Fix for Need for Speed World's SBRW launcher - https://github.com/SoapboxRaceWorld/wine
+- gta4_gamepad_workaround.mypatch : Workaround for GTA IV gamepad issues thanks to @AlexeyProkhin - https://github.com/ValveSoftware/Proton/issues/350#issuecomment-606425633
 
 WoW d3d12 fixes - **Requires using vkd3d patched with [Support_RS_1.0_Volatile patch](https://github.com/Tk-Glitch/PKGBUILDS/blob/master/community-patches/vkd3d-git/Support_RS_1.0_Volatile.myvkd3dpatch)** :
 - D3D12SerializeVersionedRootSignature.mypatch : 1/2 patch to enable WoW to run correctly in d3d12 mode - https://www.winehq.org/pipermail/wine-devel/2019-October/152356.html
