@@ -1,22 +1,27 @@
-From 99e882a125b60d9a2972e96cfb75a10256da8458 Mon Sep 17 00:00:00 2001
+From 7f2b36a799a2704a564b4f4d889cc1924a44817e Mon Sep 17 00:00:00 2001
 From: Alexey Prokhin <alexey@prokhin.ru>
 Date: Tue, 31 Mar 2020 09:04:33 +0300
-Subject: [PATCH] dinput: Add workaround for GTA4 gamepad bug
+Subject: [PATCH] HACK: dinput: Add workaround for GTA4 gamepad issues
 
 ---
- dlls/dinput/keyboard.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ dlls/dinput/keyboard.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/dlls/dinput/keyboard.c b/dlls/dinput/keyboard.c
-index 47f28cac52a..116864156df 100644
+index 47f28cac52a..2dc0f405c4d 100644
 --- a/dlls/dinput/keyboard.c
 +++ b/dlls/dinput/keyboard.c
-@@ -130,6 +130,11 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
+@@ -130,6 +130,16 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
      }
      new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
  
-+    if ((hook->flags & LLKHF_INJECTED) && dik_code == DIK_F8) {
-+        TRACE("Workaround for GTA 4 gamepad bug\n");
++    /* HACK: GTA IV calls SendInput() with a VK_F8 keydown every few minutes and
++     * never releases the key. This causes multiple gamepad issues.
++     */
++    const char *sgi = getenv("SteamGameId");
++    if (sgi && !strcmp(sgi, "12210") &&
++        hook->flags & LLKHF_INJECTED && dik_code == DIK_F8) {
++        TRACE(" ignoring injected F8 key press to work around GTA IV gamepad issues\n");
 +        return ret;
 +    }
 +
