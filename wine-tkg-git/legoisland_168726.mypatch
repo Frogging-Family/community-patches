@@ -580,11 +580,12 @@ index cc228028e1..926579d48f 100644
  START_TEST(ddraw1)
  {
      DDDEVICEIDENTIFIER identifier;
-@@ -13177,4 +13300,5 @@ START_TEST(ddraw1)
+@@ -13177,5 +13300,6 @@ START_TEST(ddraw1)
      test_clipper_refcount();
      test_caps();
      test_d32_support();
 +    test_pick();
+     test_cursor_clipping();
  }
 --
 2.22.1
