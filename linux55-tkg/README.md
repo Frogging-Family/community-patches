@@ -7,3 +7,4 @@
 - wireguard.mypatch : Implements WireGuard as an in-kernel network device driver. (https://lkml.org/lkml/2019/11/27/266)
 - zstd.mypatch : Add support for ZSTD-compressed kernel
 - pipe_use_exclusive_waits_when_reading_or_writing.mypatch : https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0ddad21d3e99c743a3aa473121dc5561679e26bb
+- The-new-cgroup-slab-memory-controller.mypatch : https://lkml.org/lkml/2020/1/9/928
