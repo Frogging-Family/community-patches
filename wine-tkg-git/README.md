@@ -28,3 +28,4 @@ WoW d3d12 fixes - **Requires using vkd3d patched with [Support_RS_1.0_Volatile p
 - origin_downloads_e4ca5dbe_revert.mypatch : Workaround for Origin client game downloading issues - https://bugs.winehq.org/show_bug.cgi?id=48032
 - 0001-Add-some-semi-stubs-in-user32.mypatch : Fixes black/green screen when running Steep in fullscreen/windowed fullscreen mode, courtesy of Guy1524
 - guy1524_mfplat_WIP.mypatch : MFPlat support patchset from our Lord and Savior Guy1524, binaryless version - You'll likely want `_proton_mf_hacks="false"` when using it - https://github.com/Guy1524/wine/commits/mfplat_cleanup
+- winex11_limit_resources-nmode.mypatch : Hack to fix DARK SOULS III, Nier: Automata and Sekiro: Shadows Die Twice crashing when there are too many display modes available - This can lead to missing modes on other games if you're affected by the issue - https://github.com/ValveSoftware/wine/pull/83
