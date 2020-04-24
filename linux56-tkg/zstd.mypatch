@@ -753,7 +753,7 @@ index 244862bfb765..18aed2ab98da 100644
  compress-$(CONFIG_INITRAMFS_COMPRESSION_XZ)	:= xzmisc
  compress-$(CONFIG_INITRAMFS_COMPRESSION_LZO)	:= lzo
  compress-$(CONFIG_INITRAMFS_COMPRESSION_LZ4)	:= lz4
-+compress-$(CONFIG_INITRAMFS_COMPRESSION_LZ4)	:= zstd
++compress-$(CONFIG_INITRAMFS_COMPRESSION_ZSTD)	:= zstd
  
  obj-$(CONFIG_BLK_DEV_INITRD) := initramfs_data.o
  
