@@ -8839,40 +8839,11 @@ Date: Mon, 16 Mar 2020 15:27:27 -0500
 Subject: [PATCH 29/40] Miscellaneous
 
 ---
- dlls/mfplat/main.c                |   5 +-
  dlls/mfreadwrite/reader.c         |  12 +++-
  dlls/winegstreamer/gst_cbs.c      |   9 +++
  dlls/winegstreamer/media_source.c | 115 +++++++++++++++++++++++++++++-
- 4 files changed, 134 insertions(+), 7 deletions(-)
+ 3 files changed, 133 insertions(+), 3 deletions(-)
 
-diff --git a/dlls/mfplat/main.c b/dlls/mfplat/main.c
-index 923905399b5..8c955a7c2d8 100644
---- a/dlls/mfplat/main.c
-+++ b/dlls/mfplat/main.c
-@@ -5911,7 +5911,6 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
- 
-     IUnknown_Release(handler.handler);
- 
--    if (SUCCEEDED(queued_result->hr))
-     {
-         RTWQASYNCRESULT *data = (RTWQASYNCRESULT *)inner_result;
- 
-@@ -5940,8 +5939,6 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
-             }
-         }
-     }
--    else
--        heap_free(queued_result);
- 
-     return S_OK;
- }
-@@ -8882,4 +8879,4 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
-     *manager = &object->IMFDXGIDeviceManager_iface;
- 
-     return S_OK;
--}
-+}
-\ No newline at end of file
 diff --git a/dlls/mfreadwrite/reader.c b/dlls/mfreadwrite/reader.c
 index a7291ff1ae4..25b0050256a 100644
 --- a/dlls/mfreadwrite/reader.c
