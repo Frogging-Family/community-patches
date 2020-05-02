@@ -1,8 +1,8 @@
-From 37d71c8533aabbecc75d90b45b4a1b0a48267ce1 Mon Sep 17 00:00:00 2001
+From 02eb17d79c6af7379482354f1579c3cf51ae9884 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:05 -0500
-Subject: [PATCH 01/40] mf/tests: Sink objects are stream sinks, not media
+Subject: [PATCH 01/42] mf/tests: Sink objects are stream sinks, not media
  sinks.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -46,11 +46,11 @@ index bf14ccf0feb..3a0164c8511 100644
      ok(full_topology != topology, "Unexpected instance.\n");
  
 
-From 454472cc64be187515937c6f607da7a609b6dce1 Mon Sep 17 00:00:00 2001
+From a5fb921a750a15bea275ff85998c308408a0e40a Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:06 -0500
-Subject: [PATCH 02/40] mf/tests: Add tests for the topology loader.
+Subject: [PATCH 02/42] mf/tests: Add tests for the topology loader.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -543,11 +543,11 @@ index 3a0164c8511..3ce94862c70 100644
  
      hr = MFShutdown();
 
-From 02de878b58d7ef8acec5a23a6cc9dc59132253c8 Mon Sep 17 00:00:00 2001
+From 25f4ed2dad27a322e844dc6f7b0f4fb3c508555c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:07 -0500
-Subject: [PATCH 03/40] mf: Partially implement the topology loader.
+Subject: [PATCH 03/42] mf: Partially implement the topology loader.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -960,10 +960,10 @@ index 0b4d7344422..7a4c95bea07 100644
  
  static const IMFTopoLoaderVtbl topologyloadervtbl =
 
-From ead38c91199278caa58ebc9425e2f10cba8a818a Mon Sep 17 00:00:00 2001
+From c95e629632785d67fe451a6cfb4cd8204e2aaf10 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:03:52 -0500
-Subject: [PATCH 04/40] Implement stub bytestream handler and source.
+Subject: [PATCH 04/42] Implement stub bytestream handler and source.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -979,10 +979,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  create mode 100644 dlls/winegstreamer/media_source.c
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 007db891c1f..f7b2a190764 100644
+index 4bc08136247..7dd9bd54c6d 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -493,7 +493,10 @@ static void test_source_resolver(void)
+@@ -494,7 +494,10 @@ static void test_source_resolver(void)
      ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
  
      hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
@@ -993,7 +993,7 @@ index 007db891c1f..f7b2a190764 100644
      ok(descriptor != NULL, "got %p\n", descriptor);
  
      hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, 0, &selected, &sd);
-@@ -504,10 +507,7 @@ static void test_source_resolver(void)
+@@ -505,10 +508,7 @@ static void test_source_resolver(void)
      IMFStreamDescriptor_Release(sd);
  
      hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
@@ -1004,7 +1004,7 @@ index 007db891c1f..f7b2a190764 100644
  
      /* Check major/minor type for the test media. */
      ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type %s.\n", debugstr_guid(&guid));
-@@ -588,6 +588,7 @@ todo_wine
+@@ -589,6 +589,7 @@ todo_wine
      get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
  
      IMFMediaTypeHandler_Release(handler);
@@ -1012,7 +1012,7 @@ index 007db891c1f..f7b2a190764 100644
  
      hr = IMFMediaSource_Shutdown(mediasource);
      ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-@@ -596,8 +597,6 @@ todo_wine
+@@ -597,8 +598,6 @@ todo_wine
      ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
  
  skip_source_tests:
@@ -1836,10 +1836,10 @@ index 4e7a43f5fff..c61ccb788ce 100644
 +cpp_quote("EXTERN_GUID(CLSID_MPEG4ByteStreamHandler, 0x271c3902, 0x6095, 0x4c45, 0xa2, 0x2f, 0x20, 0x09, 0x18, 0x16, 0xee, 0x9e);")
 \ No newline at end of file
 
-From 234d902496990fdaf85c85ba8b4ed6cb643d2f0c Mon Sep 17 00:00:00 2001
+From 14660345b1710e8dc59e8a83cbe82abf58bb07d9 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 30 Mar 2020 15:19:01 -0500
-Subject: [PATCH 05/40] winegstreamer: Implement IMFMediaSource::Shutdown.
+Subject: [PATCH 05/42] winegstreamer: Implement IMFMediaSource::Shutdown.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -1848,10 +1848,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 38 insertions(+), 3 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index f7b2a190764..7f2e4c991f2 100644
+index 7dd9bd54c6d..6381a93bd13 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -590,13 +590,13 @@ todo_wine
+@@ -591,13 +591,13 @@ todo_wine
      IMFMediaTypeHandler_Release(handler);
      IMFPresentationDescriptor_Release(descriptor);
  
@@ -1988,10 +1988,10 @@ index df28f54444d..09a40a06208 100644
      object->ref = 1;
  
 
-From 14907682d19493258ca472b2dc72ffcf3b0f045c Mon Sep 17 00:00:00 2001
+From 202f0d862ad2af915cbf8faca8e5886456a86afd Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 30 Mar 2020 14:19:35 -0500
-Subject: [PATCH 06/40] winegstreamer: Add a GstPad wrapping the media source's
+Subject: [PATCH 06/42] winegstreamer: Add a GstPad wrapping the media source's
  bytestream.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -2427,10 +2427,10 @@ index 09a40a06208..48119e4a89d 100644
 +    }
 +}
 
-From e9e5dde5bbf7d6d0a605c389697ca8a359d38489 Mon Sep 17 00:00:00 2001
+From d86374476dc5e9e780f4233c1776bc23ab0e33f7 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 13:34:57 -0500
-Subject: [PATCH 07/40] winegstreamer: Find an appropriate demuxer for the
+Subject: [PATCH 07/42] winegstreamer: Find an appropriate demuxer for the
  source.
 
 We can add a path later which uses decodebin as the demuxer, for use with formats not supported on windows.  (like Theora)
@@ -2646,10 +2646,10 @@ index 48119e4a89d..e1f5c773758 100644
          {
              ERR("Wrong callback forwarder called\n");
 
-From 5c50d3e6a2fde49e9a30fcfea031c1ac6e6b9b16 Mon Sep 17 00:00:00 2001
+From d52283d74001f57bb31e9d43ff65a59182d210cd Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 20 Apr 2020 13:02:23 -0500
-Subject: [PATCH 08/40] winegstreamer: Use the demuxer to establish
+Subject: [PATCH 08/42] winegstreamer: Use the demuxer to establish
  IMFMediaStreams.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3228,10 +3228,10 @@ index e1f5c773758..8335c64338d 100644
          {
              ERR("Wrong callback forwarder called\n");
 
-From 17198ddee20575026892c271cf95a1ba413e901d Mon Sep 17 00:00:00 2001
+From 6515880cd45a390fbb3545dbcae3ee729524f692 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 11:11:05 -0500
-Subject: [PATCH 09/40] winegstreamer: Implement
+Subject: [PATCH 09/42] winegstreamer: Implement
  IMFMediaStream::GetStreamDescriptor.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3543,10 +3543,10 @@ index 16e55247de1..09266ffab41 100644
 +}
 \ No newline at end of file
 
-From 6630020cbfa722d1767c8427dbbc96b9786e743d Mon Sep 17 00:00:00 2001
+From 4be0ce45c328f905a88875ccaaba71133198cbbc Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:00:26 -0500
-Subject: [PATCH 10/40] winegstreamer: Translate H.264 caps to attributes.
+Subject: [PATCH 10/42] winegstreamer: Translate H.264 caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3639,10 +3639,10 @@ index 09266ffab41..b76714c4829 100644
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From 4153798848fb770f4f304710589ba33889e92d19 Mon Sep 17 00:00:00 2001
+From 235bd150d6cde99138c49458c69389e39b4b84d5 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:01:20 -0500
-Subject: [PATCH 11/40] winegstreamer: Translate WMV caps to attributes.
+Subject: [PATCH 11/42] winegstreamer: Translate WMV caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3705,10 +3705,10 @@ index b76714c4829..1b0f562dbb5 100644
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From 8261f58adc0a905bde26954bee68e4d17db7cf3e Mon Sep 17 00:00:00 2001
+From 5c8cb8d42305d9955446510d89b36e6a32e958e7 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:02:27 -0500
-Subject: [PATCH 12/40] winegstreamer: Translate AAC caps to attributes.
+Subject: [PATCH 12/42] winegstreamer: Translate AAC caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3716,7 +3716,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 118 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 1b0f562dbb5..4a97bf0c70b 100644
+index 1b0f562dbb5..ca248f3f355 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -463,6 +463,15 @@ uncompressed_formats[] =
@@ -3840,7 +3840,7 @@ index 1b0f562dbb5..4a97bf0c70b 100644
 +                        user_data->profile_level_indication = profile_level_indication;
 +                    }
 +
-+                    IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)user_data, sizeof(user_data) + asc_size);
++                    IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)user_data, sizeof(*user_data) + asc_size);
 +                    heap_free(user_data);
 +                    break;
 +                }
@@ -3852,10 +3852,10 @@ index 1b0f562dbb5..4a97bf0c70b 100644
              FIXME("Unrecognized audio format %s\n", mime_type);
      }
 
-From 32b7bfeaffedf79deed5859e4c26dc8aa2e6cc50 Mon Sep 17 00:00:00 2001
+From 12df1fca165a9cb3185503900b1f14c92bc4a19c Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 13:36:19 -0500
-Subject: [PATCH 13/40] winegstreamer: Add video/mpeg recognition.
+Subject: [PATCH 13/42] winegstreamer: Add video/mpeg recognition.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3863,7 +3863,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 15 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 4a97bf0c70b..02912ac3b60 100644
+index ca248f3f355..c74f9563393 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -645,6 +645,21 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
@@ -3889,10 +3889,10 @@ index 4a97bf0c70b..02912ac3b60 100644
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From 8c397ca0e9a31ef40116840c6434d56581cd8f46 Mon Sep 17 00:00:00 2001
+From 6a3ddda65299c90ff549dffaf663ebc4b3cf3bf4 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 11:21:21 -0500
-Subject: [PATCH 14/40] winegstreamer: Implement
+Subject: [PATCH 14/42] winegstreamer: Implement
  IMFMediaSource::CreatePresentationDescriptor.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3902,10 +3902,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 38 insertions(+), 6 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 7f2e4c991f2..0a1234d1a50 100644
+index 6381a93bd13..0761d28d90e 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -493,10 +493,7 @@ static void test_source_resolver(void)
+@@ -494,10 +494,7 @@ static void test_source_resolver(void)
      ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
  
      hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
@@ -3916,7 +3916,7 @@ index 7f2e4c991f2..0a1234d1a50 100644
      ok(descriptor != NULL, "got %p\n", descriptor);
  
      hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, 0, &selected, &sd);
-@@ -524,7 +521,10 @@ todo_wine
+@@ -525,7 +522,10 @@ todo_wine
  
      var.vt = VT_EMPTY;
      hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
@@ -3927,7 +3927,7 @@ index 7f2e4c991f2..0a1234d1a50 100644
  
      get_event((IMFMediaEventGenerator *)mediasource, MENewStream, &var);
      ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MENewStream event.\n", var.vt);
-@@ -587,10 +587,10 @@ todo_wine
+@@ -588,10 +588,10 @@ todo_wine
  
      get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
  
@@ -4026,10 +4026,10 @@ index a654d555bc1..04b3b9f6c71 100644
      heap_free(object);
      *out_media_source = NULL;
 
-From c594c6dbfa6c3b5e2e1fd7064fbb660b92e5768f Mon Sep 17 00:00:00 2001
+From 5c7234942a034f679f1c41a48fe97a35865fffe8 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:10:03 -0500
-Subject: [PATCH 15/40] winegstreamer: Implement IMFMediaSource::Start.
+Subject: [PATCH 15/42] winegstreamer: Implement IMFMediaSource::Start.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -4038,10 +4038,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 284 insertions(+), 7 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 0a1234d1a50..8e7a836b3fb 100644
+index 0761d28d90e..23db0e3abe6 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -521,10 +521,7 @@ static void test_source_resolver(void)
+@@ -522,10 +522,7 @@ static void test_source_resolver(void)
  
      var.vt = VT_EMPTY;
      hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
@@ -4052,7 +4052,7 @@ index 0a1234d1a50..8e7a836b3fb 100644
  
      get_event((IMFMediaEventGenerator *)mediasource, MENewStream, &var);
      ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MENewStream event.\n", var.vt);
-@@ -542,10 +539,13 @@ todo_wine
+@@ -543,10 +540,13 @@ todo_wine
          hr = IMFMediaStream_RequestSample(video_stream, NULL);
          if (i == sample_count)
              break;
@@ -4066,7 +4066,7 @@ index 0a1234d1a50..8e7a836b3fb 100644
  
      for (i = 0; i < sample_count; ++i)
      {
-@@ -583,11 +583,11 @@ todo_wine
+@@ -584,11 +584,11 @@ todo_wine
  
      hr = IMFMediaStream_RequestSample(video_stream, NULL);
      ok(hr == MF_E_END_OF_STREAM, "Unexpected hr %#x.\n", hr);
@@ -4422,10 +4422,10 @@ index 04b3b9f6c71..abf0cfd56fa 100644
      object->bus = gst_bus_new();
      gst_bus_set_sync_handler(object->bus, watch_source_bus_wrapper, object, NULL);
 
-From 2095ce7cb63af2aa7debb866eb3645c7c7b737ae Mon Sep 17 00:00:00 2001
+From e4eaaefb17da88c2f08e61ab2fe183cc492201e8 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:11:31 -0500
-Subject: [PATCH 16/40] winegstreamer: Insert parser into pipeline to rectify
+Subject: [PATCH 16/42] winegstreamer: Insert parser into pipeline to rectify
  type differences.
 
 It's probably better to use caps negotiation here, but this seemed simpler for now.
@@ -4599,24 +4599,24 @@ index abf0cfd56fa..cb247adcef1 100644
          IMFMediaType_Release(stream_type);
      if (type_handler)
 
-From d72b1d3ca531c0792d4797bedc9a473fbefb8a14 Mon Sep 17 00:00:00 2001
+From ec8d1748841b8195140ffe94d4639ee17e33ecf5 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:43:03 -0500
-Subject: [PATCH 17/40] winegstreamer: Implement IMFMediaStream::RequestSample.
+Subject: [PATCH 17/42] winegstreamer: Implement IMFMediaStream::RequestSample.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
- dlls/mfplat/tests/mfplat.c        |   4 -
+ dlls/mfplat/tests/mfplat.c        |   4 --
  dlls/winegstreamer/gst_private.h  |   1 +
- dlls/winegstreamer/media_source.c | 128 ++++++++++++++++++++++++++++--
- dlls/winegstreamer/mfplat.c       |  90 +++++++++++++++++++++
- 4 files changed, 214 insertions(+), 9 deletions(-)
+ dlls/winegstreamer/media_source.c | 116 ++++++++++++++++++++++++++++--
+ dlls/winegstreamer/mfplat.c       |  90 +++++++++++++++++++++++
+ 4 files changed, 202 insertions(+), 9 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 8e7a836b3fb..51193641243 100644
+index 23db0e3abe6..f3d9bd8ab23 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -539,13 +539,10 @@ static void test_source_resolver(void)
+@@ -540,13 +540,10 @@ static void test_source_resolver(void)
          hr = IMFMediaStream_RequestSample(video_stream, NULL);
          if (i == sample_count)
              break;
@@ -4630,7 +4630,7 @@ index 8e7a836b3fb..51193641243 100644
  
      for (i = 0; i < sample_count; ++i)
      {
-@@ -586,7 +583,6 @@ todo_wine
+@@ -587,7 +584,6 @@ todo_wine
  
      get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
  
@@ -4651,16 +4651,10 @@ index 780cf1b02fa..823e023f52c 100644
  enum source_type
  {
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index cb247adcef1..61f3bf1a8b9 100644
+index cb247adcef1..0e53fbf4247 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
-@@ -51,11 +51,13 @@ struct media_stream
-         STREAM_SHUTDOWN,
-     } state;
-     BOOL eos;
-+    CRITICAL_SECTION cs;
- };
- 
+@@ -56,6 +56,7 @@ struct media_stream
  enum source_async_op
  {
      SOURCE_ASYNC_START,
@@ -4668,7 +4662,7 @@ index cb247adcef1..61f3bf1a8b9 100644
  };
  
  struct source_async_command
-@@ -71,6 +73,11 @@ struct source_async_command
+@@ -71,6 +72,11 @@ struct source_async_command
              GUID format;
              PROPVARIANT position;
          } start;
@@ -4680,7 +4674,7 @@ index cb247adcef1..61f3bf1a8b9 100644
      } u;
  };
  
-@@ -304,6 +311,81 @@ static HRESULT start_pipeline(struct media_source *source, struct source_async_c
+@@ -304,6 +310,76 @@ static HRESULT start_pipeline(struct media_source *source, struct source_async_c
      return S_OK;
  }
  
@@ -4709,8 +4703,6 @@ index cb247adcef1..61f3bf1a8b9 100644
 +
 +    TRACE("%p, %p\n", stream, token);
 +
-+    EnterCriticalSection(&stream->cs);
-+
 +    g_object_get(stream->appsink, "eos", &stream->eos, NULL);
 +    if (stream->eos)
 +    {
@@ -4718,7 +4710,6 @@ index cb247adcef1..61f3bf1a8b9 100644
 +            IUnknown_Release(token);
 +        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
 +        dispatch_end_of_presentation(stream->parent_source);
-+        LeaveCriticalSection(&stream->cs);
 +        return S_OK;
 +    }
 +
@@ -4754,15 +4745,13 @@ index cb247adcef1..61f3bf1a8b9 100644
 +
 +    IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK, (IUnknown *)sample);
 +
-+    LeaveCriticalSection(&stream->cs);
-+
 +    return S_OK;
 +}
 +
  static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
  {
      struct media_source *source = impl_from_async_commands_callback_IMFAsyncCallback(iface);
-@@ -323,6 +405,9 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
+@@ -323,6 +399,9 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
          case SOURCE_ASYNC_START:
              start_pipeline(source, command);
              break;
@@ -4772,38 +4761,26 @@ index cb247adcef1..61f3bf1a8b9 100644
          default:
              ;
      }
-@@ -345,12 +430,17 @@ static const IMFAsyncCallbackVtbl source_async_commands_callback_vtbl =
+@@ -345,12 +424,14 @@ static const IMFAsyncCallbackVtbl source_async_commands_callback_vtbl =
  static GstFlowReturn stream_new_sample(GstElement *appsink, gpointer user)
  {
      struct media_stream *stream = (struct media_stream *) user;
 -    GstSample *discard_sample;
  
 -    TRACE("(%p) got sample\n", stream);
-+    EnterCriticalSection(&stream->cs);
- 
--    g_signal_emit_by_name(stream->appsink, "pull-sample", &discard_sample);
--    gst_sample_unref(discard_sample);
 +    if (stream->state == STREAM_INACTIVE)
 +    {
 +        GstSample *discard_sample;
 +        g_signal_emit_by_name(stream->appsink, "pull-sample", &discard_sample);
 +        gst_sample_unref(discard_sample);
 +    }
-+
-+    LeaveCriticalSection(&stream->cs);
+ 
+-    g_signal_emit_by_name(stream->appsink, "pull-sample", &discard_sample);
+-    gst_sample_unref(discard_sample);
      return GST_FLOW_OK;
  }
  
-@@ -685,6 +775,8 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
-         if (stream->parent_source)
-             IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
- 
-+        DeleteCriticalSection(&stream->cs);
-+
-         heap_free(stream);
-     }
- 
-@@ -770,13 +862,37 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
+@@ -770,13 +851,37 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
  static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
  {
      struct media_stream *stream = impl_from_IMFMediaStream(iface);
@@ -4842,17 +4819,16 @@ index cb247adcef1..61f3bf1a8b9 100644
  }
  
  static const IMFMediaStreamVtbl media_stream_vtbl =
-@@ -898,6 +1014,8 @@ static HRESULT media_stream_constructor(struct media_source *source, GstPad *pad
+@@ -898,6 +1003,7 @@ static HRESULT media_stream_constructor(struct media_source *source, GstPad *pad
      object->their_src = pad;
  
      object->state = STREAM_INACTIVE;
 +    object->eos = FALSE;
-+    InitializeCriticalSection(&object->cs);
  
      if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
          goto fail;
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 02912ac3b60..8bb030f0185 100644
+index c74f9563393..81782eeab3f 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -871,4 +871,94 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
@@ -4952,10 +4928,10 @@ index 02912ac3b60..8bb030f0185 100644
  }
 \ No newline at end of file
 
-From c0750b5f3656824cebde006650d731892296ef03 Mon Sep 17 00:00:00 2001
+From 7171608720a202b142d29b8168b7bba56e42db4f Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:15:07 -0500
-Subject: [PATCH 18/40] winegstreamer: Implement
+Subject: [PATCH 18/42] winegstreamer: Implement
  IMFMediaSource::GetCharacteristics.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -4964,10 +4940,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index 61f3bf1a8b9..b4672450074 100644
+index 0e53fbf4247..78865259e6f 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
-@@ -1171,12 +1171,14 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
+@@ -1159,12 +1159,14 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
  {
      struct media_source *source = impl_from_IMFMediaSource(iface);
  
@@ -4985,10 +4961,10 @@ index 61f3bf1a8b9..b4672450074 100644
  
  static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
 
-From 7c9549ea7ed5831f6f9be4b1ded5032c86832e33 Mon Sep 17 00:00:00 2001
+From 3f711110b6e6d6798d1d189d42a610a31aa99e55 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:15:50 -0500
-Subject: [PATCH 19/40] winegstreamer: Calculate the MF_PD_DURATION of the
+Subject: [PATCH 19/42] winegstreamer: Calculate the MF_PD_DURATION of the
  media source's PD.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -4997,10 +4973,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 40 insertions(+)
 
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index b4672450074..454d06c761b 100644
+index 78865259e6f..b88f794d86a 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
-@@ -1434,6 +1434,46 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
+@@ -1422,6 +1422,46 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
      heap_free(descriptors);
      descriptors = NULL;
  
@@ -5048,10 +5024,10 @@ index b4672450074..454d06c761b 100644
  
      object->state = SOURCE_STOPPED;
 
-From d5a3b09cea0a3d1c6b26a0e1e3aa6c320e476605 Mon Sep 17 00:00:00 2001
+From 96ca6247518c81b2bb6eebc98420419a4b077c3b Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 29 Jan 2020 15:37:39 -0600
-Subject: [PATCH 20/40] tools: Add support for multiple parent directories.
+Subject: [PATCH 20/42] tools: Add support for multiple parent directories.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -5220,10 +5196,10 @@ index fb2e145ced2..c505d26f431 100644
      if (make->top_src_dir)
          strarray_add( &make->include_args, strmake( "-I%s", top_src_dir_path( make, "include" )));
 
-From ec1640839eece7195a0ebdfc2d4967ebe1f3abce Mon Sep 17 00:00:00 2001
+From 447104f868ec5cef20c4254a2798666ad3394f46 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 29 Jan 2020 15:30:49 -0600
-Subject: [PATCH 21/40] mf: Introduce handler helper.
+Subject: [PATCH 21/42] mf: Introduce handler helper.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -5654,10 +5630,10 @@ index 00000000000..fbebd26e8d0
 +HRESULT handler_cancel_object_creation(struct handler *handler, IUnknown *cancel_cookie);
 \ No newline at end of file
 diff --git a/dlls/mf/main.c b/dlls/mf/main.c
-index 01fe17866c3..b1b8f3430ca 100644
+index 15c9e5e3c9a..fe50dbac5ae 100644
 --- a/dlls/mf/main.c
 +++ b/dlls/mf/main.c
-@@ -35,6 +35,7 @@
+@@ -30,6 +30,7 @@
  #include "mferror.h"
  
  #include "mf_private.h"
@@ -5665,7 +5641,7 @@ index 01fe17866c3..b1b8f3430ca 100644
  
  #include "wine/debug.h"
  #include "wine/heap.h"
-@@ -556,22 +557,12 @@ static const IClassFactoryVtbl class_factory_vtbl =
+@@ -552,22 +553,12 @@ static const IClassFactoryVtbl class_factory_vtbl =
      class_factory_LockServer,
  };
  
@@ -5689,7 +5665,7 @@ index 01fe17866c3..b1b8f3430ca 100644
  };
  
  static struct file_scheme_handler *impl_from_IMFSchemeHandler(IMFSchemeHandler *iface)
-@@ -579,11 +570,6 @@ static struct file_scheme_handler *impl_from_IMFSchemeHandler(IMFSchemeHandler *
+@@ -575,11 +566,6 @@ static struct file_scheme_handler *impl_from_IMFSchemeHandler(IMFSchemeHandler *
      return CONTAINING_RECORD(iface, struct file_scheme_handler, IMFSchemeHandler_iface);
  }
  
@@ -5701,7 +5677,7 @@ index 01fe17866c3..b1b8f3430ca 100644
  static HRESULT WINAPI file_scheme_handler_QueryInterface(IMFSchemeHandler *iface, REFIID riid, void **obj)
  {
      TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-@@ -613,242 +599,45 @@ static ULONG WINAPI file_scheme_handler_AddRef(IMFSchemeHandler *iface)
+@@ -609,242 +595,45 @@ static ULONG WINAPI file_scheme_handler_AddRef(IMFSchemeHandler *iface)
  
  static ULONG WINAPI file_scheme_handler_Release(IMFSchemeHandler *iface)
  {
@@ -5955,7 +5931,7 @@ index 01fe17866c3..b1b8f3430ca 100644
  }
  
  static const IMFSchemeHandlerVtbl file_scheme_handler_vtbl =
-@@ -861,38 +650,6 @@ static const IMFSchemeHandlerVtbl file_scheme_handler_vtbl =
+@@ -857,38 +646,6 @@ static const IMFSchemeHandlerVtbl file_scheme_handler_vtbl =
      file_scheme_handler_CancelObjectCreation,
  };
  
@@ -5994,7 +5970,7 @@ index 01fe17866c3..b1b8f3430ca 100644
  static HRESULT file_scheme_handler_get_resolver(struct file_scheme_handler *handler, IMFSourceResolver **resolver)
  {
      HRESULT hr;
-@@ -914,111 +671,63 @@ static HRESULT file_scheme_handler_get_resolver(struct file_scheme_handler *hand
+@@ -910,111 +667,63 @@ static HRESULT file_scheme_handler_get_resolver(struct file_scheme_handler *hand
      return S_OK;
  }
  
@@ -6154,7 +6130,7 @@ index e578d194f7f..f2e87494459 100644
  	media_source.c \
  	mediatype.c \
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index 454d06c761b..fcfa6443f8e 100644
+index b88f794d86a..ebb88d2b8a5 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
 @@ -4,6 +4,7 @@
@@ -6165,7 +6141,7 @@ index 454d06c761b..fcfa6443f8e 100644
  
  #include <assert.h>
  #include <stdarg.h>
-@@ -1496,22 +1497,12 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
+@@ -1484,22 +1485,12 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
  
  /* IMFByteStreamHandler */
  
@@ -6189,7 +6165,7 @@ index 454d06c761b..fcfa6443f8e 100644
  };
  
  static struct container_stream_handler *impl_from_IMFByteStreamHandler(IMFByteStreamHandler *iface)
-@@ -1519,11 +1510,6 @@ static struct container_stream_handler *impl_from_IMFByteStreamHandler(IMFByteSt
+@@ -1507,11 +1498,6 @@ static struct container_stream_handler *impl_from_IMFByteStreamHandler(IMFByteSt
      return CONTAINING_RECORD(iface, struct container_stream_handler, IMFByteStreamHandler_iface);
  }
  
@@ -6201,7 +6177,7 @@ index 454d06c761b..fcfa6443f8e 100644
  static HRESULT WINAPI container_stream_handler_QueryInterface(IMFByteStreamHandler *iface, REFIID riid, void **obj)
  {
      TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-@@ -1553,248 +1539,44 @@ static ULONG WINAPI container_stream_handler_AddRef(IMFByteStreamHandler *iface)
+@@ -1541,248 +1527,44 @@ static ULONG WINAPI container_stream_handler_AddRef(IMFByteStreamHandler *iface)
  
  static ULONG WINAPI container_stream_handler_Release(IMFByteStreamHandler *iface)
  {
@@ -6457,7 +6433,7 @@ index 454d06c761b..fcfa6443f8e 100644
  }
  
  static HRESULT WINAPI container_stream_handler_GetMaxNumberOfBytesRequiredForResolution(IMFByteStreamHandler *iface, QWORD *bytes)
-@@ -1814,47 +1596,16 @@ static const IMFByteStreamHandlerVtbl container_stream_handler_vtbl =
+@@ -1802,47 +1584,16 @@ static const IMFByteStreamHandlerVtbl container_stream_handler_vtbl =
      container_stream_handler_GetMaxNumberOfBytesRequiredForResolution,
  };
  
@@ -6508,7 +6484,7 @@ index 454d06c761b..fcfa6443f8e 100644
  
          if (FAILED(hr = media_source_constructor(stream, This->type, &new_source)))
              return hr;
-@@ -1873,64 +1624,6 @@ static HRESULT container_stream_handler_create_object(struct container_stream_ha
+@@ -1861,64 +1612,6 @@ static HRESULT container_stream_handler_create_object(struct container_stream_ha
      }
  }
  
@@ -6573,7 +6549,7 @@ index 454d06c761b..fcfa6443f8e 100644
  HRESULT container_stream_handler_construct(REFIID riid, void **obj, enum source_type type)
  {
      struct container_stream_handler *this;
-@@ -1942,12 +1635,10 @@ HRESULT container_stream_handler_construct(REFIID riid, void **obj, enum source_
+@@ -1930,12 +1623,10 @@ HRESULT container_stream_handler_construct(REFIID riid, void **obj, enum source_
      if (!this)
          return E_OUTOFMEMORY;
  
@@ -6588,17 +6564,17 @@ index 454d06c761b..fcfa6443f8e 100644
  
      hr = IMFByteStreamHandler_QueryInterface(&this->IMFByteStreamHandler_iface, riid, obj);
 
-From 5e9f825039be4d7e99e93818a3fa84809657f839 Mon Sep 17 00:00:00 2001
+From 86d1bd73502a5f54fd5ceb4479db88d24b0846ee Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:15:35 -0500
-Subject: [PATCH 22/40] winegstreamer: Introduce IMFMediaType -> GstCaps
+Subject: [PATCH 22/42] winegstreamer: Introduce IMFMediaType -> GstCaps
  converter.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
  dlls/winegstreamer/gst_private.h |   1 +
- dlls/winegstreamer/mfplat.c      | 142 +++++++++++++++++++++++++++++++
- 2 files changed, 143 insertions(+)
+ dlls/winegstreamer/mfplat.c      | 139 +++++++++++++++++++++++++++++++
+ 2 files changed, 140 insertions(+)
 
 diff --git a/dlls/winegstreamer/gst_private.h b/dlls/winegstreamer/gst_private.h
 index 823e023f52c..20d3beef028 100644
@@ -6613,10 +6589,10 @@ index 823e023f52c..20d3beef028 100644
  
  enum source_type
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 8bb030f0185..5a795fed4f2 100644
+index 81782eeab3f..78ced2615c6 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -873,6 +873,148 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
+@@ -873,6 +873,145 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
      return ret;
  }
  
@@ -6656,26 +6632,23 @@ index 8bb030f0185..5a795fed4f2 100644
 +        /* Check if type is uncompressed */
 +        if (SUCCEEDED(MFCalculateImageSize(&subtype, 100, 100, &unused)))
 +        {
-+            DWORD fourcc;
 +            GstVideoFormat format = GST_VIDEO_FORMAT_UNKNOWN;
 +            unsigned int i;
 +
 +            output = gst_caps_new_empty_simple("video/x-raw");
 +
-+            fourcc = subtype.Data1;
-+            subtype.Data1 = 0;
-+            if (IsEqualGUID(&subtype, &MFVideoFormat_Base))
-+                format = gst_video_format_from_fourcc(fourcc);
-+            else
++            for (i = 0; i < ARRAY_SIZE(uncompressed_formats); i++)
 +            {
-+                for (i = 0; i < ARRAY_SIZE(uncompressed_formats); i++)
++                if (IsEqualGUID(uncompressed_formats[i].subtype, &subtype))
 +                {
-+                    if (IsEqualGUID(uncompressed_formats[i].subtype, &subtype))
-+                    {
-+                        format = uncompressed_formats[i].format;
-+                        break;
-+                    }
++                    format = uncompressed_formats[i].format;
++                    break;
 +                }
++            }
++
++            if (format == GST_VIDEO_FORMAT_UNKNOWN)
++            {
++                format = gst_video_format_from_fourcc(subtype.Data1);
 +            }
 +
 +            if (format == GST_VIDEO_FORMAT_UNKNOWN)
@@ -6766,10 +6739,10 @@ index 8bb030f0185..5a795fed4f2 100644
     IMFBuffer = GstMemory */
  
 
-From 4219e5883ca8245b3d221dd3e150cc136cd9f6f0 Mon Sep 17 00:00:00 2001
+From 52f1c2982519aa69d62b85a67d23d32592a245a7 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:18:40 -0500
-Subject: [PATCH 23/40] winegstreamer: Translate H.264 attributes to caps.
+Subject: [PATCH 23/42] winegstreamer: Translate H.264 attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6777,10 +6750,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 48 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 5a795fed4f2..c57a345117b 100644
+index 78ced2615c6..1e2a98b7d5e 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -945,6 +945,54 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -942,6 +942,54 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
              }
  
          }
@@ -6836,10 +6809,10 @@ index 5a795fed4f2..c57a345117b 100644
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
              return NULL;
 
-From ac804705b322e7fb49c361005f74399c8ef904b2 Mon Sep 17 00:00:00 2001
+From 4dc541fa2f72548d128413ef816521767862e330 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:20:17 -0500
-Subject: [PATCH 24/40] winegstreamer: Translate WMV attributes to caps.
+Subject: [PATCH 24/42] winegstreamer: Translate WMV attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6847,10 +6820,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 18 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index c57a345117b..90938e4699e 100644
+index 1e2a98b7d5e..28fa286eb62 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -993,6 +993,24 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -990,6 +990,24 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
                      gst_caps_set_simple(output, "level", G_TYPE_STRING, level, NULL);
              }
          }
@@ -6876,10 +6849,10 @@ index c57a345117b..90938e4699e 100644
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
              return NULL;
 
-From 31ff461ccc773f4348a7cb7ae5be594e82406479 Mon Sep 17 00:00:00 2001
+From 1a8f052e8ffdbb89d7fda240d723723221374a47 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 21 Apr 2020 10:31:02 -0500
-Subject: [PATCH 25/40] winegstreamer: Translate AAC attributes to caps.
+Subject: [PATCH 25/42] winegstreamer: Translate AAC attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6887,10 +6860,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 66 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 90938e4699e..39b8e1ce7da 100644
+index 28fa286eb62..63a20d0df06 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -1059,6 +1059,72 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -1056,6 +1056,72 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
                  return NULL;
              }
          }
@@ -6949,7 +6922,7 @@ index 90938e4699e..39b8e1ce7da 100644
 +
 +            if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(type, &MF_MT_USER_DATA, (BYTE **) &user_data, &user_data_size)))
 +            {
-+                if (user_data_size > sizeof(sizeof(*user_data)))
++                if (user_data_size > sizeof(*user_data))
 +                {
 +                    GstBuffer *audio_specific_config = gst_buffer_new_allocate(NULL, user_data_size - sizeof(*user_data), NULL);
 +                    gst_buffer_fill(audio_specific_config, 0, user_data + 1, user_data_size - sizeof(*user_data));
@@ -6964,10 +6937,10 @@ index 90938e4699e..39b8e1ce7da 100644
          {
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
 
-From 175f192d8735e8d20db86f9a8d07c583a6233a6d Mon Sep 17 00:00:00 2001
+From 74133c02f17dc84551f3324469b05c1d303ccd09 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:43:27 -0500
-Subject: [PATCH 26/40] Introduce IMFSample -> GstBuffer converter.
+Subject: [PATCH 26/42] Introduce IMFSample -> GstBuffer converter.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6988,10 +6961,10 @@ index 20d3beef028..258df0d0405 100644
  enum source_type
  {
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 39b8e1ce7da..46854bc67db 100644
+index 63a20d0df06..f1c8e34cd24 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -1235,4 +1235,78 @@ IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
+@@ -1232,4 +1232,78 @@ IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
      ERR("Failed to copy IMFSample to GstBuffer, hr = %#x\n", hr);
      IMFSample_Release(out);
      return NULL;
@@ -7072,10 +7045,10 @@ index 39b8e1ce7da..46854bc67db 100644
  }
 \ No newline at end of file
 
-From 4a01c9298dc8b0ea24a49529ecf667e3db60dbbd Mon Sep 17 00:00:00 2001
+From 5e337831358dad83a394b46498789a4866effaa8 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 16 Mar 2020 12:09:39 -0500
-Subject: [PATCH 27/40] winegstreamer: Implement decoder MFT on gstreamer.
+Subject: [PATCH 27/42] winegstreamer: Implement decoder MFT on gstreamer.
 
 ---
  dlls/winegstreamer/Makefile.in               |    1 +
@@ -7083,11 +7056,11 @@ Subject: [PATCH 27/40] winegstreamer: Implement decoder MFT on gstreamer.
  dlls/winegstreamer/gst_cbs.h                 |   18 +
  dlls/winegstreamer/gst_private.h             |    7 +
  dlls/winegstreamer/main.c                    |    3 +-
- dlls/winegstreamer/mf_decode.c               | 1318 ++++++++++++++++++
- dlls/winegstreamer/mfplat.c                  |  143 +-
+ dlls/winegstreamer/mf_decode.c               | 1320 ++++++++++++++++++
+ dlls/winegstreamer/mfplat.c                  |  118 +-
  dlls/winegstreamer/winegstreamer_classes.idl |   12 +
  include/mfidl.idl                            |    4 +-
- 9 files changed, 1568 insertions(+), 3 deletions(-)
+ 9 files changed, 1545 insertions(+), 3 deletions(-)
  create mode 100644 dlls/winegstreamer/mf_decode.c
 
 diff --git a/dlls/winegstreamer/Makefile.in b/dlls/winegstreamer/Makefile.in
@@ -7275,10 +7248,10 @@ index 2872710b3e2..12ca11fa6cd 100644
  HRESULT WINAPI DllUnregisterServer(void)
 diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
 new file mode 100644
-index 00000000000..7fc009513c6
+index 00000000000..1ee28d996a4
 --- /dev/null
 +++ b/dlls/winegstreamer/mf_decode.c
-@@ -0,0 +1,1318 @@
+@@ -0,0 +1,1320 @@
 +#include "config.h"
 +
 +#include <gst/gst.h>
@@ -7300,6 +7273,8 @@ index 00000000000..7fc009513c6
 +#include "wine/heap.h"
 +
 +WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
++
++/* keep in sync with mfplat.c's mft registrations */
 +
 +const GUID *h264_input_types[] = {&MFVideoFormat_H264};
 +const GUID *h264_output_types[] = {&MFVideoFormat_I420, &MFVideoFormat_IYUV, &MFVideoFormat_NV12, &MFVideoFormat_YUY2, &MFVideoFormat_YV12};
@@ -7349,6 +7324,7 @@ index 00000000000..7fc009513c6
 +    BOOL flushing, draining;
 +    CRITICAL_SECTION state_cs;
 +    CONDITION_VARIABLE state_cv;
++    DWORD message_queue;
 +};
 +
 +static struct mf_decoder *impl_mf_decoder_from_IMFTransform(IMFTransform *iface)
@@ -7380,8 +7356,8 @@ index 00000000000..7fc009513c6
 +
 +static ULONG WINAPI mf_decoder_AddRef(IMFTransform *iface)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
-+    ULONG refcount = InterlockedIncrement(&This->refcount);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
++    ULONG refcount = InterlockedIncrement(&decoder->refcount);
 +
 +    TRACE("%p, refcount %u.\n", iface, refcount);
 +
@@ -7391,14 +7367,14 @@ index 00000000000..7fc009513c6
 +static void mf_decoder_destroy(struct mf_decoder *decoder);
 +static ULONG WINAPI mf_decoder_Release(IMFTransform *iface)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
-+    ULONG refcount = InterlockedDecrement(&This->refcount);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
++    ULONG refcount = InterlockedDecrement(&decoder->refcount);
 +
 +    TRACE("%p, refcount %u.\n", iface, refcount);
 +
 +    if (!refcount)
 +    {
-+        mf_decoder_destroy(This);
++        mf_decoder_destroy(decoder);
 +    }
 +
 +    return refcount;
@@ -7434,9 +7410,9 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +
-+    TRACE("%p %u %p\n", This, id, info);
++    TRACE("%p %u %p\n", decoder, id, info);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
@@ -7452,10 +7428,10 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    MFT_OUTPUT_STREAM_INFO stream_info = {};
 +
-+    TRACE("%p %u %p\n", This, id, info);
++    TRACE("%p %u %p\n", decoder, id, info);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
@@ -7509,28 +7485,28 @@ index 00000000000..7fc009513c6
 +static HRESULT WINAPI mf_decoder_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
 +        IMFMediaType **type)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    IMFMediaType *input_type;
 +    HRESULT hr;
 +
-+    TRACE("%p, %u, %u, %p\n", This, id, index, type);
++    TRACE("%p, %u, %u, %p\n", decoder, id, index, type);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
 +
-+    if (index >= decoder_descs[This->type].input_types_count)
++    if (index >= decoder_descs[decoder->type].input_types_count)
 +        return MF_E_NO_MORE_TYPES;
 +
 +    if (FAILED(hr = MFCreateMediaType(&input_type)))
 +        return hr;
 +
-+    if (FAILED(hr = IMFMediaType_SetGUID(input_type, &MF_MT_MAJOR_TYPE, decoder_descs[This->type].major_type)))
++    if (FAILED(hr = IMFMediaType_SetGUID(input_type, &MF_MT_MAJOR_TYPE, decoder_descs[decoder->type].major_type)))
 +    {
 +        IMFMediaType_Release(input_type);
 +        return hr;
 +    }
 +
-+    if (FAILED(hr = IMFMediaType_SetGUID(input_type, &MF_MT_SUBTYPE, decoder_descs[This->type].input_types[index])))
++    if (FAILED(hr = IMFMediaType_SetGUID(input_type, &MF_MT_SUBTYPE, decoder_descs[decoder->type].input_types[index])))
 +    {
 +        IMFMediaType_Release(input_type);
 +        return hr;
@@ -7554,37 +7530,36 @@ index 00000000000..7fc009513c6
 +static HRESULT WINAPI mf_decoder_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
 +        IMFMediaType **type)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    IMFMediaType *output_type;
 +    HRESULT hr;
 +
-+    TRACE("%p, %u, %u, %p\n", This, id, index, type);
++    TRACE("%p, %u, %u, %p\n", decoder, id, index, type);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
 +
-+    if (!(This->input_type))
++    if (!(decoder->input_type))
 +        return MF_E_TRANSFORM_TYPE_NOT_SET;
 +
-+    if (index >= decoder_descs[This->type].output_types_count)
++    if (index >= decoder_descs[decoder->type].output_types_count)
 +        return MF_E_NO_MORE_TYPES;
 +
 +    if (FAILED(hr = MFCreateMediaType(&output_type)))
 +        return hr;
 +
-+    copy_attr(output_type, This->input_type, &MF_MT_MAJOR_TYPE);
-+    copy_attr(output_type, This->input_type, &MF_MT_FRAME_SIZE);
-+    copy_attr(output_type, This->input_type, &MF_MT_FRAME_RATE);
-+    copy_attr(output_type, This->input_type, &MF_MT_AUDIO_NUM_CHANNELS);
-+    copy_attr(output_type, This->input_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND);
++    copy_attr(output_type, decoder->input_type, &MF_MT_FRAME_SIZE);
++    copy_attr(output_type, decoder->input_type, &MF_MT_FRAME_RATE);
++    copy_attr(output_type, decoder->input_type, &MF_MT_AUDIO_NUM_CHANNELS);
++    copy_attr(output_type, decoder->input_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND);
 +
-+    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_MAJOR_TYPE, decoder_descs[This->type].major_type)))
++    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_MAJOR_TYPE, decoder_descs[decoder->type].major_type)))
 +    {
 +        IMFMediaType_Release(output_type);
 +        return hr;
 +    }
 +
-+    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_SUBTYPE, decoder_descs[This->type].output_types[index])))
++    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_SUBTYPE, decoder_descs[decoder->type].output_types[index])))
 +    {
 +        IMFMediaType_Release(output_type);
 +        return hr;
@@ -7610,15 +7585,15 @@ index 00000000000..7fc009513c6
 +
 +static gboolean query_input_src(GstPad *pad, GstObject *parent, GstQuery *query)
 +{
-+    struct mf_decoder *This = gst_pad_get_element_private(pad);
++    struct mf_decoder *decoder = gst_pad_get_element_private(pad);
 +
-+    TRACE("GStreamer queries MFT Input Pad %p for %s\n", This, GST_QUERY_TYPE_NAME(query));
++    TRACE("GStreamer queries MFT Input Pad %p for %s\n", decoder, GST_QUERY_TYPE_NAME(query));
 +
 +    switch (GST_QUERY_TYPE(query))
 +    {
 +        case GST_QUERY_CAPS:
 +        {
-+            gst_query_set_caps_result(query, caps_from_mf_media_type(This->input_type));
++            gst_query_set_caps_result(query, caps_from_mf_media_type(decoder->input_type));
 +            return TRUE;
 +        }
 +        case GST_QUERY_SCHEDULING:
@@ -7646,7 +7621,7 @@ index 00000000000..7fc009513c6
 +        }
 +        default:
 +        {
-+            ERR("Unhandled query type %s on MFT Input Pad %p\n", GST_QUERY_TYPE_NAME(query), This);
++            ERR("Unhandled query type %s on MFT Input Pad %p\n", GST_QUERY_TYPE_NAME(query), decoder);
 +            return gst_pad_query_default (pad, parent, query);
 +        }
 +    }
@@ -7654,17 +7629,19 @@ index 00000000000..7fc009513c6
 +
 +static GstFlowReturn decoder_new_sample(GstElement *appsink, gpointer user)
 +{
-+    struct mf_decoder *This = (struct mf_decoder *) user;
++    struct mf_decoder *decoder = (struct mf_decoder *) user;
 +
-+    if (This->flushing)
++    TRACE("new sample decoder=%p appsink=%p\n", decoder, appsink);
++
++    if (decoder->flushing)
 +    {
 +        GstSample *sample;
-+        g_signal_emit_by_name(This->appsink, "pull-sample", &sample);
++        g_signal_emit_by_name(decoder->appsink, "pull-sample", &sample);
 +        gst_sample_unref(sample);
 +        return GST_FLOW_OK;
 +    }
 +
-+    This->output_counter++;
++    decoder->output_counter++;
 +
 +    return GST_FLOW_OK;
 +}
@@ -7758,7 +7735,7 @@ index 00000000000..7fc009513c6
 +    return ret;
 +}
 +
-+static void decoder_update_pipeline(struct mf_decoder *This)
++static void decoder_update_pipeline(struct mf_decoder *decoder)
 +{
 +    GstCaps *input_caps = NULL;
 +    RECT target_size = {0};
@@ -7766,53 +7743,53 @@ index 00000000000..7fc009513c6
 +    UINT32 aperture_size;
 +    GstSegment *segment;
 +
-+    This->valid_state = FALSE;
++    decoder->valid_state = FALSE;
 +
 +    /* tear down current pipeline */
-+    gst_element_set_state(This->container, GST_STATE_READY);
-+    if (gst_element_get_state(This->container, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE)
++    gst_element_set_state(decoder->container, GST_STATE_READY);
++    if (gst_element_get_state(decoder->container, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE)
 +    {
 +        ERR("Failed to stop container\n");
 +    }
 +
-+    g_object_set(This->appsink, "caps", gst_caps_new_empty(), NULL);
++    g_object_set(decoder->appsink, "caps", gst_caps_new_empty(), NULL);
 +
-+    if (This->input_src)
++    if (decoder->input_src)
 +    {
-+        gst_pad_unlink(This->input_src, This->their_sink);
-+        gst_object_unref(G_OBJECT(This->input_src));
-+        This->input_src = NULL;
++        gst_pad_unlink(decoder->input_src, decoder->their_sink);
++        gst_object_unref(G_OBJECT(decoder->input_src));
++        decoder->input_src = NULL;
 +    }
 +
-+    if (This->their_sink)
++    if (decoder->their_sink)
 +    {
-+        gst_object_unref(G_OBJECT(This->their_sink));
-+        This->their_sink = NULL;
++        gst_object_unref(G_OBJECT(decoder->their_sink));
++        decoder->their_sink = NULL;
 +    }
 +
-+    if (This->parser)
++    if (decoder->parser)
 +    {
-+        gst_element_unlink(This->parser, This->decoder);
-+        gst_bin_remove(GST_BIN(This->container), This->parser);
-+        This->parser = NULL;
++        gst_element_unlink(decoder->parser, decoder->decoder);
++        gst_bin_remove(GST_BIN(decoder->container), decoder->parser);
++        decoder->parser = NULL;
 +    }
-+    if (This->decoder)
++    if (decoder->decoder)
 +    {
-+        gst_element_unlink(This->decoder, This->post_process_start);
-+        gst_bin_remove(GST_BIN(This->container), This->decoder);
-+        This->decoder = NULL;
++        gst_element_unlink(decoder->decoder, decoder->post_process_start);
++        gst_bin_remove(GST_BIN(decoder->container), decoder->decoder);
++        decoder->decoder = NULL;
 +    }
 +
 +    /* we can only have a valid state if an input and output type is present */
-+    if (!This->input_type || !This->output_type)
++    if (!decoder->input_type || !decoder->output_type)
 +        return;
 +
 +    /* We do leave a lot of unfreed objects here when we failure,
 +       but it will be cleaned up on the next call */
 +
-+    input_caps = caps_from_mf_media_type(This->input_type);
++    input_caps = caps_from_mf_media_type(decoder->input_type);
 +
-+    if (!(This->input_src = gst_pad_new_from_template(gst_pad_template_new(
++    if (!(decoder->input_src = gst_pad_new_from_template(gst_pad_template_new(
 +        "mf_src",
 +        GST_PAD_SRC,
 +        GST_PAD_ALWAYS,
@@ -7823,34 +7800,34 @@ index 00000000000..7fc009513c6
 +        goto done;
 +    }
 +
-+    gst_pad_set_activatemode_function(This->input_src, activate_push_mode_wrapper);
-+    gst_pad_set_query_function(This->input_src, query_input_src_wrapper);
-+    gst_pad_set_element_private(This->input_src, This);
++    gst_pad_set_activatemode_function(decoder->input_src, activate_push_mode_wrapper);
++    gst_pad_set_query_function(decoder->input_src, query_input_src_wrapper);
++    gst_pad_set_element_private(decoder->input_src, decoder);
 +
-+    if (!(find_decoder_from_caps(input_caps, &This->decoder, &This->parser)))
++    if (!(find_decoder_from_caps(input_caps, &decoder->decoder, &decoder->parser)))
 +    {
 +        goto done;
 +    }
 +
-+    gst_bin_add(GST_BIN(This->container), This->decoder);
-+    if (This->parser)
++    gst_bin_add(GST_BIN(decoder->container), decoder->decoder);
++    if (decoder->parser)
 +    {
-+        gst_bin_add(GST_BIN(This->container), This->parser);
++        gst_bin_add(GST_BIN(decoder->container), decoder->parser);
 +    }
 +
-+    if (!(This->their_sink = gst_element_get_static_pad(This->parser ? This->parser : This->decoder, "sink")))
++    if (!(decoder->their_sink = gst_element_get_static_pad(decoder->parser ? decoder->parser : decoder->decoder, "sink")))
 +    {
 +        goto done;
 +    }
 +
-+    if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(This->output_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (UINT8 **) &aperture, &aperture_size)))
++    if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(decoder->output_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (UINT8 **) &aperture, &aperture_size)))
 +    {
 +        UINT64 frame_size;
 +
 +        TRACE("x: %u %u/65536, y: %u %u/65536, area: %u x %u\n", aperture->OffsetX.value, aperture->OffsetX.fract,
 +            aperture->OffsetY.value, aperture->OffsetY.fract, aperture->Area.cx, aperture->Area.cy);
 +
-+        if (SUCCEEDED(IMFMediaType_GetUINT64(This->output_type, &MF_MT_FRAME_SIZE, &frame_size)))
++        if (SUCCEEDED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_SIZE, &frame_size)))
 +        {
 +            DWORD width = frame_size >> 32;
 +            DWORD height = frame_size;
@@ -7866,46 +7843,46 @@ index 00000000000..7fc009513c6
 +        CoTaskMemFree(aperture);
 +    }
 +
-+    if (This->videobox)
++    if (decoder->videobox)
 +    {
-+        g_object_set(This->videobox, "top", target_size.top, NULL);
-+        g_object_set(This->videobox, "bottom", target_size.bottom, NULL);
-+        g_object_set(This->videobox, "left", target_size.left, NULL);
-+        g_object_set(This->videobox, "right", target_size.right, NULL);
++        g_object_set(decoder->videobox, "top", target_size.top, NULL);
++        g_object_set(decoder->videobox, "bottom", target_size.bottom, NULL);
++        g_object_set(decoder->videobox, "left", target_size.left, NULL);
++        g_object_set(decoder->videobox, "right", target_size.right, NULL);
 +    }
 +
-+    g_object_set(This->appsink, "caps", caps_from_mf_media_type(This->output_type), NULL);
++    g_object_set(decoder->appsink, "caps", caps_from_mf_media_type(decoder->output_type), NULL);
 +
-+    if (gst_pad_link(This->input_src, This->their_sink) != GST_PAD_LINK_OK)
++    if (gst_pad_link(decoder->input_src, decoder->their_sink) != GST_PAD_LINK_OK)
 +    {
 +        ERR("Failed to link input source to decoder sink\n");
 +        return;
 +    }
 +
-+    if (This->parser && !(gst_element_link(This->parser, This->decoder)))
++    if (decoder->parser && !(gst_element_link(decoder->parser, decoder->decoder)))
 +    {
 +        ERR("Failed to link parser to decoder\n");
 +        goto done;
 +    }
 +
-+    if (!(gst_element_link(This->decoder, This->post_process_start)))
++    if (!(gst_element_link(decoder->decoder, decoder->post_process_start)))
 +    {
 +        ERR("Failed to link decoder to first element in post processing chain\n");
 +        goto done;
 +    }
 +
-+    gst_element_set_state(This->container, GST_STATE_PLAYING);
++    gst_element_set_state(decoder->container, GST_STATE_PLAYING);
 +
-+    gst_pad_set_active(This->input_src, 1);
-+    gst_pad_push_event(This->input_src, gst_event_new_stream_start("decoder-stream"));
-+    gst_pad_push_event(This->input_src, gst_event_new_caps(caps_from_mf_media_type(This->input_type)));
++    gst_pad_set_active(decoder->input_src, 1);
++    gst_pad_push_event(decoder->input_src, gst_event_new_stream_start("decoder-stream"));
++    gst_pad_push_event(decoder->input_src, gst_event_new_caps(caps_from_mf_media_type(decoder->input_type)));
 +    segment = gst_segment_new();
 +    gst_segment_init(segment, GST_FORMAT_DEFAULT);
-+    gst_pad_push_event(This->input_src, gst_event_new_segment(segment));
++    gst_pad_push_event(decoder->input_src, gst_event_new_segment(segment));
 +
-+    gst_element_get_state(This->container, NULL, NULL, -1);
++    gst_element_get_state(decoder->container, NULL, NULL, -1);
 +
-+    This->valid_state = TRUE;
++    decoder->valid_state = TRUE;
 +    done:
 +    if (input_caps)
 +        gst_caps_unref(input_caps);
@@ -7914,10 +7891,10 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    HRESULT hr = S_OK;
 +
-+    TRACE("%p, %u, %p, %#x\n", This, id, type, flags);
++    TRACE("%p, %u, %p, %#x\n", decoder, id, type, flags);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
@@ -7925,33 +7902,29 @@ index 00000000000..7fc009513c6
 +    if (type)
 +    {
 +        GUID major_type, subtype;
-+        BOOL found = FALSE;
++        UINT64 unused;
 +
 +        if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
 +            return hr;
 +        if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
 +            return hr;
 +
-+        for (unsigned int i = 0; i < decoder_descs[This->type].input_types_count; i++)
++        if (!(IsEqualGUID(&major_type, decoder_descs[decoder->type].major_type)))
++            return MF_E_INVALIDTYPE;
++
++        if (decoder->video)
 +        {
-+            UINT64 unused;
-+
-+            if (IsEqualGUID(&major_type, decoder_descs[This->type].major_type) &&
-+                IsEqualGUID(&subtype, decoder_descs[This->type].input_types[i]))
-+            {
-+                if (This->video)
-+                {
-+                    if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
-+                        return hr;
-+                }
-+
-+                found = TRUE;
-+                break;
-+            }
++            if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
++                return hr;
 +        }
 +
-+        if (!found)
-+            return MF_E_INVALIDTYPE;
++        for (unsigned int i = 0; i < decoder_descs[decoder->type].input_types_count; i++)
++        {
++            if (IsEqualGUID(&subtype, decoder_descs[decoder->type].input_types[i]))
++                break;
++            if (i == decoder_descs[decoder->type].input_types_count)
++                return MF_E_INVALIDTYPE;
++        }
 +    }
 +
 +    if (flags & MFT_SET_TYPE_TEST_ONLY)
@@ -7959,66 +7932,67 @@ index 00000000000..7fc009513c6
 +        return S_OK;
 +    }
 +
-+    EnterCriticalSection(&This->state_cs);
++    EnterCriticalSection(&decoder->state_cs);
 +
 +    if (type)
 +    {
-+        if (!This->input_type)
-+            if (FAILED(hr = MFCreateMediaType(&This->input_type)))
++        if (!decoder->input_type)
++            if (FAILED(hr = MFCreateMediaType(&decoder->input_type)))
 +                goto done;
 +
-+        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes*) This->input_type)))
++        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes*) decoder->input_type)))
 +            goto done;
 +    }
-+    else if (This->input_type)
++    else if (decoder->input_type)
 +    {
-+        IMFMediaType_Release(This->input_type);
-+        This->input_type = NULL;
++        IMFMediaType_Release(decoder->input_type);
++        decoder->input_type = NULL;
 +    }
 +
-+    decoder_update_pipeline(This);
++    decoder_update_pipeline(decoder);
 +
 +    done:
-+    LeaveCriticalSection(&This->state_cs);
-+    WakeAllConditionVariable(&This->state_cv);
++    LeaveCriticalSection(&decoder->state_cs);
++    WakeAllConditionVariable(&decoder->state_cv);
 +    return hr;
 +}
 +
 +static HRESULT WINAPI mf_decoder_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    HRESULT hr = S_OK;
 +
-+    TRACE("%p, %u, %p, %#x\n", This, id, type, flags);
++    TRACE("%p, %u, %p, %#x\n", decoder, id, type, flags);
 +
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
 +
 +    if (type)
 +    {
++        GUID major_type, subtype;
++        UINT64 unused;
++
 +        /* validate the type */
++        if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
++            return MF_E_INVALIDTYPE;
++        if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
++            return MF_E_INVALIDTYPE;
 +
-+        for (unsigned int i = 0; i < decoder_descs[This->type].output_types_count; i++)
++        if (!(IsEqualGUID(&major_type, decoder_descs[decoder->type].major_type)))
++            return MF_E_INVALIDTYPE;
++
++        if (decoder->video)
 +        {
-+            GUID major_type, subtype;
-+            UINT64 unused;
++            if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
++                return MF_E_INVALIDTYPE;
++        }
 +
-+            if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
-+                return hr;
-+            if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
-+                return hr;
-+
-+            if (IsEqualGUID(&major_type, decoder_descs[This->type].major_type) &&
-+                IsEqualGUID(&subtype, decoder_descs[This->type].output_types[i]))
-+            {
-+                if (This->video)
-+                {
-+                    if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
-+                        return hr;
-+                }
-+
++        for (unsigned int i = 0; i < decoder_descs[decoder->type].output_types_count; i++)
++        {
++            if (IsEqualGUID(&subtype, decoder_descs[decoder->type].output_types[i]))
 +                break;
-+            }
++            if (i == decoder_descs[decoder->type].output_types_count)
++                return MF_E_INVALIDTYPE;
 +        }
 +    }
 +
@@ -8027,27 +8001,27 @@ index 00000000000..7fc009513c6
 +        return S_OK;
 +    }
 +
-+    EnterCriticalSection(&This->state_cs);
++    EnterCriticalSection(&decoder->state_cs);
 +    if (type)
 +    {
-+        if (!This->output_type)
-+            if (FAILED(hr = MFCreateMediaType(&This->output_type)))
++        if (!decoder->output_type)
++            if (FAILED(hr = MFCreateMediaType(&decoder->output_type)))
 +                goto done;
 +
-+        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes*) This->output_type)))
++        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes*) decoder->output_type)))
 +            goto done;
 +    }
-+    else if (This->output_type)
++    else if (decoder->output_type)
 +    {
-+        IMFMediaType_Release(This->output_type);
-+        This->output_type = NULL;
++        IMFMediaType_Release(decoder->output_type);
++        decoder->output_type = NULL;
 +    }
 +
-+    decoder_update_pipeline(This);
++    decoder_update_pipeline(decoder);
 +
 +    done:
-+    LeaveCriticalSection(&This->state_cs);
-+    WakeAllConditionVariable(&This->state_cv);
++    LeaveCriticalSection(&decoder->state_cs);
++    WakeAllConditionVariable(&decoder->state_cv);
 +    return hr;
 +}
 +
@@ -8067,22 +8041,22 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +
-+    TRACE("%p, %u, %p\n", This, id, flags);
++    TRACE("%p, %u, %p\n", decoder, id, flags);
 +
-+    *flags = This->output_counter ? MFT_INPUT_STATUS_ACCEPT_DATA : 0;
++    *flags = decoder->output_counter ? MFT_INPUT_STATUS_ACCEPT_DATA : 0;
 +
 +    return S_OK;
 +}
 +
 +static HRESULT WINAPI mf_decoder_GetOutputStatus(IMFTransform *iface, DWORD *flags)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +
-+    TRACE("%p, %p.\n", This, flags);
++    TRACE("%p, %p.\n", decoder, flags);
 +
-+    *flags = This->output_counter ? MFT_OUTPUT_STATUS_SAMPLE_READY : 0;
++    *flags = decoder->output_counter ? MFT_OUTPUT_STATUS_SAMPLE_READY : 0;
 +
 +    return S_OK;
 +}
@@ -8141,7 +8115,7 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI decoder_process_message_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 +{
-+    struct mf_decoder *This = impl_from_message_callback_IMFAsyncCallback(iface);
++    struct mf_decoder *decoder = impl_from_message_callback_IMFAsyncCallback(iface);
 +    IUnknown *state;
 +    IMFAttributes *async_param;
 +    MFT_MESSAGE_TYPE message_type;
@@ -8166,18 +8140,18 @@ index 00000000000..7fc009513c6
 +            GstSegment *segment = gst_segment_new();
 +            gst_segment_init(segment, GST_FORMAT_DEFAULT);
 +
-+            EnterCriticalSection(&This->state_cs);
-+            This->draining = TRUE;
-+            WakeAllConditionVariable(&This->state_cv);
-+            LeaveCriticalSection(&This->state_cs);
-+            gst_pad_push_event(This->input_src, gst_event_new_eos());
++            EnterCriticalSection(&decoder->state_cs);
++            decoder->draining = TRUE;
++            WakeAllConditionVariable(&decoder->state_cv);
++            LeaveCriticalSection(&decoder->state_cs);
++            gst_pad_push_event(decoder->input_src, gst_event_new_eos());
 +
-+            EnterCriticalSection(&This->state_cs);
-+            while(This->draining)
-+                SleepConditionVariableCS(&This->state_cv, &This->state_cs, INFINITE);
-+            gst_pad_push_event(This->input_src, gst_event_new_flush_stop(0));
-+            gst_pad_push_event(This->input_src, gst_event_new_segment(segment));
-+            LeaveCriticalSection(&This->state_cs);
++            EnterCriticalSection(&decoder->state_cs);
++            while(decoder->draining)
++                SleepConditionVariableCS(&decoder->state_cv, &decoder->state_cs, INFINITE);
++            gst_pad_push_event(decoder->input_src, gst_event_new_flush_stop(0));
++            gst_pad_push_event(decoder->input_src, gst_event_new_segment(segment));
++            LeaveCriticalSection(&decoder->state_cs);
 +            return S_OK;
 +        }
 +        default:
@@ -8196,11 +8170,11 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    IMFAttributes *async_param;
 +    HRESULT hr;
 +
-+    TRACE("%p, %u %lu.\n", This, message, param);
++    TRACE("%p, %x %lu.\n", decoder, message, param);
 +
 +    if (FAILED(hr = MFCreateAttributes(&async_param, 1)))
 +        return hr;
@@ -8212,31 +8186,31 @@ index 00000000000..7fc009513c6
 +            GstSegment *segment = gst_segment_new();
 +            gst_segment_init(segment, GST_FORMAT_DEFAULT);
 +
-+            EnterCriticalSection(&This->state_cs);
-+            This->flushing = TRUE;
++            EnterCriticalSection(&decoder->state_cs);
++            decoder->flushing = TRUE;
 +
-+            while (This->output_counter)
++            while (decoder->output_counter)
 +            {
 +                GstSample *sample;
-+                g_signal_emit_by_name(This->appsink, "pull-sample", &sample);
++                g_signal_emit_by_name(decoder->appsink, "pull-sample", &sample);
 +                gst_sample_unref(sample);
-+                This->output_counter--;
++                decoder->output_counter--;
 +            }
 +
-+            gst_pad_push_event(This->input_src, gst_event_new_flush_start());
-+            gst_pad_push_event(This->input_src, gst_event_new_flush_stop(0));
-+            gst_pad_push_event(This->input_src, gst_event_new_segment(segment));
-+            gst_element_set_state(This->container, GST_STATE_PLAYING);
++            gst_pad_push_event(decoder->input_src, gst_event_new_flush_start());
++            gst_pad_push_event(decoder->input_src, gst_event_new_flush_stop(0));
++            gst_pad_push_event(decoder->input_src, gst_event_new_segment(segment));
++            gst_element_set_state(decoder->container, GST_STATE_PLAYING);
 +
-+            This->flushing = FALSE;
-+            LeaveCriticalSection(&This->state_cs);
++            decoder->flushing = FALSE;
++            LeaveCriticalSection(&decoder->state_cs);
 +
 +            hr = S_OK;
 +            break;
 +        }
 +        case MFT_MESSAGE_COMMAND_DRAIN:
 +        {
-+            if (This->draining)
++            if (decoder->draining)
 +            {
 +                hr = S_OK;
 +                break;
@@ -8244,11 +8218,11 @@ index 00000000000..7fc009513c6
 +
 +            IMFAttributes_SetUINT32(async_param, &WINE_MFT_MESSAGE_TYPE, message);
 +
-+            EnterCriticalSection(&This->state_cs);
-+            MFPutWorkItem(MF_MULTITHREADED_WORKQUEUE, &This->process_message_callback, (IUnknown *)async_param);
-+            while (!This->draining)
-+                SleepConditionVariableCS(&This->state_cv, &This->state_cs, INFINITE);
-+            LeaveCriticalSection(&This->state_cs);
++            EnterCriticalSection(&decoder->state_cs);
++            MFPutWorkItem(decoder->message_queue, &decoder->process_message_callback, (IUnknown *)async_param);
++            while (!decoder->draining)
++                SleepConditionVariableCS(&decoder->state_cv, &decoder->state_cs, INFINITE);
++            LeaveCriticalSection(&decoder->state_cs);
 +
 +            hr = S_OK;
 +            break;
@@ -8260,7 +8234,7 @@ index 00000000000..7fc009513c6
 +        }
 +        default:
 +        {
-+            ERR("Unhandled message type %u.\n", message);
++            ERR("Unhandled message type %x.\n", message);
 +            hr = E_FAIL;
 +            break;
 +        }
@@ -8272,13 +8246,13 @@ index 00000000000..7fc009513c6
 +
 +static HRESULT WINAPI mf_decoder_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    GstBuffer *gst_buffer;
 +    GstFlowReturn ret;
 +    HRESULT hr = S_OK;
 +    GstQuery *drain;
 +
-+    TRACE("%p, %u, %p, %#x\n", This, id, sample, flags);
++    TRACE("%p, %u, %p, %#x\n", decoder, id, sample, flags);
 +
 +    if (flags)
 +        WARN("Unsupported flags %#x\n", flags);
@@ -8286,15 +8260,15 @@ index 00000000000..7fc009513c6
 +    if (id != 0)
 +        return MF_E_INVALIDSTREAMNUMBER;
 +
-+    if (!This->valid_state)
++    if (!decoder->valid_state)
 +        return MF_E_TRANSFORM_TYPE_NOT_SET;
 +
-+    EnterCriticalSection(&This->state_cs);
++    EnterCriticalSection(&decoder->state_cs);
 +
 +    drain = gst_query_new_drain();
-+    gst_pad_peer_query(This->input_src, drain);
++    gst_pad_peer_query(decoder->input_src, drain);
 +
-+    if (This->output_counter || This->draining)
++    if (decoder->output_counter || decoder->draining)
 +    {
 +        hr = MF_E_NOTACCEPTING;
 +        goto done;
@@ -8306,7 +8280,7 @@ index 00000000000..7fc009513c6
 +        goto done;
 +    }
 +
-+    ret = gst_pad_push(This->input_src, gst_buffer);
++    ret = gst_pad_push(decoder->input_src, gst_buffer);
 +    if (ret != GST_FLOW_OK)
 +    {
 +        ERR("Couldn't process input ret = %d\n", ret);
@@ -8315,25 +8289,23 @@ index 00000000000..7fc009513c6
 +    }
 +
 +    done:
-+    LeaveCriticalSection(&This->state_cs);
++    LeaveCriticalSection(&decoder->state_cs);
 +    return hr;
 +}
 +
 +static HRESULT WINAPI mf_decoder_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
 +        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 +{
-+    struct mf_decoder *This = impl_mf_decoder_from_IMFTransform(iface);
++    struct mf_decoder *decoder = impl_mf_decoder_from_IMFTransform(iface);
 +    MFT_OUTPUT_DATA_BUFFER *relevant_buffer = NULL;
 +    GstSample *buffer;
 +
 +    TRACE("%p, %#x, %u, %p, %p,\n", iface, flags, count, samples, status);
 +
 +    if (flags)
-+    {
 +        WARN("Unsupported flags %#x\n", flags);
-+    }
 +
-+    if (!This->valid_state)
++    if (!decoder->valid_state)
 +        return MF_E_TRANSFORM_TYPE_NOT_SET;
 +
 +    for (unsigned int i = 0; i < count; i++)
@@ -8352,27 +8324,27 @@ index 00000000000..7fc009513c6
 +    if (!relevant_buffer)
 +        return S_OK;
 +
-+    EnterCriticalSection(&This->state_cs);
++    EnterCriticalSection(&decoder->state_cs);
 +
-+    if (!This->output_counter && !This->draining)
++    if (!decoder->output_counter && !decoder->draining)
 +    {
-+        LeaveCriticalSection(&This->state_cs);
++        LeaveCriticalSection(&decoder->state_cs);
 +        return MF_E_TRANSFORM_NEED_MORE_INPUT;
 +    }
-+    TRACE("%u\n", This->output_counter);
++    TRACE("%u\n", decoder->output_counter);
 +
-+    g_signal_emit_by_name(This->appsink, "pull-sample", &buffer);
-+    if (This->draining && !buffer)
++    g_signal_emit_by_name(decoder->appsink, "pull-sample", &buffer);
++    if (decoder->draining && !buffer)
 +    {
-+        This->output_counter = 0;
-+        This->draining = FALSE;
-+        LeaveCriticalSection(&This->state_cs);
-+        WakeAllConditionVariable(&This->state_cv);
++        decoder->output_counter = 0;
++        decoder->draining = FALSE;
++        LeaveCriticalSection(&decoder->state_cs);
++        WakeAllConditionVariable(&decoder->state_cv);
 +        return MF_E_TRANSFORM_NEED_MORE_INPUT;
 +    }
-+    This->output_counter--;
++    decoder->output_counter--;
 +
-+    LeaveCriticalSection(&This->state_cs);
++    LeaveCriticalSection(&decoder->state_cs);
 +
 +    relevant_buffer->pSample = mf_sample_from_gst_buffer(gst_sample_get_buffer(buffer));
 +    gst_sample_unref(buffer);
@@ -8414,11 +8386,11 @@ index 00000000000..7fc009513c6
 +
 +GstBusSyncReply watch_decoder_bus(GstBus *bus, GstMessage *message, gpointer user_data)
 +{
-+    struct mf_decoder *This = user_data;
++    struct mf_decoder *decoder = user_data;
 +    GError *err = NULL;
 +    gchar *dbg_info = NULL;
 +
-+    TRACE("decoder %p message type %s\n", This, GST_MESSAGE_TYPE_NAME(message));
++    TRACE("decoder %p message type %s\n", decoder, GST_MESSAGE_TYPE_NAME(message));
 +
 +    switch (message->type)
 +    {
@@ -8445,93 +8417,96 @@ index 00000000000..7fc009513c6
 +    return GST_BUS_DROP;
 +}
 +
-+static void mf_decoder_destroy(struct mf_decoder *This)
++static void mf_decoder_destroy(struct mf_decoder *decoder)
 +{
-+    if (This->input_type)
++    if (decoder->input_type)
 +    {
-+        IMFMediaType_Release(This->input_type);
-+        This->input_type = NULL;
++        IMFMediaType_Release(decoder->input_type);
++        decoder->input_type = NULL;
 +    }
 +
-+    if (This->output_type)
++    if (decoder->output_type)
 +    {
-+        IMFMediaType_Release(This->output_type);
-+        This->output_type = NULL;
++        IMFMediaType_Release(decoder->output_type);
++        decoder->output_type = NULL;
 +    }
 +
-+    decoder_update_pipeline(This);
++    decoder_update_pipeline(decoder);
 +
-+    if (This->their_sink)
-+        gst_object_unref(G_OBJECT(This->their_sink));
++    if (decoder->their_sink)
++        gst_object_unref(G_OBJECT(decoder->their_sink));
 +
-+    if (This->container)
-+        gst_object_unref(G_OBJECT(This->container));
++    if (decoder->container)
++        gst_object_unref(G_OBJECT(decoder->container));
 +
-+    if (This->bus)
-+        gst_object_unref(G_OBJECT(This->bus));
++    if (decoder->bus)
++        gst_object_unref(G_OBJECT(decoder->bus));
 +
-+    DeleteCriticalSection(&This->state_cs);
++    DeleteCriticalSection(&decoder->state_cs);
 +
-+    heap_free(This);
++    MFUnlockWorkQueue(decoder->message_queue);
++
++    heap_free(decoder);
 +}
 +
 +HRESULT generic_decoder_construct(REFIID riid, void **obj, enum decoder_type type)
 +{
-+    struct mf_decoder *This;
++    struct mf_decoder *object;
 +    GstElement *converter;
 +    HRESULT hr = S_OK;
 +
 +    TRACE("%s, %p %u.\n", debugstr_guid(riid), obj, type);
 +
-+    if (!(This = heap_alloc_zero(sizeof(*This))))
++    if (!(object = heap_alloc_zero(sizeof(*object))))
 +        return E_OUTOFMEMORY;
-+    This->type = type;
-+    This->video = decoder_descs[type].major_type == &MFMediaType_Video;
++    object->type = type;
++    object->video = decoder_descs[type].major_type == &MFMediaType_Video;
++    MFAllocateWorkQueue(&object->message_queue);
 +
-+    InitializeCriticalSection(&This->state_cs);
-+    InitializeConditionVariable(&This->state_cv);
++    InitializeCriticalSection(&object->state_cs);
++    InitializeConditionVariable(&object->state_cv);
 +
-+    This->container = gst_bin_new(NULL);
-+    This->bus = gst_bus_new();
-+    gst_bus_set_sync_handler(This->bus, watch_decoder_bus_wrapper, This, NULL);
-+    gst_element_set_bus(This->container, This->bus);
++    object->container = gst_bin_new(NULL);
++    object->bus = gst_bus_new();
++    gst_bus_set_sync_handler(object->bus, watch_decoder_bus_wrapper, object, NULL);
++    gst_element_set_bus(object->container, object->bus);
 +
-+    if (This->video)
++    if (object->video)
 +    {
-+        if (!(This->videobox = gst_element_factory_make("videobox", NULL)))
++        if (!(object->videobox = gst_element_factory_make("videobox", NULL)))
 +        {
 +            ERR("Failed to create videobox\n");
 +            hr = E_FAIL;
 +            goto fail;
 +        }
-+        gst_bin_add(GST_BIN(This->container), This->videobox);
++        gst_bin_add(GST_BIN(object->container), object->videobox);
 +    }
 +
-+    if (!(converter = gst_element_factory_make(This->video ? "videoconvert" : "audioconvert", NULL)))
++    if (!(converter = gst_element_factory_make(object->video ? "videoconvert" : "audioconvert", NULL)))
 +    {
 +        ERR("Failed to create converter\n");
 +        hr = E_FAIL;
 +        goto fail;
 +    }
-+    gst_bin_add(GST_BIN(This->container), converter);
++    gst_bin_add(GST_BIN(object->container), converter);
 +
-+    if (!(This->appsink = gst_element_factory_make("appsink", NULL)))
++    if (!(object->appsink = gst_element_factory_make("appsink", NULL)))
 +    {
 +        ERR("Failed to create appsink\n");
 +        hr = E_FAIL;
 +        goto fail;
 +    }
-+    gst_bin_add(GST_BIN(This->container), This->appsink);
++    gst_bin_add(GST_BIN(object->container), object->appsink);
 +
-+    g_object_set(This->appsink, "emit-signals", TRUE, NULL);
-+    g_object_set(This->appsink, "sync", FALSE, NULL);
-+    g_object_set(This->appsink, "async", FALSE, NULL);
-+    g_signal_connect(This->appsink, "new-sample", G_CALLBACK(decoder_new_sample_wrapper), This);
++    g_object_set(object->appsink, "emit-signals", TRUE, NULL);
++    g_object_set(object->appsink, "sync", FALSE, NULL);
++    g_object_set(object->appsink, "async", FALSE, NULL);
++    g_signal_connect(object->appsink, "new-sample", G_CALLBACK(decoder_new_sample_wrapper), object);
 +
 +
-+    if (This->videobox)
++    if (object->videobox)
 +    {
-+        if (!(gst_element_link(This->videobox, converter)))
++        if (!(gst_element_link(object->videobox, converter)))
 +        {
 +            ERR("Failed to link videobox to converter\n");
 +            hr = E_FAIL;
@@ -8539,26 +8514,26 @@ index 00000000000..7fc009513c6
 +        }
 +    }
 +
-+    if (!(gst_element_link(converter, This->appsink)))
++    if (!(gst_element_link(converter, object->appsink)))
 +    {
 +        ERR("Failed to link converter appsink");
 +        hr = E_FAIL;
 +        goto fail;
 +    }
 +
-+    This->post_process_start = This->videobox ? This->videobox : converter;
++    object->post_process_start = object->videobox ? object->videobox : converter;
 +
-+    This->process_message_callback.lpVtbl = &process_message_callback_vtbl;
++    object->process_message_callback.lpVtbl = &process_message_callback_vtbl;
 +
-+    This->IMFTransform_iface.lpVtbl = &mf_decoder_vtbl;
-+    This->refcount = 1;
++    object->IMFTransform_iface.lpVtbl = &mf_decoder_vtbl;
++    object->refcount = 1;
 +
-+    *obj = This;
++    *obj = object;
 +    return S_OK;
 +
 +    fail:
 +    ERR("Failed to create Decoder MFT type %u, hr = %#x\n", type, hr);
-+    mf_decoder_destroy(This);
++    mf_decoder_destroy(object);
 +    return hr;
 +}
 +
@@ -8599,7 +8574,7 @@ index 00000000000..7fc009513c6
 +}
 \ No newline at end of file
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 46854bc67db..f150615c39c 100644
+index f1c8e34cd24..aa17b335b37 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -404,6 +404,16 @@ static HRESULT video_processor_create(REFIID riid, void **ret)
@@ -8628,63 +8603,35 @@ index 46854bc67db..f150615c39c 100644
      { &CLSID_MPEG4ByteStreamHandler, &mp4_stream_handler_create },
  };
  
-@@ -449,6 +461,136 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
+@@ -449,6 +461,111 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
      return CLASS_E_CLASSNOTAVAILABLE;
  }
  
-+struct register_type_info
-+{
-+    const GUID *major_type;
-+    const GUID *sub_type;
-+};
 +
 +static WCHAR h264decoderW[] = {'H','.','2','6','4',' ','D','e','c','o','d','e','r',0};
-+const struct register_type_info h264_decoder_input_types[] =
++const GUID *h264_decoder_input_types[] =
 +{
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_H264
-+    }
++    &MFVideoFormat_H264,
 +};
-+const struct register_type_info h264_decoder_output_types[] =
++const GUID *h264_decoder_output_types[] =
 +{
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_I420
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_IYUV
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_NV12
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_YUY2,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_YV12,
-+    }
++    &MFVideoFormat_I420,
++    &MFVideoFormat_IYUV,
++    &MFVideoFormat_NV12,
++    &MFVideoFormat_YUY2,
++    &MFVideoFormat_YV12,
 +};
 +
 +static WCHAR aacdecoderW[] = {'A','A','C',' ','D','e','c','o','d','e','r',0};
-+const struct register_type_info aac_decoder_input_types[] =
++const GUID *aac_decoder_input_types[] =
 +{
-+    {
-+        &MFMediaType_Audio,
-+        &MFAudioFormat_AAC
-+    }
++    &MFAudioFormat_AAC,
 +};
 +
-+const struct register_type_info aac_decoder_output_types[] =
++const GUID *aac_decoder_output_types[] =
 +{
-+    {
-+        &MFMediaType_Audio,
-+        &MFAudioFormat_Float
-+    }
++    &MFAudioFormat_Float,
++    &MFAudioFormat_PCM,
 +};
 +
 +static const struct mft
@@ -8693,10 +8640,11 @@ index 46854bc67db..f150615c39c 100644
 +    const GUID *category;
 +    LPWSTR name;
 +    const UINT32 flags;
++    const GUID *major_type;
 +    const UINT32 input_types_count;
-+    const struct register_type_info *input_types;
++    const GUID **input_types;
 +    const UINT32 output_types_count;
-+    const struct register_type_info *output_types;
++    const GUID **output_types;
 +    IMFAttributes *attributes;
 +}
 +mfts[] =
@@ -8706,6 +8654,7 @@ index 46854bc67db..f150615c39c 100644
 +        &MFT_CATEGORY_VIDEO_DECODER,
 +        h264decoderW,
 +        MFT_ENUM_FLAG_SYNCMFT,
++        &MFMediaType_Video,
 +        ARRAY_SIZE(h264_decoder_input_types),
 +        h264_decoder_input_types,
 +        ARRAY_SIZE(h264_decoder_output_types),
@@ -8717,6 +8666,7 @@ index 46854bc67db..f150615c39c 100644
 +        &MFT_CATEGORY_AUDIO_DECODER,
 +        aacdecoderW,
 +        MFT_ENUM_FLAG_SYNCMFT,
++        &MFMediaType_Audio,
 +        ARRAY_SIZE(aac_decoder_input_types),
 +        aac_decoder_input_types,
 +        ARRAY_SIZE(aac_decoder_output_types),
@@ -8738,13 +8688,13 @@ index 46854bc67db..f150615c39c 100644
 +        output_types = heap_alloc(cur->output_types_count * sizeof(output_types[0]));
 +        for (unsigned int i = 0; i < cur->input_types_count; i++)
 +        {
-+            input_types[i].guidMajorType = *(cur->input_types[i].major_type);
-+            input_types[i].guidSubtype = *(cur->input_types[i].sub_type);
++            input_types[i].guidMajorType = *(cur->major_type);
++            input_types[i].guidSubtype = *(cur->input_types[i]);
 +        }
 +        for (unsigned int i = 0; i < cur->output_types_count; i++)
 +        {
-+            output_types[i].guidMajorType = *(cur->output_types[i].major_type);
-+            output_types[i].guidSubtype = *(cur->output_types[i].sub_type);
++            output_types[i].guidMajorType = *(cur->major_type);
++            output_types[i].guidSubtype = *(cur->output_types[i]);
 +        }
 +
 +        hr = MFTRegister(*(cur->clsid), *(cur->category), cur->name, cur->flags, cur->input_types_count,
@@ -8765,7 +8715,7 @@ index 46854bc67db..f150615c39c 100644
  const static struct
  {
      const GUID *subtype;
-@@ -467,7 +609,6 @@ struct aac_user_data
+@@ -467,7 +584,6 @@ struct aac_user_data
  {
      WORD payload_type;
      WORD profile_level_indication;
@@ -8807,10 +8757,10 @@ index c61ccb788ce..8e198594c57 100644
 +cpp_quote("EXTERN_GUID(CLSID_CMSH264DecoderMFT, 0x62ce7e72, 0x4c71, 0x4d20, 0xb1, 0x5d, 0x45, 0x28, 0x31, 0xa8, 0x7d, 0x9d);")
 +cpp_quote("EXTERN_GUID(CLSID_CMSAACDecMFT, 0x32d186a7, 0x218f, 0x4c75, 0x88, 0x76, 0xdd, 0x77, 0x27, 0x3a, 0x89, 0x99);")
 
-From 3a7d851bd191dd55ca4f176c37b48a0021e1390a Mon Sep 17 00:00:00 2001
+From e3f7fae4f44e9414ccd4286d98832c34a237a709 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 23 Mar 2020 11:55:41 -0500
-Subject: [PATCH 28/40] mfreadwrite: Select all streams when creating a source
+Subject: [PATCH 28/42] mfreadwrite: Select all streams when creating a source
  reader.
 
 ---
@@ -8833,10 +8783,10 @@ index eaf52ce31e3..a7291ff1ae4 100644
  
      if (FAILED(hr))
 
-From 1fefe538779fbd18331c32c95a5b837972ac65c4 Mon Sep 17 00:00:00 2001
+From 7e9efd1050f3ca4b6bb9dc7abcda0e9e93351160 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 16 Mar 2020 15:27:27 -0500
-Subject: [PATCH 29/40] Miscellaneous
+Subject: [PATCH 29/42] Miscellaneous
 
 ---
  dlls/mfreadwrite/reader.c         |  12 +++-
@@ -8907,10 +8857,10 @@ index 64dddaf47c4..098ad4b09de 100644
      pthread_mutex_lock(&cbdata->lock);
      cbdata->finished = 1;
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index fcfa6443f8e..fae4eb02c79 100644
+index ebb88d2b8a5..8e204e983cb 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
-@@ -85,6 +85,8 @@ struct source_async_command
+@@ -84,6 +84,8 @@ struct source_async_command
  struct media_source
  {
      IMFMediaSource IMFMediaSource_iface;
@@ -8919,7 +8869,7 @@ index fcfa6443f8e..fae4eb02c79 100644
      IMFAsyncCallback async_commands_callback;
      LONG ref;
      DWORD async_commands_queue;
-@@ -119,6 +121,16 @@ static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *ifac
+@@ -118,6 +120,16 @@ static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *ifac
      return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
  }
  
@@ -8936,7 +8886,7 @@ index fcfa6443f8e..fae4eb02c79 100644
  static inline struct media_source *impl_from_async_commands_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
  {
      return CONTAINING_RECORD(iface, struct media_source, async_commands_callback);
-@@ -1083,6 +1095,10 @@ static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID
+@@ -1071,6 +1083,10 @@ static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID
      {
          *out = &source->IMFMediaSource_iface;
      }
@@ -8947,7 +8897,7 @@ index fcfa6443f8e..fae4eb02c79 100644
      else
      {
          FIXME("(%s, %p)\n", debugstr_guid(riid), out);
-@@ -1177,7 +1193,7 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
+@@ -1165,7 +1181,7 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
      if (source->state == SOURCE_SHUTDOWN)
          return MF_E_SHUTDOWN;
  
@@ -8956,7 +8906,7 @@ index fcfa6443f8e..fae4eb02c79 100644
  
      return S_OK;
  }
-@@ -1317,6 +1333,99 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
+@@ -1305,6 +1321,99 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
      media_source_Shutdown,
  };
  
@@ -9056,7 +9006,7 @@ index fcfa6443f8e..fae4eb02c79 100644
  static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_type type, struct media_source **out_media_source)
  {
      GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
-@@ -1336,6 +1445,8 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
+@@ -1324,6 +1433,8 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
          return E_OUTOFMEMORY;
  
      object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
@@ -9065,7 +9015,7 @@ index fcfa6443f8e..fae4eb02c79 100644
      object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
      object->ref = 1;
      object->type = type;
-@@ -1435,7 +1546,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
+@@ -1423,7 +1534,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
      heap_free(descriptors);
      descriptors = NULL;
  
@@ -9073,7 +9023,7 @@ index fcfa6443f8e..fae4eb02c79 100644
      {
          IMFAttributes *byte_stream_attributes;
          gint64 total_pres_time = 0;
-@@ -1452,6 +1562,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
+@@ -1440,6 +1550,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, enum source_t
              IMFAttributes_Release(byte_stream_attributes);
          }
  
@@ -9082,20 +9032,20 @@ index fcfa6443f8e..fae4eb02c79 100644
          {
              GstQuery *query = gst_query_new_duration(GST_FORMAT_TIME);
 
-From 991a900b39b76c3094589c36dbf9276456d28b07 Mon Sep 17 00:00:00 2001
+From 2d4851a209f94cfc6a99ac03e95fae1de975f9a9 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 19:07:11 -0500
-Subject: [PATCH 30/40] WMV
+Subject: [PATCH 30/42] WMV
 
 ---
  dlls/winegstreamer/gst_private.h             |  2 +
- dlls/winegstreamer/media_source.c            |  3 +
- dlls/winegstreamer/mf_decode.c               | 10 +++
- dlls/winegstreamer/mfplat.c                  | 85 ++++++++++++++++++++
- dlls/winegstreamer/winegstreamer.rgs         | 12 +++
- dlls/winegstreamer/winegstreamer_classes.idl | 12 +++
+ dlls/winegstreamer/media_source.c            |  3 ++
+ dlls/winegstreamer/mf_decode.c               | 10 +++++
+ dlls/winegstreamer/mfplat.c                  | 47 ++++++++++++++++++++
+ dlls/winegstreamer/winegstreamer.rgs         | 12 +++++
+ dlls/winegstreamer/winegstreamer_classes.idl | 12 +++++
  include/mfidl.idl                            |  2 +
- 7 files changed, 126 insertions(+)
+ 7 files changed, 88 insertions(+)
 
 diff --git a/dlls/winegstreamer/gst_private.h b/dlls/winegstreamer/gst_private.h
 index 6e25b895ff4..0b61bc9e3ce 100644
@@ -9116,7 +9066,7 @@ index 6e25b895ff4..0b61bc9e3ce 100644
  HRESULT container_stream_handler_construct(REFIID riid, void **obj, enum source_type);
  
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index fae4eb02c79..ba27bf64a11 100644
+index 8e204e983cb..19b5b4346b2 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
 @@ -30,6 +30,9 @@ static struct source_desc
@@ -9130,10 +9080,10 @@ index fae4eb02c79..ba27bf64a11 100644
  };
  
 diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
-index 7fc009513c6..57a732c4f68 100644
+index 1ee28d996a4..618467a1241 100644
 --- a/dlls/winegstreamer/mf_decode.c
 +++ b/dlls/winegstreamer/mf_decode.c
-@@ -26,6 +26,9 @@ const GUID *h264_output_types[] = {&MFVideoFormat_I420, &MFVideoFormat_IYUV, &MF
+@@ -28,6 +28,9 @@ const GUID *h264_output_types[] = {&MFVideoFormat_I420, &MFVideoFormat_IYUV, &MF
  const GUID *aac_input_types[] = {&MFAudioFormat_AAC};
  const GUID *aac_output_types[] = {&MFAudioFormat_Float};
  
@@ -9143,7 +9093,7 @@ index 7fc009513c6..57a732c4f68 100644
  static struct decoder_desc
  {
      const GUID *major_type;
-@@ -48,6 +51,13 @@ static struct decoder_desc
+@@ -50,6 +53,13 @@ static struct decoder_desc
          ARRAY_SIZE(aac_input_types),
          aac_output_types,
          ARRAY_SIZE(aac_output_types),
@@ -9158,7 +9108,7 @@ index 7fc009513c6..57a732c4f68 100644
  };
  
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index f150615c39c..5ebee3e7b6e 100644
+index aa17b335b37..b9b23d55d91 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -414,11 +414,21 @@ static HRESULT aac_decoder_create(REFIID riid, void **ret)
@@ -9193,76 +9143,37 @@ index f150615c39c..5ebee3e7b6e 100644
  };
  
  HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
-@@ -516,6 +528,68 @@ const struct register_type_info aac_decoder_output_types[] =
-     }
+@@ -488,6 +500,29 @@ const GUID *aac_decoder_output_types[] =
+     &MFAudioFormat_PCM,
  };
  
 +static WCHAR wmvdecoderW[] = {'W','M','V','i','d','e','o',' ','D','e','c','o','d','e','r',' ','M','F','T',0};
 +
-+const struct register_type_info wmv_decoder_input_types[] =
++const GUID *wmv_decoder_input_types[] =
 +{
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_WMV3,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_WVC1,
-+    }
++    &MFVideoFormat_WMV3,
++    &MFVideoFormat_WVC1,
 +};
 +
-+const struct register_type_info wmv_decoder_output_types[] =
++const GUID *wmv_decoder_output_types[] =
 +{
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_NV12,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_YV12,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_YUY2,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_UYVY,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_YVYU,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_NV11,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_RGB32,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_RGB24,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_RGB565,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_RGB555,
-+    },
-+    {
-+        &MFMediaType_Video,
-+        &MFVideoFormat_RGB8,
-+    },
++    &MFVideoFormat_NV12,
++    &MFVideoFormat_YV12,
++    &MFVideoFormat_YUY2,
++    &MFVideoFormat_UYVY,
++    &MFVideoFormat_YVYU,
++    &MFVideoFormat_NV11,
++    &MFVideoFormat_RGB32,
++    &MFVideoFormat_RGB24,
++    &MFVideoFormat_RGB565,
++    &MFVideoFormat_RGB555,
++    &MFVideoFormat_RGB8,
 +};
 +
  static const struct mft
  {
      const GUID *clsid;
-@@ -551,6 +625,17 @@ mfts[] =
+@@ -526,6 +561,18 @@ mfts[] =
          ARRAY_SIZE(aac_decoder_output_types),
          aac_decoder_output_types,
          NULL
@@ -9272,6 +9183,7 @@ index f150615c39c..5ebee3e7b6e 100644
 +        &MFT_CATEGORY_VIDEO_DECODER,
 +        wmvdecoderW,
 +        MFT_ENUM_FLAG_SYNCMFT,
++        &MFMediaType_Video,
 +        ARRAY_SIZE(wmv_decoder_input_types),
 +        wmv_decoder_input_types,
 +        ARRAY_SIZE(wmv_decoder_output_types),
@@ -9343,10 +9255,10 @@ index 8e198594c57..3f994854425 100644
 +cpp_quote("EXTERN_GUID(CLSID_CWMVDecMediaObject, 0x82d353df, 0x90bd, 0x4382, 0x8b, 0xc2, 0x3f, 0x61, 0x92, 0xb7, 0x6e, 0x34);")
 \ No newline at end of file
 
-From 7234e9962397d86bd32ff55dbceee9f8dfcaf773 Mon Sep 17 00:00:00 2001
+From 0d07f7ad4694b4582dfb6b29f25eed79f146f8d5 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:42:18 -0500
-Subject: [PATCH 31/40] mf: Ask for more samples from upstream node when upon
+Subject: [PATCH 31/42] mf: Ask for more samples from upstream node when upon
  MF_E_TRANSFORM_NEED_MORE_INPUT
 
 ---
@@ -9354,7 +9266,7 @@ Subject: [PATCH 31/40] mf: Ask for more samples from upstream node when upon
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/dlls/mf/session.c b/dlls/mf/session.c
-index 75ef600a4df..e6d257e7879 100644
+index 75ef600a4df..06c44c4185a 100644
 --- a/dlls/mf/session.c
 +++ b/dlls/mf/session.c
 @@ -2437,6 +2437,8 @@ static HRESULT transform_node_pull_samples(struct topo_node *node)
@@ -9371,7 +9283,7 @@ index 75ef600a4df..e6d257e7879 100644
              }
  
 -            transform_node_pull_samples(topo_node);
-+            if (transform_node_pull_samples(topo_node) == MF_E_TRANSFORM_NEED_MORE_INPUT)
++            if (transform_node_pull_samples(topo_node) == MF_E_TRANSFORM_NEED_MORE_INPUT && !drain)
 +            {
 +                IMFTopologyNode *upstream_node;
 +                DWORD upstream_output;
@@ -9383,10 +9295,10 @@ index 75ef600a4df..e6d257e7879 100644
              /* Remaining unprocessed input has been discarded, now queue markers for every output. */
              if (drain)
 
-From ca6f8b72091cfc20bef8f97fe8a6254555db1145 Mon Sep 17 00:00:00 2001
+From 11340234e3e7901ce890b5b5b18e1465f19c5e80 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:43:52 -0500
-Subject: [PATCH 32/40] mf: Miscelaneous fixes to topology resolution.
+Subject: [PATCH 32/42] mf: Miscelaneous fixes to topology resolution.
 
 ---
  dlls/mf/topology.c | 16 +++++++++-------
@@ -9427,33 +9339,371 @@ index 7a4c95bea07..ce706a9ff7f 100644
  
      heap_free(src_mediatypes);
 
-From 4655f7b264bf35c02281d4b952d1dbe1cedcfffa Mon Sep 17 00:00:00 2001
+From 9d47c4454b62c85c7f0e1a6b24ab88b986804597 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:45:52 -0500
-Subject: [PATCH 33/40] HACK: Set output type of found decoder, this should
- probably happen somewhere else.
+Subject: [PATCH 33/42] Rewrite branch resolver.
 
+and a HACK: Set output type of found decoder, this should probably happen somewhere else.
 ---
- dlls/mf/topology.c | 1 +
- 1 file changed, 1 insertion(+)
+ dlls/mf/topology.c | 279 +++++++++++++++++++++++++++------------------
+ 1 file changed, 171 insertions(+), 108 deletions(-)
 
 diff --git a/dlls/mf/topology.c b/dlls/mf/topology.c
-index ce706a9ff7f..65f562d7f1c 100644
+index ce706a9ff7f..337bf38081b 100644
 --- a/dlls/mf/topology.c
 +++ b/dlls/mf/topology.c
-@@ -2005,6 +2005,7 @@ static HRESULT topology_loader_resolve_branch(IMFTopologyNode *src, IMFMediaType
-                         IMFTopologyNode_SetObject(node_dec, (IUnknown *)decoder);
-                         IMFTopologyNode_ConnectOutput(src, 0, node_dec, 0);
-                         IMFTopologyNode_ConnectOutput(node_dec, 0, sink, 0);
-+                        IMFTransform_SetOutputType(decoder, 0, decoder_mtype, 0);
+@@ -1928,135 +1928,194 @@ static void topology_loader_add_branch(struct topology *topology, IMFTopologyNod
+     }
+ }
  
-                         IMFActivate_ShutdownObject(activates_decs[i]);
-                         return S_OK;
++struct available_output_type
++{
++    IMFMediaType *type;
++    IMFTransform *transform;
++};
++
++static HRESULT topology_loader_enumerate_output_types(GUID *category, IMFMediaType *input_type, HRESULT (*new_type)(struct available_output_type *, void *), void *context)
++{
++    MFT_REGISTER_TYPE_INFO mft_typeinfo;
++    GUID major_type, subtype;
++    IMFActivate **activates;
++    UINT32 num_activates;
++    HRESULT hr;
++
++    if (FAILED(hr = IMFMediaType_GetMajorType(input_type, &major_type)))
++        return hr;
++
++    if (FAILED(hr = IMFMediaType_GetGUID(input_type, &MF_MT_SUBTYPE, &subtype)))
++        return hr;
++
++    mft_typeinfo.guidMajorType = major_type;
++    mft_typeinfo.guidSubtype = subtype;
++
++    if (FAILED(hr = MFTEnumEx(*category, MFT_ENUM_FLAG_ALL, &mft_typeinfo, NULL, &activates, &num_activates)))
++        return hr;
++
++    hr = E_FAIL;
++
++    for (unsigned int i = 0; i < num_activates; i++)
++    {
++        IMFTransform *mft;
++
++        IMFActivate_ActivateObject(activates[i], &IID_IMFTransform, (void**) &mft);
++
++        if (SUCCEEDED(hr = IMFTransform_SetInputType(mft, 0, input_type, 0)))
++        {
++            struct available_output_type avail = {.transform = mft};
++            unsigned int output_count = 0;
++
++            while (SUCCEEDED(IMFTransform_GetOutputAvailableType(mft, 0, output_count++, &avail.type)))
++            {
++                if (SUCCEEDED(hr = new_type(&avail, context)))
++                {
++                    IMFActivate_ShutdownObject(activates[i]);
++                    return hr;
++                }
++            }
++        }
++
++        IMFActivate_ShutdownObject(activates[i]);
++    }
++
++    return hr;
++}
++
++struct connect_to_sink_context
++{
++    IMFTopologyNode *src, *sink;
++    IMFMediaTypeHandler *sink_mth;
++};
++
++HRESULT connect_to_sink(struct available_output_type *type, void *context)
++{
++    IMFTopologyNode *node;
++    struct connect_to_sink_context *ctx = context;
++
++    if (SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(ctx->sink_mth, type->type)))
++    {
++        MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
++        IMFTopologyNode_SetObject(node, (IUnknown *) type->transform);
++        IMFTopologyNode_ConnectOutput(ctx->src, 0, node, 0);
++        IMFTopologyNode_ConnectOutput(node, 0, ctx->sink, 0);
++
++        IMFTransform_SetOutputType(type->transform, 0, type->type, 0);
++
++        return S_OK;
++    }
++    return E_FAIL;
++}
++
++struct connect_to_converter_context
++{
++    struct connect_to_sink_context sink_ctx;
++    GUID *converter_category;
++};
++
++HRESULT connect_to_converter(struct available_output_type *type, void *context)
++{
++    struct connect_to_converter_context *ctx = context;
++    struct connect_to_sink_context sink_ctx;
++    IMFTopologyNode *node;
++
++    MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
++    IMFTopologyNode_SetObject(node, (IUnknown *) type->transform);
++
++    sink_ctx = ctx->sink_ctx;
++    sink_ctx.src = node;
++    if (SUCCEEDED(topology_loader_enumerate_output_types(ctx->converter_category, type->type, connect_to_sink, &sink_ctx)))
++    {
++        IMFTopologyNode_ConnectOutput(ctx->sink_ctx.src, 0, node, 0);
++
++        IMFTransform_SetOutputType(type->transform, 0, type->type, 0);
++
++        return S_OK;
++    }
++    IMFTopologyNode_Release(node);
++    return E_FAIL;
++}
++
+ static HRESULT topology_loader_resolve_branch(IMFTopologyNode *src, IMFMediaType *mediatype, IMFTopologyNode *sink, MF_CONNECT_METHOD method)
+ {
++    struct connect_to_converter_context convert_ctx;
++    struct connect_to_sink_context sink_ctx;
++    GUID major_type, decode_cat, convert_cat;
+     IMFStreamSink *streamsink;
+     IMFMediaTypeHandler *mth;
+     HRESULT hr;
+ 
++    TRACE("method %u\n", method);
++
+     IMFTopologyNode_GetObject(sink, (IUnknown **)&streamsink);
+     IMFStreamSink_GetMediaTypeHandler(streamsink, &mth);
+-    if (method == MF_CONNECT_DIRECT)
++
++    if (SUCCEEDED(hr = IMFMediaTypeHandler_SetCurrentMediaType(mth, mediatype)))
+     {
+-        if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(mth, mediatype)))
+-            return hr;
+-        hr = IMFTopologyNode_ConnectOutput(src, 0, sink, 0);
++        return IMFTopologyNode_ConnectOutput(src, 0, sink, 0);
++    }
++
++    if (FAILED(hr = IMFMediaType_GetMajorType(mediatype, &major_type)))
+         return hr;
++
++    if (IsEqualGUID(&major_type, &MFMediaType_Audio))
++    {
++        decode_cat = MFT_CATEGORY_AUDIO_DECODER;
++        convert_cat = MFT_CATEGORY_AUDIO_EFFECT;
+     }
+-    else
++    else if (IsEqualGUID(&major_type, &MFMediaType_Video))
+     {
+-        IMFTopologyNode *node_dec, *node_conv;
+-        GUID major_type, subtype, mft_category;
+-        MFT_REGISTER_TYPE_INFO mft_typeinfo;
+-        UINT32 flags = MFT_ENUM_FLAG_ALL;
+-        IMFActivate **activates_decs;
+-        UINT32 num_activates_decs;
+-        int i, j;
+-
+-        IMFMediaType_GetGUID(mediatype, &MF_MT_MAJOR_TYPE, &major_type);
+-        if (IsEqualGUID(&major_type, &MFMediaType_Audio))
+-            mft_category = MFT_CATEGORY_AUDIO_DECODER;
+-        else if (IsEqualGUID(&major_type, &MFMediaType_Video))
+-            mft_category = MFT_CATEGORY_VIDEO_DECODER;
+-        else
+-            return MF_E_INVALIDMEDIATYPE;
+-
+-        IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &subtype);
+-        mft_typeinfo.guidMajorType = major_type;
+-        mft_typeinfo.guidSubtype = subtype;
+-        MFTEnumEx(mft_category, flags, &mft_typeinfo, NULL, &activates_decs, &num_activates_decs);
+-
+-        /* for getting converters later on */
+-        if (IsEqualGUID(&major_type, &MFMediaType_Audio))
+-            mft_category = MFT_CATEGORY_AUDIO_EFFECT;
+-        else if (IsEqualGUID(&major_type, &MFMediaType_Video))
+-            mft_category = MFT_CATEGORY_VIDEO_EFFECT;
+-
+-        /*
+-         * Iterate over number of decoders.
+-         * Try to set input type on decoder with source's output media type.
+-         * If succeeds, iterate over decoder's output media types.
+-         * Try to set input type on sink with decoder's output media type.
+-         * If fails, iterate over number of converters.
+-         * Try to set input type on converter with decoder's output media type.
+-         * If succeeds, iterate over converters output media types.
+-         * Try to set input type on sink with converter's output media type.
+-         */
+-        for (i = 0; i < num_activates_decs; i++)
+-        {
+-            IMFTransform *decoder;
++        decode_cat = MFT_CATEGORY_VIDEO_DECODER;
++        convert_cat = MFT_CATEGORY_VIDEO_EFFECT;
++    }
++    else
++        return E_FAIL;
+ 
+-            IMFActivate_ActivateObject(activates_decs[i], &IID_IMFTransform, (void **)&decoder);
+-            if (SUCCEEDED(hr = IMFTransform_SetInputType(decoder, 0, mediatype, 0)))
+-            {
+-                UINT32 num_activates_convs;
+-                IMFActivate **activates_convs;
+-                IMFMediaType *decoder_mtype;
++    sink_ctx.src = src;
++    sink_ctx.sink = sink;
++    sink_ctx.sink_mth = mth;
+ 
+-                int count = 0;
+-                while (SUCCEEDED(IMFTransform_GetOutputAvailableType(decoder, 0, count++, &decoder_mtype)))
+-                {
+-                    IMFTransform *converter;
++    convert_ctx.sink_ctx = sink_ctx;
++    convert_ctx.converter_category = &convert_cat;
+ 
+-                    /* succeeded with source -> decoder -> sink */
+-                    if (SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(mth, decoder_mtype)))
+-                    {
+-                        MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node_dec);
+-                        IMFTopologyNode_SetObject(node_dec, (IUnknown *)decoder);
+-                        IMFTopologyNode_ConnectOutput(src, 0, node_dec, 0);
+-                        IMFTopologyNode_ConnectOutput(node_dec, 0, sink, 0);
++    hr = E_FAIL;
+ 
+-                        IMFActivate_ShutdownObject(activates_decs[i]);
+-                        return S_OK;
+-                    }
++    if (method & MF_CONNECT_ALLOW_CONVERTER)
++    {
++        if (SUCCEEDED(hr = topology_loader_enumerate_output_types(&convert_cat, mediatype, connect_to_sink, &sink_ctx)))
++            goto done;
++    }
+ 
+-                    IMFMediaType_GetGUID(decoder_mtype, &MF_MT_SUBTYPE, &subtype);
+-                    mft_typeinfo.guidSubtype = subtype;
+-                    MFTEnumEx(mft_category, flags, &mft_typeinfo, NULL, &activates_convs, &num_activates_convs);
+-                    for (j = 0; j < num_activates_convs; j++)
+-                    {
+-                        IMFMediaType *converter_mtype;
+-
+-                        IMFActivate_ActivateObject(activates_convs[j], &IID_IMFTransform, (void **)&converter);
+-                        if (SUCCEEDED(IMFTransform_SetInputType(converter, 0, decoder_mtype, 0)))
+-                        {
+-                            int count = 0;
+-                            while (SUCCEEDED(IMFTransform_GetOutputAvailableType(converter, 0, count++, &converter_mtype)))
+-                            {
+-                                /* succeeded with source -> decoder -> converter -> sink */
+-                                if (SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(mth, converter_mtype)))
+-                                {
+-                                    MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node_dec);
+-                                    IMFTopologyNode_SetObject(node_dec, (IUnknown *)decoder);
+-                                    MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node_conv);
+-                                    IMFTopologyNode_SetObject(node_conv, (IUnknown *)converter);
+-                                    IMFTopologyNode_ConnectOutput(src, 0, node_dec, 0);
+-                                    IMFTopologyNode_ConnectOutput(node_dec, 0, node_conv, 0);
+-                                    IMFTopologyNode_ConnectOutput(node_conv, 0, sink, 0);
+-
+-                                    IMFActivate_ShutdownObject(activates_convs[j]);
+-                                    IMFActivate_ShutdownObject(activates_decs[i]);
+-                                    return S_OK;
+-                                }
+-                            }
+-                        }
+-                        IMFActivate_ShutdownObject(activates_convs[j]);
+-                    }
+-                }
+-            }
+-            IMFActivate_ShutdownObject(activates_decs[i]);
++    /* 2 = decoder flag */
++    if (method & 2)
++    {
++        if (method & MF_CONNECT_ALLOW_CONVERTER)
++        {
++            if (SUCCEEDED(hr = topology_loader_enumerate_output_types(&decode_cat, mediatype, connect_to_converter, &convert_ctx)))
++                goto done;
++        }
++        else
++        {
++            if (SUCCEEDED(hr = topology_loader_enumerate_output_types(&decode_cat, mediatype, connect_to_sink, &sink_ctx)))
++                goto done;
+         }
+     }
+-    return E_FAIL;
++
++    done:
++    IMFMediaTypeHandler_Release(mth);
++    IMFStreamSink_Release(streamsink);
++    return hr;
+ }
+ 
+ static HRESULT topology_loader_resolve_partial_topology(struct topology_node *src, struct topology_node *sink, struct topology *topology, struct topology **full_topology)
+ {
++    UINT32 method, src_method, sink_method, enum_src_types, streamid;
+     IMFMediaTypeHandler *mth_src, *mth_sink;
+     IMFTopologyNode *clone_src, *clone_sink;
+-    UINT32 method, enum_src_types, streamid;
+     IMFMediaType **src_mediatypes;
+     IMFStreamDescriptor *desc;
++    IMFAttributes *attrs_sink;
+     IMFAttributes *attrs_src;
+     IMFStreamSink *strm_sink;
+     IMFMediaType *mtype_src;
+@@ -2064,6 +2123,7 @@ static HRESULT topology_loader_resolve_partial_topology(struct topology_node *sr
+     HRESULT hr;
+     int i;
+ 
++    attrs_sink = sink->attributes;
+     attrs_src = src->attributes;
+     if (FAILED(hr = IMFAttributes_GetUnknown(attrs_src, &MF_TOPONODE_STREAM_DESCRIPTOR, &IID_IMFStreamDescriptor, (void **)&desc)))
+         return hr;
+@@ -2117,12 +2177,15 @@ static HRESULT topology_loader_resolve_partial_topology(struct topology_node *sr
+     if (FAILED(IMFTopologyNode_GetUINT32(clone_sink, &MF_TOPONODE_STREAMID, &streamid)))
+         IMFTopologyNode_SetUINT32(clone_sink, &MF_TOPONODE_STREAMID, 0);
+ 
++    if (FAILED(IMFAttributes_GetUINT32(attrs_sink, &MF_TOPONODE_CONNECT_METHOD, &sink_method)))
++        sink_method = MF_CONNECT_ALLOW_DECODER;
++
+     if (enum_src_types)
+     {
+-        hr = IMFAttributes_GetUINT32(attrs_src, &MF_TOPONODE_CONNECT_METHOD, &method);
+-        if (hr == S_OK && method != MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES)
++        hr = IMFAttributes_GetUINT32(attrs_src, &MF_TOPONODE_CONNECT_METHOD, &src_method);
++        if (hr == S_OK && src_method != MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES)
+         {
+-            for (method = MF_CONNECT_DIRECT; method < MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES; method++)
++            for (method = MF_CONNECT_DIRECT; method <= sink_method; method++)
+                 for (i = 0; i < num_media_types; i++)
+                     if (SUCCEEDED(topology_loader_resolve_branch(clone_src, src_mediatypes[i], clone_sink, method)))
+                     {
+@@ -2134,7 +2197,7 @@ static HRESULT topology_loader_resolve_partial_topology(struct topology_node *sr
+         else
+         {
+             for (i = 0; i < num_media_types; i++)
+-                for (method = MF_CONNECT_DIRECT; method < MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES; method++)
++                for (method = MF_CONNECT_DIRECT; method <= sink_method; method++)
+                     if (SUCCEEDED(topology_loader_resolve_branch(clone_src, src_mediatypes[i], clone_sink, method)))
+                     {
+                         topology_loader_add_branch(*full_topology, clone_src, clone_sink);
+@@ -2145,10 +2208,10 @@ static HRESULT topology_loader_resolve_partial_topology(struct topology_node *sr
+     }
+     else
+     {
+-        for (method = MF_CONNECT_DIRECT; method < MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES; method++)
++        for (method = MF_CONNECT_DIRECT; method <= sink_method; method++)
+             if (SUCCEEDED(topology_loader_resolve_branch(clone_src, src_mediatypes[0], clone_sink, method)))
+             {
+-                TRACE("Successfully connected nodes with method %u\n", method);
++                TRACE("Successfully connected nodes with method %u\n", src_method);
+                 topology_loader_add_branch(*full_topology, clone_src, clone_sink);
+                 heap_free(src_mediatypes);
+                 return S_OK;
 
-From be91b7535313274644a88b5595468477cba5fce3 Mon Sep 17 00:00:00 2001
+From 034a0812020b55edb1e047a81c3d2656ff112ab9 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:46:25 -0500
-Subject: [PATCH 34/40] winegstreamer:  Implement
+Subject: [PATCH 34/42] winegstreamer:  Implement
  IMFMedisStream::GetMediaSource.
 
 ---
@@ -9461,10 +9711,10 @@ Subject: [PATCH 34/40] winegstreamer:  Implement
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/dlls/winegstreamer/media_source.c b/dlls/winegstreamer/media_source.c
-index ba27bf64a11..371a2973817 100644
+index 19b5b4346b2..5c01346987b 100644
 --- a/dlls/winegstreamer/media_source.c
 +++ b/dlls/winegstreamer/media_source.c
-@@ -852,12 +852,15 @@ static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMedi
+@@ -841,12 +841,15 @@ static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMedi
  {
      struct media_stream *stream = impl_from_IMFMediaStream(iface);
  
@@ -9483,21 +9733,20 @@ index ba27bf64a11..371a2973817 100644
  
  static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IMFStreamDescriptor **descriptor)
 
-From c40297ba9b685c2b9dbaaea4d49a402d040c96f8 Mon Sep 17 00:00:00 2001
+From fafea13268e6e420dbd324e7e1ca1a91d2364730 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 3 Apr 2020 11:12:33 -0500
-Subject: [PATCH 35/40] Expose PCM output type on AAC decoder.
+Subject: [PATCH 35/42] Expose PCM output type on AAC decoder.
 
 ---
  dlls/winegstreamer/mf_decode.c | 2 +-
- dlls/winegstreamer/mfplat.c    | 4 ++++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
-index 57a732c4f68..ba258848a5a 100644
+index 618467a1241..d44bdb5f4ba 100644
 --- a/dlls/winegstreamer/mf_decode.c
 +++ b/dlls/winegstreamer/mf_decode.c
-@@ -24,7 +24,7 @@ const GUID *h264_input_types[] = {&MFVideoFormat_H264};
+@@ -26,7 +26,7 @@ const GUID *h264_input_types[] = {&MFVideoFormat_H264};
  const GUID *h264_output_types[] = {&MFVideoFormat_I420, &MFVideoFormat_IYUV, &MFVideoFormat_NV12, &MFVideoFormat_YUY2, &MFVideoFormat_YV12};
  
  const GUID *aac_input_types[] = {&MFAudioFormat_AAC};
@@ -9506,36 +9755,21 @@ index 57a732c4f68..ba258848a5a 100644
  
  const GUID *wmv_input_types[] = {&MFVideoFormat_WMV3, &MFVideoFormat_WVC1};
  const GUID *wmv_output_types[] = {&MFVideoFormat_NV12, &MFVideoFormat_YV12, &MFVideoFormat_YUY2, &MFVideoFormat_UYVY, &MFVideoFormat_YVYU, &MFVideoFormat_NV11, &MFVideoFormat_RGB32, &MFVideoFormat_RGB24, &MFVideoFormat_RGB555, &MFVideoFormat_RGB8};
-diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 5ebee3e7b6e..de1071c5eba 100644
---- a/dlls/winegstreamer/mfplat.c
-+++ b/dlls/winegstreamer/mfplat.c
-@@ -525,6 +525,10 @@ const struct register_type_info aac_decoder_output_types[] =
-     {
-         &MFMediaType_Audio,
-         &MFAudioFormat_Float
-+    },
-+    {
-+        &MFMediaType_Audio,
-+        &MFAudioFormat_PCM
-     }
- };
- 
 
-From f375a6ff6e238b9c1904e0e079d69870a78f4afc Mon Sep 17 00:00:00 2001
+From 2a3ef3ad0e938fcab4a45ae7836118966456126a Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 3 Apr 2020 13:09:30 -0500
-Subject: [PATCH 36/40] Set BPS on AAC.
+Subject: [PATCH 36/42] Set BPS on AAC.
 
 ---
  dlls/winegstreamer/mfplat.c | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index de1071c5eba..ed3c4a1254b 100644
+index b9b23d55d91..b195bc02698 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -965,6 +965,7 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
+@@ -898,6 +898,7 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
                      struct aac_user_data *user_data = NULL;
  
                      IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_AAC);
@@ -9544,10 +9778,10 @@ index de1071c5eba..ed3c4a1254b 100644
                      codec_data = gst_structure_get_value(info, "codec_data");
                      if (codec_data)
 
-From ee4ed05afda95adf042e6ff821daa2594c4f92c5 Mon Sep 17 00:00:00 2001
+From 656258e196b5a42b7b9bc2f9b6d9488a8cc41370 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 9 Mar 2020 11:59:17 -0500
-Subject: [PATCH 37/40] Improve tests
+Subject: [PATCH 37/42] Improve tests
 
 ---
  dlls/mfplat/tests/mfplat.c         | 244 +++++++++++++++++++++++++++--
@@ -9559,10 +9793,10 @@ Subject: [PATCH 37/40] Improve tests
  create mode 100644 dlls/mfreadwrite/tests/test.mp4
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 51193641243..ed7fdbf1988 100644
+index f3d9bd8ab23..8f89c61c1b1 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -401,6 +401,9 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
+@@ -402,6 +402,9 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
      return TRUE;
  }
  
@@ -9572,7 +9806,7 @@ index 51193641243..ed7fdbf1988 100644
  static void test_source_resolver(void)
  {
      struct test_callback callback = { { &test_create_from_url_callback_vtbl } };
-@@ -424,6 +427,7 @@ static void test_source_resolver(void)
+@@ -425,6 +428,7 @@ static void test_source_resolver(void)
      PROPVARIANT var;
      HRESULT hr;
      GUID guid;
@@ -9580,7 +9814,7 @@ index 51193641243..ed7fdbf1988 100644
  
      if (!pMFCreateSourceResolver)
      {
-@@ -513,12 +517,27 @@ static void test_source_resolver(void)
+@@ -514,12 +518,27 @@ static void test_source_resolver(void)
      ok(hr == S_OK, "Failed to get current media type, hr %#x.\n", hr);
      hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
      ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
@@ -9610,7 +9844,7 @@ index 51193641243..ed7fdbf1988 100644
      var.vt = VT_EMPTY;
      hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
      ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
-@@ -529,9 +548,9 @@ static void test_source_resolver(void)
+@@ -530,9 +549,9 @@ static void test_source_resolver(void)
  
      get_event((IMFMediaEventGenerator *)mediasource, MESourceStarted, NULL);
  
@@ -9622,7 +9856,7 @@ index 51193641243..ed7fdbf1988 100644
  
      /* Request one beyond EOS, otherwise EndOfStream isn't queued. */
      for (i = 0; i <= sample_count; ++i)
-@@ -547,9 +566,14 @@ static void test_source_resolver(void)
+@@ -548,9 +567,14 @@ static void test_source_resolver(void)
      for (i = 0; i < sample_count; ++i)
      {
          static const LONGLONG MILLI_TO_100_NANO = 10000;
@@ -9638,7 +9872,7 @@ index 51193641243..ed7fdbf1988 100644
          BOOL ret;
  
          ret = get_event((IMFMediaEventGenerator *)video_stream, MEMediaSample, &var);
-@@ -560,19 +584,38 @@ static void test_source_resolver(void)
+@@ -561,19 +585,38 @@ static void test_source_resolver(void)
          ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MEMediaSample event.\n", var.vt);
          sample = (IMFSample *)var.punkVal;
  
@@ -9686,7 +9920,7 @@ index 51193641243..ed7fdbf1988 100644
      }
  
      if (i == sample_count)
-@@ -656,6 +699,178 @@ static void test_source_resolver(void)
+@@ -661,6 +704,178 @@ static void test_source_resolver(void)
      CloseHandle(callback.event);
  }
  
@@ -9865,7 +10099,7 @@ index 51193641243..ed7fdbf1988 100644
  static void init_functions(void)
  {
      HMODULE mod = GetModuleHandleA("mfplat.dll");
-@@ -5258,6 +5473,7 @@ START_TEST(mfplat)
+@@ -5263,6 +5478,7 @@ START_TEST(mfplat)
      test_MFCreateMFByteStreamOnStream();
      test_system_memory_buffer();
      test_source_resolver();
@@ -10131,10 +10365,10 @@ index f54212a8c8f..5edf5254906 100644
 -test.wav RCDATA test.wav
 +/* @makedep: test.mp4 */
 +test.mp4 RCDATA test.mp4
-From 289da26167ec4d36ea2b5297c63ebe4848c04a3b Mon Sep 17 00:00:00 2001
+From 07f85ce831a6a1a2ec7fc561b62256634842c94c Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 13:58:36 -0500
-Subject: [PATCH 38/40] Revert "Improve tests"
+Subject: [PATCH 38/42] Revert "Improve tests"
 
 This reverts commit 603b1717a2b511a66d3be99ab5761d49cd5ef34d.
 ---
@@ -10147,10 +10381,10 @@ This reverts commit 603b1717a2b511a66d3be99ab5761d49cd5ef34d.
  delete mode 100644 dlls/mfreadwrite/tests/test.mp4
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index ed7fdbf1988..51193641243 100644
+index 8f89c61c1b1..f3d9bd8ab23 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
-@@ -401,9 +401,6 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
+@@ -402,9 +402,6 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
      return TRUE;
  }
  
@@ -10160,7 +10394,7 @@ index ed7fdbf1988..51193641243 100644
  static void test_source_resolver(void)
  {
      struct test_callback callback = { { &test_create_from_url_callback_vtbl } };
-@@ -427,7 +424,6 @@ static void test_source_resolver(void)
+@@ -428,7 +425,6 @@ static void test_source_resolver(void)
      PROPVARIANT var;
      HRESULT hr;
      GUID guid;
@@ -10168,7 +10402,7 @@ index ed7fdbf1988..51193641243 100644
  
      if (!pMFCreateSourceResolver)
      {
-@@ -517,27 +513,12 @@ static void test_source_resolver(void)
+@@ -518,27 +514,12 @@ static void test_source_resolver(void)
      ok(hr == S_OK, "Failed to get current media type, hr %#x.\n", hr);
      hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
      ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
@@ -10198,7 +10432,7 @@ index ed7fdbf1988..51193641243 100644
      var.vt = VT_EMPTY;
      hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
      ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
-@@ -548,9 +529,9 @@ static void test_source_resolver(void)
+@@ -549,9 +530,9 @@ static void test_source_resolver(void)
  
      get_event((IMFMediaEventGenerator *)mediasource, MESourceStarted, NULL);
  
@@ -10210,7 +10444,7 @@ index ed7fdbf1988..51193641243 100644
  
      /* Request one beyond EOS, otherwise EndOfStream isn't queued. */
      for (i = 0; i <= sample_count; ++i)
-@@ -566,14 +547,9 @@ static void test_source_resolver(void)
+@@ -567,14 +548,9 @@ static void test_source_resolver(void)
      for (i = 0; i < sample_count; ++i)
      {
          static const LONGLONG MILLI_TO_100_NANO = 10000;
@@ -10226,7 +10460,7 @@ index ed7fdbf1988..51193641243 100644
          BOOL ret;
  
          ret = get_event((IMFMediaEventGenerator *)video_stream, MEMediaSample, &var);
-@@ -584,38 +560,19 @@ static void test_source_resolver(void)
+@@ -585,38 +561,19 @@ static void test_source_resolver(void)
          ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MEMediaSample event.\n", var.vt);
          sample = (IMFSample *)var.punkVal;
  
@@ -10274,7 +10508,7 @@ index ed7fdbf1988..51193641243 100644
      }
  
      if (i == sample_count)
-@@ -699,178 +656,6 @@ static void test_source_resolver(void)
+@@ -704,178 +661,6 @@ static void test_source_resolver(void)
      CloseHandle(callback.event);
  }
  
@@ -10453,7 +10687,7 @@ index ed7fdbf1988..51193641243 100644
  static void init_functions(void)
  {
      HMODULE mod = GetModuleHandleA("mfplat.dll");
-@@ -5473,7 +5258,6 @@ START_TEST(mfplat)
+@@ -5478,7 +5263,6 @@ START_TEST(mfplat)
      test_MFCreateMFByteStreamOnStream();
      test_system_memory_buffer();
      test_source_resolver();
@@ -10719,50 +10953,886 @@ index 5edf5254906..f54212a8c8f 100644
 -test.mp4 RCDATA test.mp4
 +/* @makedep: test.wav */
 +test.wav RCDATA test.wav
-From e8716c269c45f086284c623a2fec3d031b0000da Mon Sep 17 00:00:00 2001
+From 365f2ea39940530dad9d0cd0ad024097bcbb15c2 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
-Date: Wed, 22 Apr 2020 09:21:58 -0500
-Subject: [PATCH 40/40] Use dedicated queue for drain message.
+Date: Fri, 1 May 2020 11:46:26 -0500
+Subject: [PATCH 40/42] mfplat: Add I420 format information.
 
+Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
- dlls/winegstreamer/mf_decode.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ dlls/mfplat/mediatype.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
-index ba258848a5a..eef664efa18 100644
---- a/dlls/winegstreamer/mf_decode.c
-+++ b/dlls/winegstreamer/mf_decode.c
-@@ -78,6 +78,7 @@ struct mf_decoder
-     BOOL flushing, draining;
-     CRITICAL_SECTION state_cs;
-     CONDITION_VARIABLE state_cv;
-+    DWORD message_queue;
- };
+diff --git a/dlls/mfplat/mediatype.c b/dlls/mfplat/mediatype.c
+index 620e144d348..df1481b16ea 100644
+--- a/dlls/mfplat/mediatype.c
++++ b/dlls/mfplat/mediatype.c
+@@ -1790,6 +1790,7 @@ static const struct uncompressed_video_format video_formats[] =
+     { &MFVideoFormat_A2R10G10B10,   4, 3, 1, 0 },
+     { &MFVideoFormat_RGB8,          1, 3, 1, 0 },
+     { &MFVideoFormat_L8,            1, 3, 1, 0 },
++    { &MFVideoFormat_I420,          1, 0, 0, 1 },
+     { &MFVideoFormat_AYUV,          4, 3, 0, 1 },
+     { &MFVideoFormat_IMC1,          2, 3, 0, 1 },
+     { &MFVideoFormat_IMC2,          1, 0, 0, 1 },
+
+From 2c56e6775363a5318ef41e454153d1d4acbfdcb9 Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Fri, 1 May 2020 13:20:49 -0500
+Subject: [PATCH 41/42] winegstreamer: Implement Color Converter MFT.
+
+Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
+---
+ dlls/winegstreamer/Makefile.in               |   1 +
+ dlls/winegstreamer/colorconvert.c            | 704 +++++++++++++++++++
+ dlls/winegstreamer/gst_private.h             |   2 +
+ dlls/winegstreamer/mfplat.c                  |  35 +
+ dlls/winegstreamer/winegstreamer_classes.idl |   8 +-
+ 5 files changed, 749 insertions(+), 1 deletion(-)
+ create mode 100644 dlls/winegstreamer/colorconvert.c
+
+diff --git a/dlls/winegstreamer/Makefile.in b/dlls/winegstreamer/Makefile.in
+index e2af4085827..a266b0a95e4 100644
+--- a/dlls/winegstreamer/Makefile.in
++++ b/dlls/winegstreamer/Makefile.in
+@@ -6,6 +6,7 @@ EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
+ PARENTSRC = ../strmbase ../mf
  
- static struct mf_decoder *impl_mf_decoder_from_IMFTransform(IMFTransform *iface)
-@@ -974,7 +975,7 @@ static HRESULT WINAPI mf_decoder_ProcessMessage(IMFTransform *iface, MFT_MESSAGE
-             IMFAttributes_SetUINT32(async_param, &WINE_MFT_MESSAGE_TYPE, message);
- 
-             EnterCriticalSection(&This->state_cs);
--            MFPutWorkItem(MF_MULTITHREADED_WORKQUEUE, &This->process_message_callback, (IUnknown *)async_param);
-+            MFPutWorkItem(This->message_queue, &This->process_message_callback, (IUnknown *)async_param);
-             while (!This->draining)
-                 SleepConditionVariableCS(&This->state_cv, &This->state_cs, INFINITE);
-             LeaveCriticalSection(&This->state_cs);
-@@ -1201,6 +1202,8 @@ static void mf_decoder_destroy(struct mf_decoder *This)
- 
-     DeleteCriticalSection(&This->state_cs);
- 
-+    MFUnlockWorkQueue(This->message_queue);
+ C_SRCS = \
++	colorconvert.c \
+ 	filter.c \
+ 	gst_cbs.c \
+ 	gstdemux.c \
+diff --git a/dlls/winegstreamer/colorconvert.c b/dlls/winegstreamer/colorconvert.c
+new file mode 100644
+index 00000000000..f149ab553f9
+--- /dev/null
++++ b/dlls/winegstreamer/colorconvert.c
+@@ -0,0 +1,704 @@
++#include "config.h"
++#include <gst/gst.h>
 +
-     heap_free(This);
++#include "gst_private.h"
++#include "gst_cbs.h"
++
++#include "mfapi.h"
++#include "mferror.h"
++#include "mfidl.h"
++
++#include "wine/debug.h"
++#include "wine/heap.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
++
++const GUID *raw_types[] = {
++    &MFVideoFormat_RGB24,
++    &MFVideoFormat_RGB32,
++    &MFVideoFormat_RGB555,
++    &MFVideoFormat_RGB8,
++    &MFVideoFormat_AYUV,
++    &MFVideoFormat_I420,
++    &MFVideoFormat_IYUV,
++    &MFVideoFormat_NV11,
++    &MFVideoFormat_NV12,
++    &MFVideoFormat_UYVY,
++    &MFVideoFormat_v216,
++    &MFVideoFormat_v410,
++    &MFVideoFormat_YUY2,
++    &MFVideoFormat_YVYU,
++    &MFVideoFormat_YVYU,
++};
++
++struct color_converter
++{
++    IMFTransform IMFTransform_iface;
++    LONG refcount;
++    IMFAttributes *attributes;
++    IMFAttributes *output_attributes;
++    IMFMediaType *input_type;
++    IMFMediaType *output_type;
++    BOOL valid_state, inflight;
++    GstElement *container, *appsrc, *videoconvert, *appsink;
++    GstBus *bus;
++    CRITICAL_SECTION cs;
++};
++
++static struct color_converter *impl_color_converter_from_IMFTransform(IMFTransform *iface)
++{
++    return CONTAINING_RECORD(iface, struct color_converter, IMFTransform_iface);
++}
++
++static HRESULT WINAPI color_converter_QueryInterface(IMFTransform *iface, REFIID riid, void **obj)
++{
++    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
++
++    if (IsEqualIID(riid, &IID_IMFTransform) ||
++            IsEqualIID(riid, &IID_IUnknown))
++    {
++        *obj = iface;
++        IMFTransform_AddRef(iface);
++        return S_OK;
++    }
++
++    WARN("Unsupported %s.\n", debugstr_guid(riid));
++    *obj = NULL;
++    return E_NOINTERFACE;
++}
++
++static ULONG WINAPI color_converter_AddRef(IMFTransform *iface)
++{
++    struct color_converter *transform = impl_color_converter_from_IMFTransform(iface);
++    ULONG refcount = InterlockedIncrement(&transform->refcount);
++
++    TRACE("%p, refcount %u.\n", iface, refcount);
++
++    return refcount;
++}
++
++static ULONG WINAPI color_converter_Release(IMFTransform *iface)
++{
++    struct color_converter *transform = impl_color_converter_from_IMFTransform(iface);
++    ULONG refcount = InterlockedDecrement(&transform->refcount);
++
++    TRACE("%p, refcount %u.\n", iface, refcount);
++
++    if (!refcount)
++    {
++        if (transform->attributes)
++            IMFAttributes_Release(transform->attributes);
++        if (transform->output_attributes)
++            IMFAttributes_Release(transform->output_attributes);
++        heap_free(transform);
++    }
++
++    return refcount;
++}
++
++static HRESULT WINAPI color_converter_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum, DWORD *input_maximum,
++        DWORD *output_minimum, DWORD *output_maximum)
++{
++    TRACE("%p, %p, %p, %p, %p.\n", iface, input_minimum, input_maximum, output_minimum, output_maximum);
++
++    *input_minimum = *input_maximum = *output_minimum = *output_maximum = 1;
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
++{
++    TRACE("%p, %p, %p.\n", iface, inputs, outputs);
++
++    *inputs = *outputs = 1;
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
++        DWORD output_size, DWORD *outputs)
++{
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++
++    TRACE("%p %u %p\n", converter, id, info);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    /* If we create a wrapped GstBuffer, remove MFT_INPUT_STREAM_DOES_NOT_ADDREF */
++    info->dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_DOES_NOT_ADDREF;
++    info->cbMaxLookahead = 0;
++    info->cbAlignment = 0;
++    /* this is incorrect */
++    info->hnsMaxLatency = 0;
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++
++    MFT_OUTPUT_STREAM_INFO stream_info = {};
++
++    TRACE("%p %u %p\n", converter, id, info);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    stream_info.dwFlags = MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
++    stream_info.cbSize = 0;
++    stream_info.cbAlignment = 0;
++
++    *info = stream_info;
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
++{
++    struct color_converter *transform = impl_color_converter_from_IMFTransform(iface);
++
++    TRACE("%p, %p.\n", iface, attributes);
++
++    *attributes = transform->attributes;
++    IMFAttributes_AddRef(*attributes);
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_GetInputStreamAttributes(IMFTransform *iface, DWORD id,
++        IMFAttributes **attributes)
++{
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetOutputStreamAttributes(IMFTransform *iface, DWORD id,
++        IMFAttributes **attributes)
++{
++    struct color_converter *transform = impl_color_converter_from_IMFTransform(iface);
++
++    TRACE("%p, %u, %p.\n", iface, id, attributes);
++
++    *attributes = transform->output_attributes;
++    IMFAttributes_AddRef(*attributes);
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_DeleteInputStream(IMFTransform *iface, DWORD id)
++{
++    TRACE("%p, %u.\n", iface, id);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
++{
++    TRACE("%p, %u, %p.\n", iface, streams, ids);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
++        IMFMediaType **type)
++{
++    IMFMediaType *ret;
++    HRESULT hr;
++
++    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    if (index >= ARRAY_SIZE(raw_types))
++        return MF_E_NO_MORE_TYPES;
++
++    if (FAILED(hr = MFCreateMediaType(&ret)))
++        return hr;
++
++    if (FAILED(hr = IMFMediaType_SetGUID(ret, &MF_MT_MAJOR_TYPE, &MFMediaType_Video)))
++    {
++        IMFMediaType_Release(ret);
++        return hr;
++    }
++
++    if (FAILED(hr = IMFMediaType_SetGUID(ret, &MF_MT_SUBTYPE, raw_types[index])))
++    {
++        IMFMediaType_Release(ret);
++        return hr;
++    }
++
++    *type = ret;
++
++    return S_OK;
++}
++
++static void copy_attr(IMFMediaType *target, IMFMediaType *source, const GUID *key)
++{
++    PROPVARIANT val;
++
++    if (SUCCEEDED(IMFAttributes_GetItem((IMFAttributes *)source, key, &val)))
++    {
++        IMFAttributes_SetItem((IMFAttributes* )target, key, &val);
++    }
++}
++
++static HRESULT WINAPI color_converter_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
++        IMFMediaType **type)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++    IMFMediaType *output_type;
++    HRESULT hr;
++
++    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    if (!(converter->input_type))
++        return MF_E_TRANSFORM_TYPE_NOT_SET;
++
++    if (index >= ARRAY_SIZE(raw_types))
++        return MF_E_NO_MORE_TYPES;
++
++    if (FAILED(hr = MFCreateMediaType(&output_type)))
++        return hr;
++
++    copy_attr(output_type, converter->input_type, &MF_MT_MAJOR_TYPE);
++    copy_attr(output_type, converter->input_type, &MF_MT_FRAME_SIZE);
++    copy_attr(output_type, converter->input_type, &MF_MT_FRAME_RATE);
++
++    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_SUBTYPE, raw_types[index])))
++    {
++        IMFMediaType_Release(output_type);
++        return hr;
++    }
++
++    *type = output_type;
++
++    return S_OK;
++}
++
++static void color_converter_update_pipeline_state(struct color_converter *converter)
++{
++    converter->valid_state = converter->input_type && converter->output_type;
++
++    if (!converter->valid_state)
++    {
++        gst_element_set_state(converter->container, GST_STATE_READY);
++        return;
++    }
++
++    g_object_set(converter->appsrc, "caps", caps_from_mf_media_type(converter->input_type), NULL);
++    g_object_set(converter->appsink, "caps", caps_from_mf_media_type(converter->output_type), NULL);
++
++    gst_element_set_state(converter->container, GST_STATE_PLAYING);
++    return;
++}
++
++static HRESULT WINAPI color_converter_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
++{
++    HRESULT hr;
++
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++
++    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    if (type)
++    {
++        GUID major_type, subtype;
++        BOOL found = FALSE;
++
++        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
++            return MF_E_INVALIDTYPE;
++        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
++            return MF_E_INVALIDTYPE;
++
++        if (!(IsEqualGUID(&major_type, &MFMediaType_Video)))
++            return MF_E_INVALIDTYPE;
++
++        for (unsigned int i = 0; i < ARRAY_SIZE(raw_types); i++)
++        {
++            UINT64 unused;
++
++            if (IsEqualGUID(&subtype, raw_types[i]))
++            {
++                if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
++                    return MF_E_INVALIDTYPE;
++                found = TRUE;
++                break;
++            }
++        }
++
++        if (!found)
++            return MF_E_INVALIDTYPE;
++    }
++
++    if (flags & MFT_SET_TYPE_TEST_ONLY)
++    {
++        return S_OK;
++    }
++
++    hr = S_OK;
++
++    EnterCriticalSection(&converter->cs);
++
++    if (type)
++    {
++        if (!converter->input_type)
++            if (FAILED(hr = MFCreateMediaType(&converter->input_type)))
++                goto done;
++
++        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *) converter->input_type)))
++            goto done;
++    }
++    else if (converter->input_type)
++    {
++        IMFMediaType_Release(converter->input_type);
++        converter->input_type = NULL;
++    }
++
++    done:
++    if (hr == S_OK)
++        color_converter_update_pipeline_state(converter);
++    LeaveCriticalSection(&converter->cs);
++
++    return S_OK;
++}
++
++static HRESULT WINAPI color_converter_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++    HRESULT hr;
++    GUID major_type, subtype;
++    UINT64 unused;
++
++    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    if (type)
++    {
++        /* validate the type */
++
++        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
++            return MF_E_INVALIDTYPE;
++        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
++            return MF_E_INVALIDTYPE;
++        if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &unused)))
++            return MF_E_INVALIDTYPE;
++
++        if (!(IsEqualGUID(&major_type, &MFMediaType_Video)))
++            return MF_E_INVALIDTYPE;
++
++        for (unsigned int i = 0; i < ARRAY_SIZE(raw_types); i++)
++        {
++            if (IsEqualGUID(&subtype, raw_types[i]))
++                break;
++            if (i == ARRAY_SIZE(raw_types))
++                return MF_E_INVALIDTYPE;
++        }
++    }
++
++    if (flags & MFT_SET_TYPE_TEST_ONLY)
++    {
++        return S_OK;
++    }
++
++    EnterCriticalSection(&converter->cs);
++
++    hr = S_OK;
++
++    if (type)
++    {
++        if (!converter->output_type)
++            if (FAILED(hr = MFCreateMediaType(&converter->output_type)))
++                goto done;
++
++        if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *) converter->output_type)))
++            goto done;
++    }
++    else if (converter->output_type)
++    {
++        IMFMediaType_Release(converter->output_type);
++        converter->output_type = NULL;
++    }
++
++    done:
++    if (hr == S_OK)
++        color_converter_update_pipeline_state(converter);
++    LeaveCriticalSection(&converter->cs);
++
++    return hr;
++}
++
++static HRESULT WINAPI color_converter_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
++{
++    FIXME("%p, %u, %p.\n", iface, id, type);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
++{
++    FIXME("%p, %u, %p.\n", iface, id, type);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
++{
++    FIXME("%p, %u, %p.\n", iface, id, flags);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_GetOutputStatus(IMFTransform *iface, DWORD *flags)
++{
++    FIXME("%p, %p.\n", iface, flags);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
++{
++    FIXME("%p, %s, %s.\n", iface, wine_dbgstr_longlong(lower), wine_dbgstr_longlong(upper));
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
++{
++    TRACE("%p, %u, %p.\n", iface, id, event);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
++{
++    FIXME("%p, %u.\n", iface, message);
++
++    return E_NOTIMPL;
++}
++
++static HRESULT WINAPI color_converter_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++    GstBuffer *gst_buffer;
++    HRESULT hr = S_OK;
++    int ret;
++
++    TRACE("%p, %u, %p, %#x.\n", iface, id, sample, flags);
++
++    if (flags)
++        WARN("Unsupported flags %#x\n", flags);
++
++    if (id != 0)
++        return MF_E_INVALIDSTREAMNUMBER;
++
++    EnterCriticalSection(&converter->cs);
++
++    if (!converter->valid_state)
++    {
++        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
++        goto done;
++    }
++
++    if (converter->inflight)
++    {
++        hr = MF_E_NOTACCEPTING;
++        goto done;
++    }
++
++    if (!(gst_buffer = gst_buffer_from_mf_sample(sample)))
++    {
++        hr = E_FAIL;
++        goto done;
++    }
++
++    g_signal_emit_by_name(converter->appsrc, "push-buffer", gst_buffer, &ret);
++    gst_buffer_unref(gst_buffer);
++    if (ret != GST_FLOW_OK)
++    {
++        ERR("Couldn't push buffer ret = %d\n", ret);
++        hr = E_FAIL;
++        goto done;
++    }
++
++    converter->inflight = TRUE;
++
++    done:
++    LeaveCriticalSection(&converter->cs);
++
++    return hr;
++}
++
++static HRESULT WINAPI color_converter_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
++        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
++{
++    struct color_converter *converter = impl_color_converter_from_IMFTransform(iface);
++    MFT_OUTPUT_DATA_BUFFER *relevant_buffer = NULL;
++    GstSample *sample;
++    HRESULT hr = S_OK;
++
++    TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, samples, status);
++
++    if (flags)
++        WARN("Unsupported flags %#x\n", flags);
++
++    for (unsigned int i = 0; i < count; i++)
++    {
++        MFT_OUTPUT_DATA_BUFFER *out_buffer = &samples[i];
++
++        if (out_buffer->dwStreamID != 0)
++            return MF_E_INVALIDSTREAMNUMBER;
++
++        if (relevant_buffer)
++            return MF_E_INVALIDSTREAMNUMBER;
++
++        relevant_buffer = out_buffer;
++    }
++
++    if (!relevant_buffer)
++        return S_OK;
++
++    EnterCriticalSection(&converter->cs);
++
++    if (!converter->valid_state)
++    {
++        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
++        goto done;
++    }
++
++    if (!converter->inflight)
++    {
++        hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
++        goto done;
++    }
++
++    g_signal_emit_by_name(converter->appsink, "pull-sample", &sample);
++
++    converter->inflight =  FALSE;
++
++    relevant_buffer->pSample = mf_sample_from_gst_buffer(gst_sample_get_buffer(sample));
++    gst_sample_unref(sample);
++    relevant_buffer->dwStatus = S_OK;
++    relevant_buffer->pEvents = NULL;
++    *status = 0;
++
++    done:
++    LeaveCriticalSection(&converter->cs);
++
++    return hr;
++}
++
++static const IMFTransformVtbl color_converter_vtbl =
++{
++    color_converter_QueryInterface,
++    color_converter_AddRef,
++    color_converter_Release,
++    color_converter_GetStreamLimits,
++    color_converter_GetStreamCount,
++    color_converter_GetStreamIDs,
++    color_converter_GetInputStreamInfo,
++    color_converter_GetOutputStreamInfo,
++    color_converter_GetAttributes,
++    color_converter_GetInputStreamAttributes,
++    color_converter_GetOutputStreamAttributes,
++    color_converter_DeleteInputStream,
++    color_converter_AddInputStreams,
++    color_converter_GetInputAvailableType,
++    color_converter_GetOutputAvailableType,
++    color_converter_SetInputType,
++    color_converter_SetOutputType,
++    color_converter_GetInputCurrentType,
++    color_converter_GetOutputCurrentType,
++    color_converter_GetInputStatus,
++    color_converter_GetOutputStatus,
++    color_converter_SetOutputBounds,
++    color_converter_ProcessEvent,
++    color_converter_ProcessMessage,
++    color_converter_ProcessInput,
++    color_converter_ProcessOutput,
++};
++
++HRESULT color_converter_create(REFIID riid, void **ret)
++{
++    struct color_converter *object;
++    HRESULT hr;
++
++    TRACE("%s %p\n", debugstr_guid(riid), ret);
++
++    if (!(object = heap_alloc_zero(sizeof(*object))))
++        return E_OUTOFMEMORY;
++
++    object->IMFTransform_iface.lpVtbl = &color_converter_vtbl;
++    object->refcount = 1;
++
++    InitializeCriticalSection(&object->cs);
++
++    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
++        goto failed;
++
++    if (FAILED(hr = MFCreateAttributes(&object->output_attributes, 0)))
++        goto failed;
++
++    object->container = gst_bin_new(NULL);
++    object->bus = gst_bus_new();
++    gst_element_set_bus(object->container, object->bus);
++
++    if (!(object->appsrc = gst_element_factory_make("appsrc", NULL)))
++    {
++        ERR("Failed to create appsrc");
++        hr = E_FAIL;
++        goto failed;
++    }
++    gst_bin_add(GST_BIN(object->container), object->appsrc);
++
++    if (!(object->videoconvert = gst_element_factory_make("videoconvert", NULL)))
++    {
++        ERR("Failed to create converter\n");
++        hr = E_FAIL;
++        goto failed;
++    }
++    gst_bin_add(GST_BIN(object->container), object->videoconvert);
++
++    if (!(object->appsink = gst_element_factory_make("appsink", NULL)))
++    {
++        ERR("Failed to create appsink\n");
++        hr = E_FAIL;
++        goto failed;
++    }
++    gst_bin_add(GST_BIN(object->container), object->appsink);
++
++    if (!(gst_element_link(object->appsrc, object->videoconvert)))
++    {
++        ERR("Failed to link appsrc to videoconvert\n");
++        hr = E_FAIL;
++        goto failed;
++    }
++
++    if (!(gst_element_link(object->videoconvert, object->appsink)))
++    {
++        ERR("Failed to link videoconvert to appsink\n");
++        hr = E_FAIL;
++        goto failed;
++    }
++
++    *ret = &object->IMFTransform_iface;
++    return S_OK;
++
++failed:
++
++    IMFTransform_Release(&object->IMFTransform_iface);
++    return hr;
++}
+\ No newline at end of file
+diff --git a/dlls/winegstreamer/gst_private.h b/dlls/winegstreamer/gst_private.h
+index 0b61bc9e3ce..b855d650dc3 100644
+--- a/dlls/winegstreamer/gst_private.h
++++ b/dlls/winegstreamer/gst_private.h
+@@ -76,4 +76,6 @@ enum source_type
+ };
+ HRESULT container_stream_handler_construct(REFIID riid, void **obj, enum source_type);
+ 
++HRESULT color_converter_create(REFIID riid, void **ret);
++
+ #endif /* __GST_PRIVATE_INCLUDED__ */
+diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
+index b195bc02698..654e0351b26 100644
+--- a/dlls/winegstreamer/mfplat.c
++++ b/dlls/winegstreamer/mfplat.c
+@@ -429,6 +429,8 @@ static HRESULT asf_stream_handler_create(REFIID riid, void **ret)
+     return container_stream_handler_construct(riid, ret, SOURCE_TYPE_ASF);
  }
  
-@@ -1216,6 +1219,7 @@ HRESULT generic_decoder_construct(REFIID riid, void **obj, enum decoder_type typ
-         return E_OUTOFMEMORY;
-     This->type = type;
-     This->video = decoder_descs[type].major_type == &MFMediaType_Video;
-+    MFAllocateWorkQueue(&This->message_queue);
++static GUID CLSID_CColorConvertDMO = {0x98230571,0x0087,0x4204,{0xb0,0x20,0x32,0x82,0x53,0x8e,0x57,0xd3}};
++
+ static const struct class_object
+ {
+     const GUID *clsid;
+@@ -442,6 +444,7 @@ class_objects[] =
+     { &CLSID_CWMVDecMediaObject, &wmv_decoder_create },
+     { &CLSID_MPEG4ByteStreamHandler, &mp4_stream_handler_create },
+     { &CLSID_ASFByteStreamHandler, &asf_stream_handler_create },
++    { &CLSID_CColorConvertDMO, &color_converter_create },
+ };
  
-     InitializeCriticalSection(&This->state_cs);
-     InitializeConditionVariable(&This->state_cv);
+ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
+@@ -473,6 +476,26 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
+     return CLASS_E_CLASSNOTAVAILABLE;
+ }
+ 
++static WCHAR color_converterW[] = {'C','o','l','o','r',' ','C','o','n','v','e','r','t','e','r',0};
++
++const GUID *color_converter_supported_types[] =
++{
++    &MFVideoFormat_RGB24,
++    &MFVideoFormat_RGB32,
++    &MFVideoFormat_RGB555,
++    &MFVideoFormat_RGB8,
++    &MFVideoFormat_AYUV,
++    &MFVideoFormat_I420,
++    &MFVideoFormat_IYUV,
++    &MFVideoFormat_NV11,
++    &MFVideoFormat_NV12,
++    &MFVideoFormat_UYVY,
++    &MFVideoFormat_v216,
++    &MFVideoFormat_v410,
++    &MFVideoFormat_YUY2,
++    &MFVideoFormat_YVYU,
++    &MFVideoFormat_YVYU,
++};
+ 
+ static WCHAR h264decoderW[] = {'H','.','2','6','4',' ','D','e','c','o','d','e','r',0};
+ const GUID *h264_decoder_input_types[] =
+@@ -538,6 +561,18 @@ static const struct mft
+ }
+ mfts[] =
+ {
++    {
++        &CLSID_CColorConvertDMO,
++        &MFT_CATEGORY_VIDEO_EFFECT,
++        color_converterW,
++        MFT_ENUM_FLAG_SYNCMFT,
++        &MFMediaType_Video,
++        ARRAY_SIZE(color_converter_supported_types),
++        color_converter_supported_types,
++        ARRAY_SIZE(color_converter_supported_types),
++        color_converter_supported_types,
++        NULL
++    },
+     {
+         &CLSID_CMSH264DecoderMFT,
+         &MFT_CATEGORY_VIDEO_DECODER,
+diff --git a/dlls/winegstreamer/winegstreamer_classes.idl b/dlls/winegstreamer/winegstreamer_classes.idl
+index 376e08c418b..d933d40cfd3 100644
+--- a/dlls/winegstreamer/winegstreamer_classes.idl
++++ b/dlls/winegstreamer/winegstreamer_classes.idl
+@@ -84,4 +84,10 @@ coclass ASFByteStreamHandler {}
+     threading(both),
+     uuid(82d353df-90bd-4382-8bc2-3f6192b76e34)
+ ]
+-coclass CLSID_CWMVDecMediaObject {}
+\ No newline at end of file
++coclass CLSID_CWMVDecMediaObject {}
++
++[
++    threading(both),
++    uuid(98230571-0087-4204-b020-3282538e57d3)
++]
++coclass CColorConvertDMO { }
+\ No newline at end of file
+
+From 3c71ca3b1cd6298ab85f54c2b18897c5b0bc03fa Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Fri, 1 May 2020 22:36:02 -0500
+Subject: [PATCH 42/42] HACK: Set BPS to 16 for output template.
+
+---
+ dlls/winegstreamer/mf_decode.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
+index d44bdb5f4ba..5de1b60d2a2 100644
+--- a/dlls/winegstreamer/mf_decode.c
++++ b/dlls/winegstreamer/mf_decode.c
+@@ -321,6 +321,11 @@ static HRESULT WINAPI mf_decoder_GetOutputAvailableType(IMFTransform *iface, DWO
+         return hr;
+     }
+ 
++    if (IsEqualGUID(decoder_descs[decoder->type].output_types[index], &MFAudioFormat_PCM))
++    {
++        IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
++    }
++
+     *type = output_type;
+ 
+     return S_OK;
