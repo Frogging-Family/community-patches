@@ -1,26 +1,3 @@
-From 5337a4e78f62a9a484d2332cf95474fcc91b13b0 Mon Sep 17 00:00:00 2001
-From: Derek Lesho <dlesho@codeweavers.com>
-Date: Tue, 5 May 2020 09:45:24 -0500
-Subject: [PATCH 01/46] mf: Add missing ::Release of clock timer.
-
-Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
----
- dlls/mf/session.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/dlls/mf/session.c b/dlls/mf/session.c
-index 75ef600a4df..d6b881218bf 100644
---- a/dlls/mf/session.c
-+++ b/dlls/mf/session.c
-@@ -4289,6 +4289,7 @@ static HRESULT WINAPI present_clock_timer_callback_Invoke(IMFAsyncCallback *ifac
- 
-     EnterCriticalSection(&clock->cs);
-     list_remove(&timer->entry);
-+    IUnknown_Release(&timer->IUnknown_iface);
-     LeaveCriticalSection(&clock->cs);
- 
-     IMFAsyncCallback_Invoke(timer->callback, timer->result);
-
 From 363c90e81e451c946f52fca4fd11bb777f3a4565 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
