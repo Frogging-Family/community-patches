@@ -46,7 +46,7 @@ index 639e032f62..d199f876b2 100644
 +            if (wait_work_item->Flags & WT_EXECUTEINWAITTHREAD)
 +                leave_critical_section(&wait_thread_executeinwaitthread_cs);
 +
-             interlocked_xchg( &wait_work_item->CallbackInProgress, FALSE );
+             InterlockedExchange( &wait_work_item->CallbackInProgress, FALSE );
  
              if (wait_work_item->Flags & WT_EXECUTEONLYONCE)
 -- 
