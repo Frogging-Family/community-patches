@@ -1,0 +1,250 @@
+diff --git a/src/amd/compiler/aco_optimizer.cpp b/src/amd/compiler/aco_optimizer.cpp
+index 9203f1c4b43d1dd3a76e41152027fe36c2a5e50f..12137b2c5847ddc2e2a30c52bbd998332224608f 100644
+--- a/src/amd/compiler/aco_optimizer.cpp
++++ b/src/amd/compiler/aco_optimizer.cpp
+@@ -447,6 +447,7 @@ bool can_swap_operands(aco_ptr<Instruction>& instr)
+ 
+    switch (instr->opcode) {
+    case aco_opcode::v_add_f32:
++   case aco_opcode::v_mul_legacy_f32:
+    case aco_opcode::v_mul_f32:
+    case aco_opcode::v_or_b32:
+    case aco_opcode::v_and_b32:
+@@ -2460,7 +2461,7 @@ void combine_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr
+       }
+    }
+    /* v_mul_f32(v_cndmask_b32(0, 1.0, cond), a) -> v_cndmask_b32(0, a, cond) */
+-   else if (instr->opcode == aco_opcode::v_mul_f32 && !instr->isVOP3()) {
++   else if ((instr->opcode == aco_opcode::v_mul_f32 || instr->opcode == aco_opcode::v_mul_legacy_f32) && !instr->isVOP3()) {
+       for (unsigned i = 0; i < 2; i++) {
+          if (instr->operands[i].isTemp() && ctx.info[instr->operands[i].tempId()].is_b2f() &&
+              ctx.uses[instr->operands[i].tempId()] == 1 &&
+diff --git a/src/amd/compiler/aco_instruction_selection.cpp b/src/amd/compiler/aco_instruction_selection.cpp
+index 1ac3cda14a88939601f6fadf2ce462509c22abe8..346c7bcfbadadb48143ec3ee23b2f3fa383a422f 100644
+--- a/src/amd/compiler/aco_instruction_selection.cpp
++++ b/src/amd/compiler/aco_instruction_selection.cpp
+@@ -1597,7 +1597,7 @@ void visit_alu_instr(isel_context *ctx, nir_alu_instr *instr)
+       if (dst.regClass() == v2b) {
+          emit_vop2_instruction(ctx, instr, aco_opcode::v_mul_f16, dst, true);
+       } else if (dst.regClass() == v1) {
+-         emit_vop2_instruction(ctx, instr, aco_opcode::v_mul_f32, dst, true);
++         emit_vop2_instruction(ctx, instr, ctx->program->info->mul_zero_wins ? aco_opcode::v_mul_legacy_f32 : aco_opcode::v_mul_f32, dst, true);
+       } else if (dst.regClass() == v2) {
+          bld.vop3(aco_opcode::v_mul_f64, Definition(dst), src0, src1);
+       } else {
+diff --git a/src/amd/compiler/aco_lower_to_hw_instr.cpp b/src/amd/compiler/aco_lower_to_hw_instr.cpp
+index 6f051200b53260b248ddb3a35ba61b899ffdfe30..5c4ebc8a441d4de7a341a671827073e5e4ed9690 100644
+--- a/src/amd/compiler/aco_lower_to_hw_instr.cpp
++++ b/src/amd/compiler/aco_lower_to_hw_instr.cpp
+@@ -41,12 +41,12 @@ struct lower_context {
+    std::vector<aco_ptr<Instruction>> instructions;
+ };
+ 
+-aco_opcode get_reduce_opcode(chip_class chip, ReduceOp op) {
++aco_opcode get_reduce_opcode(chip_class chip, bool mul_zero_wins, ReduceOp op) {
+    switch (op) {
+    case iadd32: return chip >= GFX9 ? aco_opcode::v_add_u32 : aco_opcode::v_add_co_u32;
+    case imul32: return aco_opcode::v_mul_lo_u32;
+    case fadd32: return aco_opcode::v_add_f32;
+-   case fmul32: return aco_opcode::v_mul_f32;
++   case fmul32: return mul_zero_wins ? aco_opcode::v_mul_legacy_f32 : aco_opcode::v_mul_f32;
+    case imax32: return aco_opcode::v_max_i32;
+    case imin32: return aco_opcode::v_min_i32;
+    case umin32: return aco_opcode::v_min_u32;
+@@ -295,7 +295,7 @@ void emit_dpp_op(lower_context *ctx, PhysReg dst_reg, PhysReg src0_reg, PhysReg
+    Operand src0(src0_reg, rc);
+    Operand src1(src1_reg, rc);
+ 
+-   aco_opcode opcode = get_reduce_opcode(ctx->program->chip_class, op);
++   aco_opcode opcode = get_reduce_opcode(ctx->program->chip_class, ctx->program->info->mul_zero_wins, op);
+    bool vop3 = op == imul32 || size == 2;
+ 
+    if (!vop3) {
+@@ -333,7 +333,7 @@ void emit_op(lower_context *ctx, PhysReg dst_reg, PhysReg src0_reg, PhysReg src1
+    Operand src0(src0_reg, RegClass(src0_reg.reg() >= 256 ? RegType::vgpr : RegType::sgpr, size));
+    Operand src1(src1_reg, rc);
+ 
+-   aco_opcode opcode = get_reduce_opcode(ctx->program->chip_class, op);
++   aco_opcode opcode = get_reduce_opcode(ctx->program->chip_class, ctx->program->info->mul_zero_wins, op);
+    bool vop3 = op == imul32 || size == 2;
+ 
+    if (opcode == aco_opcode::num_opcodes) {
+diff --git a/src/amd/vulkan/radv_debug.h b/src/amd/vulkan/radv_debug.h
+index 979b448c6adc9f4bfc1940e5c273b71678348771..771e4b54c97bebbad7ef3d2027390eb01b3cb1af 100644
+--- a/src/amd/vulkan/radv_debug.h
++++ b/src/amd/vulkan/radv_debug.h
+@@ -70,6 +70,7 @@ enum {
+ 	RADV_PERFTEST_GE_WAVE_32      =   0x80,
+ 	RADV_PERFTEST_DFSM            =  0x100,
+ 	RADV_PERFTEST_ACO             =  0x200,
++	RADV_PERFTEST_MULZEROWINS     =  0x400,
+ };
+ 
+ bool
+diff --git a/src/amd/vulkan/radv_device.c b/src/amd/vulkan/radv_device.c
+index d5d1553e5f92c8899c8e45e085359cb86b539707..6bf264fdd839f574eaaef6bfa5fe2d015d23f790 100644
+--- a/src/amd/vulkan/radv_device.c
++++ b/src/amd/vulkan/radv_device.c
+@@ -344,7 +344,9 @@ radv_physical_device_try_create(struct radv_instance *instance,
+ 	}
+ 
+ 	/* These flags affect shader compilation. */
+-	uint64_t shader_env_flags = (device->use_aco ? 0x2 : 0);
++	bool force_zero_wins = instance->perftest_flags & RADV_PERFTEST_MULZEROWINS;
++	uint64_t shader_env_flags = (device->use_aco ? 0x2 : 0) |
++				    (force_zero_wins ? 0x4 : 0);
+ 
+ 	/* The gpu id is already embedded in the uuid so we just pass "radv"
+ 	 * when creating the cache.
+@@ -518,6 +520,7 @@ static const struct debug_control radv_perftest_options[] = {
+ 	{"gewave32", RADV_PERFTEST_GE_WAVE_32},
+ 	{"dfsm", RADV_PERFTEST_DFSM},
+ 	{"aco", RADV_PERFTEST_ACO},
++	{"mulzerowins", RADV_PERFTEST_MULZEROWINS},
+ 	{NULL, 0}
+ };
+ 
+@@ -644,6 +647,9 @@ VkResult radv_CreateInstance(
+ 
+ 	if (instance->perftest_flags & RADV_PERFTEST_ACO)
+ 		fprintf(stderr, "WARNING: Experimental compiler backend enabled. Here be dragons! Incorrect rendering, GPU hangs and/or resets are likely\n");
++	
++	if (instance->perftest_flags & RADV_PERFTEST_MULZEROWINS)
++		fprintf(stderr, "WARNING: Forcing d3d9-style anything * 0 = 0 behaviour\n");
+ 
+ 	if (instance->debug_flags & RADV_DEBUG_STARTUP)
+ 		radv_logi("Created an instance");
+@@ -2917,6 +2923,7 @@ VkResult radv_CreateDevice(
+ 	struct radv_device *device;
+ 
+ 	bool keep_shader_info = false;
++	bool mul_zero_wins = false;
+ 	bool robust_buffer_access = false;
+ 	bool overallocation_disallowed = false;
+ 
+@@ -2985,6 +2992,7 @@ VkResult radv_CreateDevice(
+ 	radv_device_init_dispatch(device);
+ 
+ 	keep_shader_info = device->enabled_extensions.AMD_shader_info;
++	mul_zero_wins    = device->instance->perftest_flags & RADV_PERFTEST_MULZEROWINS;
+ 
+ 	/* With update after bind we can't attach bo's to the command buffer
+ 	 * from the descriptor set anymore, so we have to use a global BO list.
+@@ -3116,6 +3124,7 @@ VkResult radv_CreateDevice(
+ 		device->instance->num_sc_threads = 0;
+ 
+ 	device->keep_shader_info = keep_shader_info;
++	device->mul_zero_wins    = mul_zero_wins;
+ 	result = radv_device_init_meta(device);
+ 	if (result != VK_SUCCESS)
+ 		goto fail;
+diff --git a/src/amd/vulkan/radv_pipeline.c b/src/amd/vulkan/radv_pipeline.c
+index 33b93e7d0c9d3174d0033ffb58d9b4ba9db8d582..54b021721932990bc6be01b5acb2fa70c26a7ae2 100644
+--- a/src/amd/vulkan/radv_pipeline.c
++++ b/src/amd/vulkan/radv_pipeline.c
+@@ -2618,7 +2618,8 @@ radv_fill_shader_info(struct radv_pipeline *pipeline,
+ 					  pipeline->layout,
+ 					  &keys[MESA_SHADER_FRAGMENT],
+ 					  &infos[MESA_SHADER_FRAGMENT],
+-					  pipeline->device->physical_device->use_aco);
++					  pipeline->device->physical_device->use_aco,
++						pipeline->device->mul_zero_wins);
+ 
+ 		/* TODO: These are no longer used as keys we should refactor this */
+ 		keys[MESA_SHADER_VERTEX].vs_common_out.export_prim_id =
+@@ -2670,7 +2671,8 @@ radv_fill_shader_info(struct radv_pipeline *pipeline,
+ 			radv_nir_shader_info_pass(combined_nir[i],
+ 						  pipeline->layout, &key,
+ 						  &infos[MESA_SHADER_TESS_CTRL],
+-						  pipeline->device->physical_device->use_aco);
++						  pipeline->device->physical_device->use_aco,
++							pipeline->device->mul_zero_wins);
+ 		}
+ 
+ 		keys[MESA_SHADER_TESS_EVAL].tes.num_patches =
+@@ -2694,7 +2696,8 @@ radv_fill_shader_info(struct radv_pipeline *pipeline,
+ 						  pipeline->layout,
+ 						  &keys[pre_stage],
+ 						  &infos[MESA_SHADER_GEOMETRY],
+-						  pipeline->device->physical_device->use_aco);
++						  pipeline->device->physical_device->use_aco,
++							pipeline->device->mul_zero_wins);
+ 		}
+ 
+ 		filled_stages |= (1 << pre_stage);
+@@ -2719,7 +2722,8 @@ radv_fill_shader_info(struct radv_pipeline *pipeline,
+ 
+ 		radv_nir_shader_info_init(&infos[i]);
+ 		radv_nir_shader_info_pass(nir[i], pipeline->layout,
+-					  &keys[i], &infos[i], pipeline->device->physical_device->use_aco);
++					  &keys[i], &infos[i], pipeline->device->physical_device->use_aco,
++						pipeline->device->mul_zero_wins);
+ 	}
+ 
+ 	for (int i = 0; i < MESA_SHADER_STAGES; i++) {
+@@ -2978,7 +2982,8 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
+ 
+ 			radv_nir_shader_info_pass(nir[MESA_SHADER_GEOMETRY],
+ 						  pipeline->layout, &key,
+-						  &info, pipeline->device->physical_device->use_aco);
++						  &info, pipeline->device->physical_device->use_aco,
++							pipeline->device->mul_zero_wins);
+ 			info.wave_size = 64; /* Wave32 not supported. */
+ 			info.ballot_bit_size = 64;
+ 
+diff --git a/src/amd/vulkan/radv_private.h b/src/amd/vulkan/radv_private.h
+index 6b54a8ad60011d04923494e156b45fe40dcf07bd..892ccc291a9511372ee64826aebf3f41d693e1c0 100644
+--- a/src/amd/vulkan/radv_private.h
++++ b/src/amd/vulkan/radv_private.h
+@@ -820,6 +820,8 @@ struct radv_device {
+ 	/* Whether to keep shader debug info, for tracing or VK_AMD_shader_info */
+ 	bool                                         keep_shader_info;
+ 
++	bool					     mul_zero_wins;															
++
+ 	struct radv_physical_device                  *physical_device;
+ 
+ 	/* Backup in-memory cache to be used if the app doesn't provide one */
+@@ -2371,7 +2373,8 @@ void radv_nir_shader_info_pass(const struct nir_shader *nir,
+ 			       const struct radv_pipeline_layout *layout,
+ 			       const struct radv_shader_variant_key *key,
+ 			       struct radv_shader_info *info,
+-			       bool use_aco);
++			       bool use_aco,
++						 bool mul_zero_wins);
+ 
+ void radv_nir_shader_info_init(struct radv_shader_info *info);
+ 
+diff --git a/src/amd/vulkan/radv_shader.h b/src/amd/vulkan/radv_shader.h
+index d7c8119cd2431ccdb48edeac76ff20d148ca0b7e..b1df04ea40d965b84a1f9151b42c9d9d1cd4f96f 100644
+--- a/src/amd/vulkan/radv_shader.h
++++ b/src/amd/vulkan/radv_shader.h
+@@ -337,6 +337,7 @@ struct radv_shader_info {
+ 	struct gfx10_ngg_info ngg_info;
+ 
+ 	unsigned float_controls_mode;
++	bool mul_zero_wins;
+ };
+ 
+ enum radv_shader_binary_type {
+diff --git a/src/amd/vulkan/radv_shader_info.c b/src/amd/vulkan/radv_shader_info.c
+index c651f2162807a58762d4d0a0e0ba0d1aefd8a86c..0901678b2d0ce85f857d09b48b2413c93c7c4278 100644
+--- a/src/amd/vulkan/radv_shader_info.c
++++ b/src/amd/vulkan/radv_shader_info.c
+@@ -657,7 +657,8 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
+ 			  const struct radv_pipeline_layout *layout,
+ 			  const struct radv_shader_variant_key *key,
+ 			  struct radv_shader_info *info,
+-			  bool use_aco)
++			  bool use_aco,
++				bool mul_zero_wins)
+ {
+ 	struct nir_function *func =
+ 		(struct nir_function *)exec_list_get_head_const(&nir->functions);
+@@ -833,4 +834,5 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
+ 	}
+ 
+ 	info->float_controls_mode = nir->info.float_controls_execution_mode;
++	info->mul_zero_wins = mul_zero_wins;
+ }
+ 
