@@ -1,8 +1,8 @@
-From ae170f4b833fdd7f7052b9e44a1afd55f671792f Mon Sep 17 00:00:00 2001
+From 306a3ad98bb6575300293c65481e87d41395e225 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:05 -0500
-Subject: [PATCH 01/46] mf/tests: Sink objects are stream sinks, not media
+Subject: [PATCH 01/50] mf/tests: Sink objects are stream sinks, not media
  sinks.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -46,11 +46,11 @@ index bf14ccf0feb..3a0164c8511 100644
      ok(full_topology != topology, "Unexpected instance.\n");
  
 
-From 185d97c61774fcf01a3656b4a52cb7ab828bdd00 Mon Sep 17 00:00:00 2001
+From 96219a4eacca24949017c7b9147bc9d0284c0ccd Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:06 -0500
-Subject: [PATCH 02/46] mf/tests: Add tests for the topology loader.
+Subject: [PATCH 02/50] mf/tests: Add tests for the topology loader.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -543,11 +543,11 @@ index 3a0164c8511..3ce94862c70 100644
  
      hr = MFShutdown();
 
-From 45675b8d3e142ec1942610396b2d11d6ecee09a5 Mon Sep 17 00:00:00 2001
+From 3801accce876e5f051974bc084d5887cc235d53c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20G=C3=B3mez=20Del=20Real?=
  <sdelreal@codeweavers.com>
 Date: Wed, 1 Apr 2020 16:11:07 -0500
-Subject: [PATCH 03/46] mf: Partially implement the topology loader.
+Subject: [PATCH 03/50] mf: Partially implement the topology loader.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -960,10 +960,10 @@ index 0b4d7344422..7a4c95bea07 100644
  
  static const IMFTopoLoaderVtbl topologyloadervtbl =
 
-From f50a12f8af7f677c716670ad2481300f1ad431d1 Mon Sep 17 00:00:00 2001
+From bc6c11e38014f711f19e51bbf880a8c385ea993b Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:03:52 -0500
-Subject: [PATCH 04/46] Implement stub bytestream handler and source.
+Subject: [PATCH 04/50] Implement stub bytestream handler and source.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -979,7 +979,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  create mode 100644 dlls/winegstreamer/media_source.c
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 4bc08136247..7dd9bd54c6d 100644
+index 8a52279a081..55a27a8437e 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -494,7 +494,10 @@ static void test_source_resolver(void)
@@ -1836,10 +1836,10 @@ index 4e7a43f5fff..c61ccb788ce 100644
 +cpp_quote("EXTERN_GUID(CLSID_MPEG4ByteStreamHandler, 0x271c3902, 0x6095, 0x4c45, 0xa2, 0x2f, 0x20, 0x09, 0x18, 0x16, 0xee, 0x9e);")
 \ No newline at end of file
 
-From 502f705a2763177d62e3fb51b6967e95094cc589 Mon Sep 17 00:00:00 2001
+From 387636802d1e88c7c7f18983ecd85db6d532b24f Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 30 Mar 2020 15:19:01 -0500
-Subject: [PATCH 05/46] winegstreamer: Implement IMFMediaSource::Shutdown.
+Subject: [PATCH 05/50] winegstreamer: Implement IMFMediaSource::Shutdown.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -1848,7 +1848,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 38 insertions(+), 3 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 7dd9bd54c6d..6381a93bd13 100644
+index 55a27a8437e..06b4817f99e 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -591,13 +591,13 @@ todo_wine
@@ -1988,10 +1988,10 @@ index df28f54444d..09a40a06208 100644
      object->ref = 1;
  
 
-From d3dccd5caa4d9765376648bd3138a19f5f0f42e7 Mon Sep 17 00:00:00 2001
+From 8b3f5b3c9a7852efdbaf14a8595e92a68560deaa Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 30 Mar 2020 14:19:35 -0500
-Subject: [PATCH 06/46] winegstreamer: Add a GstPad wrapping the media source's
+Subject: [PATCH 06/50] winegstreamer: Add a GstPad wrapping the media source's
  bytestream.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -2427,10 +2427,10 @@ index 09a40a06208..48119e4a89d 100644
 +    }
 +}
 
-From df04ed4ba74eb03e44aaed419a44ec024ade39d7 Mon Sep 17 00:00:00 2001
+From 00ffdd008dadb9dfb0592fcef691ad2a460370ba Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 13:34:57 -0500
-Subject: [PATCH 07/46] winegstreamer: Find an appropriate demuxer for the
+Subject: [PATCH 07/50] winegstreamer: Find an appropriate demuxer for the
  source.
 
 We can add a path later which uses decodebin as the demuxer, for use with formats not supported on windows.  (like Theora)
@@ -2646,10 +2646,10 @@ index 48119e4a89d..e1f5c773758 100644
          {
              ERR("Wrong callback forwarder called\n");
 
-From 3bf84ad96cd4476bb77328cc030cfe729cf7c679 Mon Sep 17 00:00:00 2001
+From 3332a8bea51893195698c262dbc98e69ba32d226 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 20 Apr 2020 13:02:23 -0500
-Subject: [PATCH 08/46] winegstreamer: Use the demuxer to establish
+Subject: [PATCH 08/50] winegstreamer: Use the demuxer to establish
  IMFMediaStreams.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3228,10 +3228,10 @@ index e1f5c773758..8335c64338d 100644
          {
              ERR("Wrong callback forwarder called\n");
 
-From 8e6afb4118d66a9c7745948d54d2e01c4cb03158 Mon Sep 17 00:00:00 2001
+From fa1b38ba0b50e51d01dbbb8208d126926998ccd8 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 11:11:05 -0500
-Subject: [PATCH 09/46] winegstreamer: Implement
+Subject: [PATCH 09/50] winegstreamer: Implement
  IMFMediaStream::GetStreamDescriptor.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3543,10 +3543,10 @@ index 16e55247de1..09266ffab41 100644
 +}
 \ No newline at end of file
 
-From 559eeb99607526dccc68e9f6fe5d2961e384deb4 Mon Sep 17 00:00:00 2001
+From 0a90a29b8f21222f2cef91e746a8b0525e342ea6 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:00:26 -0500
-Subject: [PATCH 10/46] winegstreamer: Translate H.264 caps to attributes.
+Subject: [PATCH 10/50] winegstreamer: Translate H.264 caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3639,10 +3639,10 @@ index 09266ffab41..b76714c4829 100644
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From 213f5c35bcf06e6550a2ebb01e5897fee79ab907 Mon Sep 17 00:00:00 2001
+From 4b2d5aa089eca1f9803747e5213e9eb5eb76c8fe Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:01:20 -0500
-Subject: [PATCH 11/46] winegstreamer: Translate WMV caps to attributes.
+Subject: [PATCH 11/50] winegstreamer: Translate WMV caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3705,10 +3705,10 @@ index b76714c4829..1b0f562dbb5 100644
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From e6c831b3de50bafb8cda0181aea164f1de95f36c Mon Sep 17 00:00:00 2001
+From 2ddb97133408d80e8be97b95b3f0ff6523e6b8a1 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:02:27 -0500
-Subject: [PATCH 12/46] winegstreamer: Translate AAC caps to attributes.
+Subject: [PATCH 12/50] winegstreamer: Translate AAC caps to attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -3852,21 +3852,22 @@ index 1b0f562dbb5..ca248f3f355 100644
              FIXME("Unrecognized audio format %s\n", mime_type);
      }
 
-From 3923dfd0bc3b630731aaf51bfce2a329a6dcc33c Mon Sep 17 00:00:00 2001
+From 555a93b4fd84572933207435916fa540db3c704d Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 13:36:19 -0500
-Subject: [PATCH 13/46] winegstreamer: Add video/mpeg recognition.
+Subject: [PATCH 13/50] winegstreamer: Translate MPEG-4 Section-2 caps to
+ attributes.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
- dlls/winegstreamer/mfplat.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ dlls/winegstreamer/mfplat.c | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index ca248f3f355..c74f9563393 100644
+index ca248f3f355..ef92edc50e4 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -645,6 +645,21 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
+@@ -645,6 +645,34 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
                  }
              }
          }
@@ -3875,24 +3876,37 @@ index ca248f3f355..c74f9563393 100644
 +            gint mpegversion;
 +            if (gst_structure_get_int(info, "mpegversion", &mpegversion))
 +            {
-+                switch (mpegversion)
++                const GValue *codec_data;
++
++                if (mpegversion == 4)
 +                {
-+                    case 1: IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_MPG1); break;
-+                    case 2: IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_MPEG2); break;
-+                    case 4: IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_M4S2); break;
-+                    default: FIXME("Unrecognized mpeg version %d\n", mpegversion);
++                    IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_M4S2);
++                    IMFMediaType_SetUINT32(media_type, &MF_MT_COMPRESSED, TRUE);
++
++                    if ((codec_data = gst_structure_get_value(info, "codec_data")))
++                    {
++                        GstBuffer *codec_data_buffer = gst_value_get_buffer(codec_data);
++                        if (codec_data_buffer)
++                        {
++                            gsize codec_data_size = gst_buffer_get_size(codec_data_buffer);
++                            gpointer codec_data_raw = heap_alloc(codec_data_size);
++                            gst_buffer_extract(codec_data_buffer, 0, codec_data_raw, codec_data_size);
++                            IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, codec_data_raw, codec_data_size);
++                        }
++                    }
 +                }
++                else
++                    FIXME("Unrecognized mpeg version %d\n", mpegversion);
 +            }
-+            IMFMediaType_SetUINT32(media_type, &MF_MT_COMPRESSED, TRUE);
 +        }
          else
              FIXME("Unrecognized video format %s\n", mime_type);
      }
 
-From 20d94a4ac5573e06f708d7725fb89375fae2faf9 Mon Sep 17 00:00:00 2001
+From 0aa519e033c8ef46852d72bc95b02ae3de982c77 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 11:21:21 -0500
-Subject: [PATCH 14/46] winegstreamer: Implement
+Subject: [PATCH 14/50] winegstreamer: Implement
  IMFMediaSource::CreatePresentationDescriptor.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -3902,7 +3916,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 38 insertions(+), 6 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 6381a93bd13..0761d28d90e 100644
+index 06b4817f99e..e2609f34ee3 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -494,10 +494,7 @@ static void test_source_resolver(void)
@@ -4026,10 +4040,10 @@ index a654d555bc1..04b3b9f6c71 100644
      heap_free(object);
      *out_media_source = NULL;
 
-From d997650a8aa97477a4a80b32cf8dbc0847ee090e Mon Sep 17 00:00:00 2001
+From f2773f677ff7c5155406ec7ce414d6989efe748f Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:10:03 -0500
-Subject: [PATCH 15/46] winegstreamer: Implement IMFMediaSource::Start.
+Subject: [PATCH 15/50] winegstreamer: Implement IMFMediaSource::Start.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -4038,7 +4052,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  2 files changed, 284 insertions(+), 7 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 0761d28d90e..23db0e3abe6 100644
+index e2609f34ee3..1929c0e519e 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -522,10 +522,7 @@ static void test_source_resolver(void)
@@ -4422,10 +4436,10 @@ index 04b3b9f6c71..abf0cfd56fa 100644
      object->bus = gst_bus_new();
      gst_bus_set_sync_handler(object->bus, watch_source_bus_wrapper, object, NULL);
 
-From 3d8b6ff9064e44165fb9659af96459a258060c4b Mon Sep 17 00:00:00 2001
+From f9d1da75d3fc1041f187e03cb15ded5ab4d02c5b Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:11:31 -0500
-Subject: [PATCH 16/46] winegstreamer: Insert parser into pipeline to rectify
+Subject: [PATCH 16/50] winegstreamer: Insert parser into pipeline to rectify
  type differences.
 
 It's probably better to use caps negotiation here, but this seemed simpler for now.
@@ -4599,10 +4613,10 @@ index abf0cfd56fa..cb247adcef1 100644
          IMFMediaType_Release(stream_type);
      if (type_handler)
 
-From e43993ec16b75cbf0fdfe466b97af54ab751d1d9 Mon Sep 17 00:00:00 2001
+From e3c34d295a646e653b516ecc1ba0ba320e580450 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:43:03 -0500
-Subject: [PATCH 17/46] winegstreamer: Implement IMFMediaStream::RequestSample.
+Subject: [PATCH 17/50] winegstreamer: Implement IMFMediaStream::RequestSample.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -4613,7 +4627,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  4 files changed, 202 insertions(+), 9 deletions(-)
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 23db0e3abe6..f3d9bd8ab23 100644
+index 1929c0e519e..0ae58b24cab 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -540,13 +540,10 @@ static void test_source_resolver(void)
@@ -4828,10 +4842,10 @@ index cb247adcef1..0e53fbf4247 100644
      if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
          goto fail;
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index c74f9563393..81782eeab3f 100644
+index ef92edc50e4..4494a6b7312 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -871,4 +871,94 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
+@@ -884,4 +884,94 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
      }
  
      return ret;
@@ -4928,10 +4942,10 @@ index c74f9563393..81782eeab3f 100644
  }
 \ No newline at end of file
 
-From 2910455e692beb2aff8eb00c4e254cdd7f5de58f Mon Sep 17 00:00:00 2001
+From 68e8439aae01128708ac3a0f5ec14ed180a326f9 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:15:07 -0500
-Subject: [PATCH 18/46] winegstreamer: Implement
+Subject: [PATCH 18/50] winegstreamer: Implement
  IMFMediaSource::GetCharacteristics.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -4961,10 +4975,10 @@ index 0e53fbf4247..78865259e6f 100644
  
  static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
 
-From 24b0a47fbebd9813a7b7ccec4956a7af67c5f192 Mon Sep 17 00:00:00 2001
+From 252f96b30cbfa1cacc8ac858947fe9697fc49c37 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 31 Mar 2020 15:15:50 -0500
-Subject: [PATCH 19/46] winegstreamer: Calculate the MF_PD_DURATION of the
+Subject: [PATCH 19/50] winegstreamer: Calculate the MF_PD_DURATION of the
  media source's PD.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
@@ -5024,10 +5038,10 @@ index 78865259e6f..b88f794d86a 100644
  
      object->state = SOURCE_STOPPED;
 
-From 07c36d0486488553975b33d0748e6769675f75c1 Mon Sep 17 00:00:00 2001
+From 56fc037c71ac39b66420da788c65b417e70eff51 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 29 Jan 2020 15:37:39 -0600
-Subject: [PATCH 20/46] tools: Add support for multiple parent directories.
+Subject: [PATCH 20/50] tools: Add support for multiple parent directories.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -5196,10 +5210,10 @@ index fb2e145ced2..c505d26f431 100644
      if (make->top_src_dir)
          strarray_add( &make->include_args, strmake( "-I%s", top_src_dir_path( make, "include" )));
 
-From 26070848499d38be91b0889c0bc4ee6804b9c02a Mon Sep 17 00:00:00 2001
+From 145585c3db9eb2bcd40f5a9a6ef728e97075bce1 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 29 Jan 2020 15:30:49 -0600
-Subject: [PATCH 21/46] mf: Introduce handler helper.
+Subject: [PATCH 21/50] mf: Introduce handler helper.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6564,17 +6578,17 @@ index b88f794d86a..ebb88d2b8a5 100644
  
      hr = IMFByteStreamHandler_QueryInterface(&this->IMFByteStreamHandler_iface, riid, obj);
 
-From 4b0ddf75cb2eabfa8c376e55211be2aa2ff9f0e9 Mon Sep 17 00:00:00 2001
+From ef1af98e23856013e25c5537ecadedd1e72ada2b Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:15:35 -0500
-Subject: [PATCH 22/46] winegstreamer: Introduce IMFMediaType -> GstCaps
+Subject: [PATCH 22/50] winegstreamer: Introduce IMFMediaType -> GstCaps
  converter.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
  dlls/winegstreamer/gst_private.h |   1 +
- dlls/winegstreamer/mfplat.c      | 139 +++++++++++++++++++++++++++++++
- 2 files changed, 140 insertions(+)
+ dlls/winegstreamer/mfplat.c      | 140 +++++++++++++++++++++++++++++++
+ 2 files changed, 141 insertions(+)
 
 diff --git a/dlls/winegstreamer/gst_private.h b/dlls/winegstreamer/gst_private.h
 index 823e023f52c..20d3beef028 100644
@@ -6589,10 +6603,10 @@ index 823e023f52c..20d3beef028 100644
  
  enum source_type
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 81782eeab3f..78ced2615c6 100644
+index 4494a6b7312..3005b7d4a5f 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -873,6 +873,145 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
+@@ -886,6 +886,146 @@ GstCaps *make_mf_compatible_caps(GstCaps *caps)
      return ret;
  }
  
@@ -6689,6 +6703,7 @@ index 81782eeab3f..78ced2615c6 100644
 +            output = gst_caps_new_empty_simple("audio/x-raw");
 +
 +            gst_caps_set_simple(output, "format", G_TYPE_STRING, "F32LE", NULL);
++            gst_caps_set_simple(output, "layout", G_TYPE_STRING, "interleaved", NULL);
 +        }
 +        else if (IsEqualGUID(&subtype, &MFAudioFormat_PCM))
 +        {
@@ -6739,10 +6754,10 @@ index 81782eeab3f..78ced2615c6 100644
     IMFBuffer = GstMemory */
  
 
-From 046171c06344d02dae86a00f5f62d1c367843bf2 Mon Sep 17 00:00:00 2001
+From 2a458c8e96480cc236c3b218abf4aebb4769bd71 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:18:40 -0500
-Subject: [PATCH 23/46] winegstreamer: Translate H.264 attributes to caps.
+Subject: [PATCH 23/50] winegstreamer: Translate H.264 attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6750,10 +6765,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 48 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 78ced2615c6..1e2a98b7d5e 100644
+index 3005b7d4a5f..fab13fd6f45 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -942,6 +942,54 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -955,6 +955,54 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
              }
  
          }
@@ -6809,10 +6824,10 @@ index 78ced2615c6..1e2a98b7d5e 100644
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
              return NULL;
 
-From 6a26875511a6b9f4ac2bfceab09b5d1ec87508e2 Mon Sep 17 00:00:00 2001
+From e71f74029aae1ae4e274a2a27b458366c95d198a Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 24 Mar 2020 16:20:17 -0500
-Subject: [PATCH 24/46] winegstreamer: Translate WMV attributes to caps.
+Subject: [PATCH 24/50] winegstreamer: Translate WMV attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6820,10 +6835,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 18 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 1e2a98b7d5e..28fa286eb62 100644
+index fab13fd6f45..660e75a2d33 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -990,6 +990,24 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -1003,6 +1003,24 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
                      gst_caps_set_simple(output, "level", G_TYPE_STRING, level, NULL);
              }
          }
@@ -6849,10 +6864,10 @@ index 1e2a98b7d5e..28fa286eb62 100644
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
              return NULL;
 
-From eabca18fbce58fc8e64b0495bbe608158ee97f2a Mon Sep 17 00:00:00 2001
+From fae1f38ad996a2249fbcd9a88649d74e52980d27 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 21 Apr 2020 10:31:02 -0500
-Subject: [PATCH 25/46] winegstreamer: Translate AAC attributes to caps.
+Subject: [PATCH 25/50] winegstreamer: Translate AAC attributes to caps.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6860,10 +6875,10 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 66 insertions(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 28fa286eb62..63a20d0df06 100644
+index 660e75a2d33..0fe4a64b8ca 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -1056,6 +1056,72 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+@@ -1070,6 +1070,72 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
                  return NULL;
              }
          }
@@ -6937,10 +6952,10 @@ index 28fa286eb62..63a20d0df06 100644
          {
              FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
 
-From c73ceebe50c24d7089a0ad58ad1e42019a0c30dd Mon Sep 17 00:00:00 2001
+From fa5ba8001a5ab0d21f0e89f87655ccd32b196744 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 10:43:27 -0500
-Subject: [PATCH 26/46] Introduce IMFSample -> GstBuffer converter.
+Subject: [PATCH 26/50] Introduce IMFSample -> GstBuffer converter.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -6961,10 +6976,10 @@ index 20d3beef028..258df0d0405 100644
  enum source_type
  {
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index 63a20d0df06..f1c8e34cd24 100644
+index 0fe4a64b8ca..ab2466303e9 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -1232,4 +1232,78 @@ IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
+@@ -1246,4 +1246,78 @@ IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
      ERR("Failed to copy IMFSample to GstBuffer, hr = %#x\n", hr);
      IMFSample_Release(out);
      return NULL;
@@ -7045,10 +7060,10 @@ index 63a20d0df06..f1c8e34cd24 100644
  }
 \ No newline at end of file
 
-From 64f842ef03d35bbff355a8794e4bf8370936d25f Mon Sep 17 00:00:00 2001
+From 1d50456e3d8ac4f61a131e46c6e8189215d8d207 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 16 Mar 2020 12:09:39 -0500
-Subject: [PATCH 27/46] winegstreamer: Implement decoder MFT on gstreamer.
+Subject: [PATCH 27/50] winegstreamer: Implement decoder MFT on gstreamer.
 
 ---
  dlls/winegstreamer/Makefile.in               |    1 +
@@ -8574,7 +8589,7 @@ index 00000000000..1ee28d996a4
 +}
 \ No newline at end of file
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index f1c8e34cd24..aa17b335b37 100644
+index ab2466303e9..b42db70baca 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -404,6 +404,16 @@ static HRESULT video_processor_create(REFIID riid, void **ret)
@@ -8757,10 +8772,10 @@ index c61ccb788ce..8e198594c57 100644
 +cpp_quote("EXTERN_GUID(CLSID_CMSH264DecoderMFT, 0x62ce7e72, 0x4c71, 0x4d20, 0xb1, 0x5d, 0x45, 0x28, 0x31, 0xa8, 0x7d, 0x9d);")
 +cpp_quote("EXTERN_GUID(CLSID_CMSAACDecMFT, 0x32d186a7, 0x218f, 0x4c75, 0x88, 0x76, 0xdd, 0x77, 0x27, 0x3a, 0x89, 0x99);")
 
-From bb92241e87dbef78dec9c96429c4823d45cc0986 Mon Sep 17 00:00:00 2001
+From b2a8c31e09849fd87fbedd95667b2eac53c87008 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 23 Mar 2020 11:55:41 -0500
-Subject: [PATCH 28/46] mfreadwrite: Select all streams when creating a source
+Subject: [PATCH 28/50] mfreadwrite: Select all streams when creating a source
  reader.
 
 ---
@@ -8783,10 +8798,10 @@ index eaf52ce31e3..a7291ff1ae4 100644
  
      if (FAILED(hr))
 
-From acfcf1c256dae6aa0b2cb4de806b45eea05d8131 Mon Sep 17 00:00:00 2001
+From 00eed91722e5a9646e08fca4478fbad49dfd619d Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 16 Mar 2020 15:27:27 -0500
-Subject: [PATCH 29/46] Miscellaneous
+Subject: [PATCH 29/50] Miscellaneous
 
 ---
  dlls/mfreadwrite/reader.c         |  12 +++-
@@ -9032,10 +9047,10 @@ index ebb88d2b8a5..8e204e983cb 100644
          {
              GstQuery *query = gst_query_new_duration(GST_FORMAT_TIME);
 
-From 01ba4a363df4c7bd5ba000ae1966d36ace7f0b8e Mon Sep 17 00:00:00 2001
+From 34fbe8352e4fd4b086691782b4b07f9c2c43c9dd Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 19:07:11 -0500
-Subject: [PATCH 30/46] WMV
+Subject: [PATCH 30/50] WMV
 
 ---
  dlls/winegstreamer/gst_private.h             |  2 +
@@ -9108,7 +9123,7 @@ index 1ee28d996a4..618467a1241 100644
  };
  
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index aa17b335b37..b9b23d55d91 100644
+index b42db70baca..cddc6fa6aa4 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -414,11 +414,21 @@ static HRESULT aac_decoder_create(REFIID riid, void **ret)
@@ -9255,10 +9270,10 @@ index 8e198594c57..3f994854425 100644
 +cpp_quote("EXTERN_GUID(CLSID_CWMVDecMediaObject, 0x82d353df, 0x90bd, 0x4382, 0x8b, 0xc2, 0x3f, 0x61, 0x92, 0xb7, 0x6e, 0x34);")
 \ No newline at end of file
 
-From e6b4787d9cdf8c34fa636e39ec7bb2123853155c Mon Sep 17 00:00:00 2001
+From 3cb5c9b33afcebe0c8982647a2a4f57d8e4c2ddf Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:42:18 -0500
-Subject: [PATCH 31/46] mf: Ask for more samples from upstream node when upon
+Subject: [PATCH 31/50] mf: Ask for more samples from upstream node when upon
  MF_E_TRANSFORM_NEED_MORE_INPUT
 
 ---
@@ -9266,10 +9281,10 @@ Subject: [PATCH 31/46] mf: Ask for more samples from upstream node when upon
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/dlls/mf/session.c b/dlls/mf/session.c
-index d6b881218bf..68720247fc0 100644
+index ba30733fe5c..ce3d7e3018d 100644
 --- a/dlls/mf/session.c
 +++ b/dlls/mf/session.c
-@@ -2437,6 +2437,8 @@ static HRESULT transform_node_pull_samples(struct topo_node *node)
+@@ -2453,6 +2453,8 @@ static HRESULT transform_node_pull_samples(struct topo_node *node)
      return hr;
  }
  
@@ -9278,7 +9293,7 @@ index d6b881218bf..68720247fc0 100644
  static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
          IMFSample *sample)
  {
-@@ -2509,7 +2511,14 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
+@@ -2525,7 +2527,14 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
                      WARN("Drain command failed for transform, hr %#x.\n", hr);
              }
  
@@ -9295,10 +9310,10 @@ index d6b881218bf..68720247fc0 100644
              /* Remaining unprocessed input has been discarded, now queue markers for every output. */
              if (drain)
 
-From 5241c4399575604ff2af5eecc0442b22adb5abac Mon Sep 17 00:00:00 2001
+From 192b5f716626f7e2e72e55d3364135626ce8d7b1 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:43:52 -0500
-Subject: [PATCH 32/46] mf: Miscelaneous fixes to topology resolution.
+Subject: [PATCH 32/50] mf: Miscelaneous fixes to topology resolution.
 
 ---
  dlls/mf/topology.c | 16 +++++++++-------
@@ -9339,10 +9354,10 @@ index 7a4c95bea07..ce706a9ff7f 100644
  
      heap_free(src_mediatypes);
 
-From b3c77e2282466d8d62dc4a07df8439eb8d61b1a1 Mon Sep 17 00:00:00 2001
+From 38088d047fe98d7d4c56dd1aaf37996c3b393364 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:45:52 -0500
-Subject: [PATCH 33/46] Rewrite branch resolver.
+Subject: [PATCH 33/50] Rewrite branch resolver.
 
 and a HACK: Set output type of found decoder, this should probably happen somewhere else.
 ---
@@ -9700,10 +9715,10 @@ index ce706a9ff7f..337bf38081b 100644
                  heap_free(src_mediatypes);
                  return S_OK;
 
-From 470059d8f825d232fec270a180d96c03a9662962 Mon Sep 17 00:00:00 2001
+From 064ffac985d99fb2a758ac3e7860bcf1567851a2 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 2 Apr 2020 15:46:25 -0500
-Subject: [PATCH 34/46] winegstreamer:  Implement
+Subject: [PATCH 34/50] winegstreamer:  Implement
  IMFMedisStream::GetMediaSource.
 
 ---
@@ -9733,10 +9748,10 @@ index 19b5b4346b2..5c01346987b 100644
  
  static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IMFStreamDescriptor **descriptor)
 
-From ec06e9c9b135ad55548a585f39b95b198ccba7ef Mon Sep 17 00:00:00 2001
+From 905fd890fdc512cbeaf4710d3aaaf3739d8b246f Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 3 Apr 2020 11:12:33 -0500
-Subject: [PATCH 35/46] Expose PCM output type on AAC decoder.
+Subject: [PATCH 35/50] Expose PCM output type on AAC decoder.
 
 ---
  dlls/winegstreamer/mf_decode.c | 2 +-
@@ -9756,20 +9771,20 @@ index 618467a1241..d44bdb5f4ba 100644
  const GUID *wmv_input_types[] = {&MFVideoFormat_WMV3, &MFVideoFormat_WVC1};
  const GUID *wmv_output_types[] = {&MFVideoFormat_NV12, &MFVideoFormat_YV12, &MFVideoFormat_YUY2, &MFVideoFormat_UYVY, &MFVideoFormat_YVYU, &MFVideoFormat_NV11, &MFVideoFormat_RGB32, &MFVideoFormat_RGB24, &MFVideoFormat_RGB555, &MFVideoFormat_RGB8};
 
-From 7bd5d7979bbf7edacae2ed6d1225cdc58159b025 Mon Sep 17 00:00:00 2001
+From 7428d0e356c3505acaee0c5fa9e7012439bfeaa0 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 3 Apr 2020 13:09:30 -0500
-Subject: [PATCH 36/46] Set BPS on AAC.
+Subject: [PATCH 36/50] Set BPS on AAC.
 
 ---
  dlls/winegstreamer/mfplat.c | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index b9b23d55d91..b195bc02698 100644
+index cddc6fa6aa4..a8ecc134a01 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
-@@ -898,6 +898,7 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
+@@ -911,6 +911,7 @@ static IMFMediaType* transform_to_media_type(GstCaps *caps)
                      struct aac_user_data *user_data = NULL;
  
                      IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_AAC);
@@ -9778,10 +9793,10 @@ index b9b23d55d91..b195bc02698 100644
                      codec_data = gst_structure_get_value(info, "codec_data");
                      if (codec_data)
 
-From a028df7d4f68487199f31e46d9e47f51d7f1b8c3 Mon Sep 17 00:00:00 2001
+From 726a45f8011c26b23106ed20605fdd23b104868d Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 1 May 2020 11:46:26 -0500
-Subject: [PATCH 37/46] mfplat: Add I420 format information.
+Subject: [PATCH 37/50] mfplat: Add I420 format information.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -9789,7 +9804,7 @@ Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/dlls/mfplat/mediatype.c b/dlls/mfplat/mediatype.c
-index 620e144d348..df1481b16ea 100644
+index f92577a9cbc..d3c08f52c71 100644
 --- a/dlls/mfplat/mediatype.c
 +++ b/dlls/mfplat/mediatype.c
 @@ -1790,6 +1790,7 @@ static const struct uncompressed_video_format video_formats[] =
@@ -9798,13 +9813,13 @@ index 620e144d348..df1481b16ea 100644
      { &MFVideoFormat_L8,            1, 3, 1, 0 },
 +    { &MFVideoFormat_I420,          1, 0, 0, 1 },
      { &MFVideoFormat_AYUV,          4, 3, 0, 1 },
+     { &MFVideoFormat_I420,          1, 0, 0, 1 },
      { &MFVideoFormat_IMC1,          2, 3, 0, 1 },
-     { &MFVideoFormat_IMC2,          1, 0, 0, 1 },
 
-From 5a73a9f81a9f076835665d2b0c45d87797655d75 Mon Sep 17 00:00:00 2001
+From 1106c3b5e62d7af3af81bf9496c9e2b74baf9b7d Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 1 May 2020 13:20:49 -0500
-Subject: [PATCH 38/46] winegstreamer: Implement Color Converter MFT.
+Subject: [PATCH 38/50] winegstreamer: Implement Color Converter MFT.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -10551,7 +10566,7 @@ index 0b61bc9e3ce..b855d650dc3 100644
 +
  #endif /* __GST_PRIVATE_INCLUDED__ */
 diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
-index b195bc02698..654e0351b26 100644
+index a8ecc134a01..04fe213268a 100644
 --- a/dlls/winegstreamer/mfplat.c
 +++ b/dlls/winegstreamer/mfplat.c
 @@ -429,6 +429,8 @@ static HRESULT asf_stream_handler_create(REFIID riid, void **ret)
@@ -10636,10 +10651,10 @@ index 376e08c418b..d933d40cfd3 100644
 +coclass CColorConvertDMO { }
 \ No newline at end of file
 
-From eb1d200f2f6fe6f9f42d81a82228277980a028c5 Mon Sep 17 00:00:00 2001
+From fd5b20fdb3bab927969dd22424fef2dce1490c2b Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Fri, 1 May 2020 22:36:02 -0500
-Subject: [PATCH 39/46] HACK: Set BPS to 16 for output template.
+Subject: [PATCH 39/50] HACK: Set BPS to 16 for output template.
 
 ---
  dlls/winegstreamer/mf_decode.c | 5 +++++
@@ -10662,10 +10677,10 @@ index d44bdb5f4ba..5de1b60d2a2 100644
  
      return S_OK;
 
-From d242b9b6062c49bc6ec53de9d159189351397bd5 Mon Sep 17 00:00:00 2001
+From ca6a768e54e61d3af107fc097260d8aafc4cef66 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 4 May 2020 12:40:56 -0500
-Subject: [PATCH 40/46] Set "wait-on-eos" to allow other streams to continue
+Subject: [PATCH 40/50] Set "wait-on-eos" to allow other streams to continue
  while appsink buffers.
 
 ---
@@ -10685,10 +10700,10 @@ index 5c01346987b..5a8537970ab 100644
  
      if (FAILED(hr = media_stream_align_with_mf(object, &stream_type)))
 
-From 59ebfc002cac7061dba2e70e50ef343159c19dc5 Mon Sep 17 00:00:00 2001
+From 4ef51468b2f1f7b844f29cf3246397bbd5754273 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 4 May 2020 12:42:09 -0500
-Subject: [PATCH 41/46] Stub out enough of the SAR to prevent the session from
+Subject: [PATCH 41/50] Stub out enough of the SAR to prevent the session from
  stalling.
 
 ---
@@ -10743,10 +10758,10 @@ index f883163bde5..d5998cb1f39 100644
  }
  
 
-From 665ab8f35f6a6afa037a274fb5816f386144eaf1 Mon Sep 17 00:00:00 2001
+From fd62ff73e8fa6ea6a4271d47287c421f0b540d4a Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 9 Mar 2020 11:59:17 -0500
-Subject: [PATCH 42/46] Improve tests
+Subject: [PATCH 42/50] Improve tests
 
 ---
  dlls/mfplat/tests/mfplat.c         | 244 +++++++++++++++++++++++++++--
@@ -10758,7 +10773,7 @@ Subject: [PATCH 42/46] Improve tests
  create mode 100644 dlls/mfreadwrite/tests/test.mp4
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index f3d9bd8ab23..8f89c61c1b1 100644
+index 0ae58b24cab..6d981f4c1d1 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -402,6 +402,9 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
@@ -11064,7 +11079,7 @@ index f3d9bd8ab23..8f89c61c1b1 100644
  static void init_functions(void)
  {
      HMODULE mod = GetModuleHandleA("mfplat.dll");
-@@ -5263,6 +5478,7 @@ START_TEST(mfplat)
+@@ -5283,6 +5498,7 @@ START_TEST(mfplat)
      test_MFCreateMFByteStreamOnStream();
      test_system_memory_buffer();
      test_source_resolver();
@@ -11330,10 +11345,10 @@ index f54212a8c8f..5edf5254906 100644
 -test.wav RCDATA test.wav
 +/* @makedep: test.mp4 */
 +test.mp4 RCDATA test.mp4
-From 8f2e092040789c30ac613c5bf1e8d2c905e50c80 Mon Sep 17 00:00:00 2001
+From e06ce5d087007e8e18aa412a6fa8e9398df39623 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Wed, 25 Mar 2020 13:58:36 -0500
-Subject: [PATCH 43/46] Revert "Improve tests"
+Subject: [PATCH 43/50] Revert "Improve tests"
 
 This reverts commit 603b1717a2b511a66d3be99ab5761d49cd5ef34d.
 ---
@@ -11346,7 +11361,7 @@ This reverts commit 603b1717a2b511a66d3be99ab5761d49cd5ef34d.
  delete mode 100644 dlls/mfreadwrite/tests/test.mp4
 
 diff --git a/dlls/mfplat/tests/mfplat.c b/dlls/mfplat/tests/mfplat.c
-index 8f89c61c1b1..f3d9bd8ab23 100644
+index 6d981f4c1d1..0ae58b24cab 100644
 --- a/dlls/mfplat/tests/mfplat.c
 +++ b/dlls/mfplat/tests/mfplat.c
 @@ -402,9 +402,6 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
@@ -11652,7 +11667,7 @@ index 8f89c61c1b1..f3d9bd8ab23 100644
  static void init_functions(void)
  {
      HMODULE mod = GetModuleHandleA("mfplat.dll");
-@@ -5478,7 +5263,6 @@ START_TEST(mfplat)
+@@ -5498,7 +5283,6 @@ START_TEST(mfplat)
      test_MFCreateMFByteStreamOnStream();
      test_system_memory_buffer();
      test_source_resolver();
@@ -11918,10 +11933,10 @@ index 5edf5254906..f54212a8c8f 100644
 -test.mp4 RCDATA test.mp4
 +/* @makedep: test.wav */
 +test.wav RCDATA test.wav
-From 3d9fda1bfa2a507bfe80579aabd207388e895a50 Mon Sep 17 00:00:00 2001
+From 83cefc4cf8b87719f7456d08bffe70a377b1d00f Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 5 May 2020 15:35:16 -0500
-Subject: [PATCH 44/46] Report streams backwards and only select one of each
+Subject: [PATCH 44/50] Report streams backwards and only select one of each
  stream type.
 
 ---
@@ -11978,10 +11993,10 @@ index 5a8537970ab..f62fb6716be 100644
      }
      heap_free(descriptors);
 
-From 611b855076006d5fcd3f54b71199563d03aeb726 Mon Sep 17 00:00:00 2001
+From b09069e5a2d126ed43ec9c24bc90af00e263579e Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 7 May 2020 13:09:47 -0500
-Subject: [PATCH 45/46] winegstreamer: Implement IMFMediaSource::Stop.
+Subject: [PATCH 45/50] winegstreamer: Implement IMFMediaSource::Stop.
 
 Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
 ---
@@ -12056,10 +12071,232 @@ index f62fb6716be..15ea9520c89 100644
  
  static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 
-From 6b927ab27b549cafe98fd0ddfeacb490508c79a2 Mon Sep 17 00:00:00 2001
+From 56539ec6a0599555336df5431528481fd2b978e2 Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Mon, 11 May 2020 09:20:11 -0500
+Subject: [PATCH 46/50] mfreadwrite: Add recognition of ftypemp42 mp4 header.
+
+Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
+---
+ dlls/mfreadwrite/reader.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/dlls/mfreadwrite/reader.c b/dlls/mfreadwrite/reader.c
+index 25b0050256a..2fdc1e28922 100644
+--- a/dlls/mfreadwrite/reader.c
++++ b/dlls/mfreadwrite/reader.c
+@@ -2150,6 +2150,7 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
+     static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+     static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+     static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
++    static const unsigned char mp42magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
+     static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
+     static const struct stream_content_url_hint
+     {
+@@ -2162,6 +2163,7 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
+         { asfmagic,  L".asf" },
+         { wavmagic,  L".wav", wavmask },
+         { isommagic, L".mp4", mp4mask },
++        { mp42magic, L".mp4", mp4mask },
+     };
+     unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
+     unsigned int i, j, length = 0, caps = 0;
+
+From 3ede3d8b2dcd46dbc3c2f936a8aa221a1d653600 Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Mon, 11 May 2020 16:03:09 -0500
+Subject: [PATCH 47/50] winegstreamer: Translate MPEG-4 Section-2 attributes to
+ caps.
+
+Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
+---
+ dlls/winegstreamer/mfplat.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
+index 04fe213268a..95341f972b9 100644
+--- a/dlls/winegstreamer/mfplat.c
++++ b/dlls/winegstreamer/mfplat.c
+@@ -1220,6 +1220,23 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+                 CoTaskMemFree(user_data);
+             }
+         }
++        else if (IsEqualGUID(&subtype, &MFVideoFormat_M4S2))
++        {
++            BYTE *user_data;
++            DWORD user_data_size;
++
++            output = gst_caps_new_empty_simple("video/mpeg");
++            gst_caps_set_simple(output, "mpegversion", G_TYPE_INT, 4, NULL);
++
++            if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(type, &MF_MT_USER_DATA, &user_data, &user_data_size)))
++            {
++                GstBuffer *codec_data_buffer = gst_buffer_new_allocate(NULL, user_data_size, NULL);
++                gst_buffer_fill(codec_data_buffer, 0, user_data, user_data_size);
++                gst_caps_set_simple(output, "codec_data", GST_TYPE_BUFFER, codec_data_buffer, NULL);
++                gst_buffer_unref(codec_data_buffer);
++                CoTaskMemFree(user_data);
++            }
++        }
+         else {
+             FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
+             return NULL;
+
+From 420138b2cc36f8367a3336988ee319a49e8f31fe Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Mon, 11 May 2020 16:05:50 -0500
+Subject: [PATCH 48/50] winegstreamer: Introduce MPEG-4 Section-2 video
+ decoder.
+
+Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
+---
+ dlls/winegstreamer/gst_private.h             |  1 +
+ dlls/winegstreamer/mf_decode.c               | 10 ++++++
+ dlls/winegstreamer/mfplat.c                  | 34 ++++++++++++++++++++
+ dlls/winegstreamer/winegstreamer_classes.idl |  6 ++++
+ include/mfidl.idl                            |  1 +
+ 5 files changed, 52 insertions(+)
+
+diff --git a/dlls/winegstreamer/gst_private.h b/dlls/winegstreamer/gst_private.h
+index b855d650dc3..6dc90e28810 100644
+--- a/dlls/winegstreamer/gst_private.h
++++ b/dlls/winegstreamer/gst_private.h
+@@ -67,6 +67,7 @@ enum decoder_type
+     DECODER_TYPE_H264,
+     DECODER_TYPE_AAC,
+     DECODER_TYPE_WMV,
++    DECODER_TYPE_M4S2,
+ };
+ HRESULT generic_decoder_construct(REFIID riid, void **obj, enum decoder_type);
+ enum source_type
+diff --git a/dlls/winegstreamer/mf_decode.c b/dlls/winegstreamer/mf_decode.c
+index 5de1b60d2a2..57d83e3875b 100644
+--- a/dlls/winegstreamer/mf_decode.c
++++ b/dlls/winegstreamer/mf_decode.c
+@@ -31,6 +31,9 @@ const GUID *aac_output_types[] = {&MFAudioFormat_Float, &MFAudioFormat_PCM};
+ const GUID *wmv_input_types[] = {&MFVideoFormat_WMV3, &MFVideoFormat_WVC1};
+ const GUID *wmv_output_types[] = {&MFVideoFormat_NV12, &MFVideoFormat_YV12, &MFVideoFormat_YUY2, &MFVideoFormat_UYVY, &MFVideoFormat_YVYU, &MFVideoFormat_NV11, &MFVideoFormat_RGB32, &MFVideoFormat_RGB24, &MFVideoFormat_RGB555, &MFVideoFormat_RGB8};
+ 
++const GUID *m4s2_input_types[] = {&MFVideoFormat_MPEG2};
++const GUID *m4s2_output_types[] = {&MFVideoFormat_I420, &MFVideoFormat_IYUV, &MFVideoFormat_NV12, &MFVideoFormat_YUY2, &MFVideoFormat_YV12};
++
+ static struct decoder_desc
+ {
+     const GUID *major_type;
+@@ -60,6 +63,13 @@ static struct decoder_desc
+         ARRAY_SIZE(wmv_input_types),
+         wmv_output_types,
+         ARRAY_SIZE(wmv_output_types),
++    },
++    { /* DECODER_TYPE_M4S2 */
++        &MFMediaType_Video,
++        m4s2_input_types,
++        ARRAY_SIZE(m4s2_input_types),
++        m4s2_output_types,
++        ARRAY_SIZE(m4s2_output_types),
+     }
+ };
+ 
+diff --git a/dlls/winegstreamer/mfplat.c b/dlls/winegstreamer/mfplat.c
+index 95341f972b9..e1cf054c115 100644
+--- a/dlls/winegstreamer/mfplat.c
++++ b/dlls/winegstreamer/mfplat.c
+@@ -419,6 +419,11 @@ static HRESULT wmv_decoder_create(REFIID riid, void **ret)
+     return generic_decoder_construct(riid, ret, DECODER_TYPE_WMV);
+ }
+ 
++static HRESULT m4s2_decoder_create(REFIID riid, void **ret)
++{
++    return generic_decoder_construct(riid, ret, DECODER_TYPE_M4S2);
++}
++
+ static HRESULT mp4_stream_handler_create(REFIID riid, void **ret)
+ {
+     return container_stream_handler_construct(riid, ret, SOURCE_TYPE_MPEG_4);
+@@ -442,6 +447,7 @@ class_objects[] =
+     { &CLSID_CMSH264DecoderMFT, &h264_decoder_create },
+     { &CLSID_CMSAACDecMFT, &aac_decoder_create },
+     { &CLSID_CWMVDecMediaObject, &wmv_decoder_create },
++    { &CLSID_CMpeg4sDecMFT, m4s2_decoder_create },
+     { &CLSID_MPEG4ByteStreamHandler, &mp4_stream_handler_create },
+     { &CLSID_ASFByteStreamHandler, &asf_stream_handler_create },
+     { &CLSID_CColorConvertDMO, &color_converter_create },
+@@ -546,6 +552,22 @@ const GUID *wmv_decoder_output_types[] =
+     &MFVideoFormat_RGB8,
+ };
+ 
++static WCHAR m4s2decoderW[] = {'M','p','e','g','4','s',' ','D','e','c','o','d','e','r',' ','M','F','T',0};
++
++const GUID *m4s2_decoder_input_types[] =
++{
++    &MFVideoFormat_M4S2,
++};
++
++const GUID *m4s2_decoder_output_types[] =
++{
++    &MFVideoFormat_I420,
++    &MFVideoFormat_IYUV,
++    &MFVideoFormat_NV12,
++    &MFVideoFormat_YUY2,
++    &MFVideoFormat_YV12,
++};
++
+ static const struct mft
+ {
+     const GUID *clsid;
+@@ -608,6 +630,18 @@ mfts[] =
+         ARRAY_SIZE(wmv_decoder_output_types),
+         wmv_decoder_output_types,
+         NULL
++    },
++    {
++        &CLSID_CMpeg4sDecMFT,
++        &MFT_CATEGORY_VIDEO_DECODER,
++        m4s2decoderW,
++        MFT_ENUM_FLAG_SYNCMFT,
++        &MFMediaType_Video,
++        ARRAY_SIZE(m4s2_decoder_input_types),
++        m4s2_decoder_input_types,
++        ARRAY_SIZE(m4s2_decoder_output_types),
++        m4s2_decoder_output_types,
++        NULL
+     }
+ };
+ 
+diff --git a/dlls/winegstreamer/winegstreamer_classes.idl b/dlls/winegstreamer/winegstreamer_classes.idl
+index d933d40cfd3..3a3daad3ab6 100644
+--- a/dlls/winegstreamer/winegstreamer_classes.idl
++++ b/dlls/winegstreamer/winegstreamer_classes.idl
+@@ -74,6 +74,12 @@ coclass CMSH264DecoderMFT { }
+ ]
+ coclass CMSAACDecMFT { }
+ 
++[
++    threading(both),
++    uuid(5686a0d9-fe39-409f-9dff-3fdbc849f9f5)
++]
++coclass CMpeg4sDecMFT { }
++
+ [
+     threading(both),
+     uuid(41457294-644c-4298-a28a-BD69F2C0CF3B)
+diff --git a/include/mfidl.idl b/include/mfidl.idl
+index 3f994854425..a66962dd270 100644
+--- a/include/mfidl.idl
++++ b/include/mfidl.idl
+@@ -1131,5 +1131,6 @@ cpp_quote("EXTERN_GUID(CLSID_VideoProcessorMFT, 0x88753b26, 0x5b24, 0x49bd, 0xb2
+ cpp_quote("EXTERN_GUID(CLSID_MPEG4ByteStreamHandler, 0x271c3902, 0x6095, 0x4c45, 0xa2, 0x2f, 0x20, 0x09, 0x18, 0x16, 0xee, 0x9e);")
+ cpp_quote("EXTERN_GUID(CLSID_CMSH264DecoderMFT, 0x62ce7e72, 0x4c71, 0x4d20, 0xb1, 0x5d, 0x45, 0x28, 0x31, 0xa8, 0x7d, 0x9d);")
+ cpp_quote("EXTERN_GUID(CLSID_CMSAACDecMFT, 0x32d186a7, 0x218f, 0x4c75, 0x88, 0x76, 0xdd, 0x77, 0x27, 0x3a, 0x89, 0x99);")
++cpp_quote("EXTERN_GUID(CLSID_CMpeg4sDecMFT, 0x5686a0d9, 0xfe39, 0x409f, 0x9d, 0xff, 0x3f, 0xdb, 0xc8, 0x49, 0xf9, 0xf5);")
+ cpp_quote("EXTERN_GUID(CLSID_ASFByteStreamHandler, 0x41457294, 0x644c, 0x4298, 0xa2, 0x8a, 0xbd, 0x69, 0xf2, 0xc0, 0xcf, 0x3b);")
+ cpp_quote("EXTERN_GUID(CLSID_CWMVDecMediaObject, 0x82d353df, 0x90bd, 0x4382, 0x8b, 0xc2, 0x3f, 0x61, 0x92, 0xb7, 0x6e, 0x34);")
+\ No newline at end of file
+
+From 379662bd5714ca9ebdce9f192b3b6afe96b3f374 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Thu, 7 May 2020 13:12:00 -0500
-Subject: [PATCH 46/46] HACK around ::Close being called before EOP is
+Subject: [PATCH 49/50] HACK around ::Close being called before EOP is
  complete.
 
 ---
@@ -12067,10 +12304,10 @@ Subject: [PATCH 46/46] HACK around ::Close being called before EOP is
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/dlls/mf/session.c b/dlls/mf/session.c
-index 68720247fc0..ee3204869cb 100644
+index ce3d7e3018d..2a98ee3ef0a 100644
 --- a/dlls/mf/session.c
 +++ b/dlls/mf/session.c
-@@ -2329,7 +2329,8 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
+@@ -2345,7 +2345,8 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
                      break;
              }
  
@@ -12080,3 +12317,26 @@ index 68720247fc0..ee3204869cb 100644
                  session_set_stopped(session, hr);
  
              break;
+
+From b2509165bd14c7def24ccdca4c04ebb112ccf90d Mon Sep 17 00:00:00 2001
+From: Derek Lesho <dlesho@codeweavers.com>
+Date: Mon, 11 May 2020 17:27:13 -0500
+Subject: [PATCH 50/50] WACK
+
+---
+ dlls/mf/session.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dlls/mf/session.c b/dlls/mf/session.c
+index 2a98ee3ef0a..4494fae6ded 100644
+--- a/dlls/mf/session.c
++++ b/dlls/mf/session.c
+@@ -2769,7 +2769,7 @@ static void session_raise_end_of_presentation(struct media_session *session)
+         if (session_nodes_is_mask_set(session, MF_TOPOLOGY_MAX, SOURCE_FLAG_END_OF_PRESENTATION))
+         {
+             session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION;
+-            session_push_back_command(session, SESSION_CMD_END);
++            //session_push_back_command(session, SESSION_CMD_END);
+             IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
+         }
+     }
