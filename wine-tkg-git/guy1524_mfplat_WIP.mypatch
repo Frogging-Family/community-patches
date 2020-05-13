@@ -10832,64 +10832,6 @@ index 5c01346987b..5a8537970ab 100644
  
      if (FAILED(hr = media_stream_align_with_mf(object, &stream_type)))
 
-From e366449eb776994e15e188beef2dce5ca6705e18 Mon Sep 17 00:00:00 2001
-From: Derek Lesho <dlesho@codeweavers.com>
-Date: Mon, 4 May 2020 12:42:09 -0500
-Subject: [PATCH 44/53] Stub out enough of the SAR to prevent the session from
- stalling.
-
----
- dlls/mf/sar.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
-
-diff --git a/dlls/mf/sar.c b/dlls/mf/sar.c
-index f883163bde5..d5998cb1f39 100644
---- a/dlls/mf/sar.c
-+++ b/dlls/mf/sar.c
-@@ -553,6 +553,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
-             if (FAILED(hr = IAudioClient_Start(renderer->audio_client)))
-                 WARN("Failed to start audio client, hr %#x.\n", hr);
-             renderer->state = STREAM_STATE_RUNNING;
-+            IMFStreamSink_QueueEvent(&renderer->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
-         }
-     }
-     else
-@@ -1239,16 +1240,34 @@ static HRESULT WINAPI audio_renderer_stream_GetMediaTypeHandler(IMFStreamSink *i
- 
- static HRESULT WINAPI audio_renderer_stream_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
- {
-+    struct audio_renderer *renderer = impl_from_IMFStreamSink(iface);
-+
-     FIXME("%p, %p.\n", iface, sample);
- 
-+    EnterCriticalSection(&renderer->cs);
-+
-+    if (renderer->state == STREAM_STATE_RUNNING && sample)
-+        IMFStreamSink_QueueEvent(&renderer->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
-+
-+    LeaveCriticalSection(&renderer->cs);
-+
-     return E_NOTIMPL;
- }
- 
- static HRESULT WINAPI audio_renderer_stream_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
-         const PROPVARIANT *marker_value, const PROPVARIANT *context_value)
- {
-+    struct audio_renderer *renderer = impl_from_IMFStreamSink(iface);
-+
-     FIXME("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
- 
-+    EnterCriticalSection(&renderer->cs);
-+
-+    if (renderer->state == STREAM_STATE_RUNNING)
-+        IMFStreamSink_QueueEvent(&renderer->IMFStreamSink_iface, MEStreamSinkMarker, &GUID_NULL, S_OK, context_value);
-+
-+    LeaveCriticalSection(&renderer->cs);
-+
-     return E_NOTIMPL;
- }
- 
-
 From 60d2ca39e1cd4c809d5347e40a75f3247c9ea533 Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Mon, 9 Mar 2020 11:59:17 -0500
