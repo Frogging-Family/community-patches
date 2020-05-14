@@ -61,7 +61,7 @@ diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
 index c4aedd00c..04b3e9257 100644
 --- a/arch/x86/mm/pat/set_memory.c
 +++ b/arch/x86/mm/pat/set_memory.c
-@@ -340,22 +340,56 @@ static void __cpa_flush_tlb(void *data)
+@@ -340,22 +340,57 @@ static void __cpa_flush_tlb(void *data)
  		__flush_tlb_one_kernel(fix_addr(__cpa_addr(cpa, i)));
  }
  
@@ -106,19 +106,18 @@ index c4aedd00c..04b3e9257 100644
  		return;
  	}
  
--	if (cpa->numpages <= tlb_single_page_flush_ceiling)
--		on_each_cpu(__cpa_flush_tlb, cpa, 1);
--	else
-+	if (cpa->numpages > tlb_single_page_flush_ceiling || !list_empty(&pgtables))
+-	if (cpa->force_flush_all || cpa->numpages > tlb_single_page_flush_ceiling)
++	if (cpa->force_flush_all || cpa->numpages > tlb_single_page_flush_ceiling
++		|| !list_empty(&pgtables))
  		flush_tlb_all();
-+	else
-+		on_each_cpu(__cpa_flush_tlb, cpa, 1);
-+
+ 	else
+ 		on_each_cpu(__cpa_flush_tlb, cpa, 1);
+ 
 +	list_for_each_entry_safe(page, tmp, &pgtables, lru) {
 +		list_del(&page->lru);
 +		__free_page(page);
 +	}
- 
++
  	if (!cache)
  		return;
 @@ -1071,6 +1105,153 @@ static int split_large_page(struct cpa_data *cpa, pte_t *kpte,
