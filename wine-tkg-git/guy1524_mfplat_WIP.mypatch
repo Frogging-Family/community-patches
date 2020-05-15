@@ -12327,54 +12327,6 @@ index 3f994854425..a66962dd270 100644
  cpp_quote("EXTERN_GUID(CLSID_CWMVDecMediaObject, 0x82d353df, 0x90bd, 0x4382, 0x8b, 0xc2, 0x3f, 0x61, 0x92, 0xb7, 0x6e, 0x34);")
 \ No newline at end of file
 
-From f4cec58bd2981e1218aadecd04b2b4343c0d542d Mon Sep 17 00:00:00 2001
-From: Derek Lesho <dlesho@codeweavers.com>
-Date: Tue, 12 May 2020 10:08:20 -0500
-Subject: [PATCH 51/53] mf: Attach markers to previously queued sample, not the
- next.
-
-Signed-off-by: Derek Lesho <dlesho@codeweavers.com>
----
- dlls/mf/samplegrabber.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
-
-diff --git a/dlls/mf/samplegrabber.c b/dlls/mf/samplegrabber.c
-index 7d9fa78732a..d0c789a8fd2 100644
---- a/dlls/mf/samplegrabber.c
-+++ b/dlls/mf/samplegrabber.c
-@@ -722,7 +722,7 @@ static struct scheduled_item *stream_get_next_item(struct sample_grabber *grabbe
- static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
- {
-     struct sample_grabber *grabber = impl_from_IMFAsyncCallback(iface);
--    struct scheduled_item *item;
-+    struct scheduled_item *item, *cursor2;
-     BOOL sample_delivered;
-     HRESULT hr;
- 
-@@ -741,8 +741,13 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
-                     stream_release_pending_item(item);
- 
-                     /* Schedule next sample, skipping markers. */
--                    LIST_FOR_EACH_ENTRY(item, &grabber->items, struct scheduled_item, entry)
-+                    LIST_FOR_EACH_ENTRY_SAFE(item, cursor2, &grabber->items, struct scheduled_item, entry)
-                     {
-+                        if (item->type == ITEM_TYPE_MARKER)
-+                        {
-+                            sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
-+                            stream_release_pending_item(item);
-+                        }
-                         if (item->type == ITEM_TYPE_SAMPLE)
-                         {
-                             if (FAILED(hr = stream_schedule_sample(grabber, item)))
-@@ -756,6 +761,7 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
- 
-                     item = NULL;
-                     break;
-+                /* just in case */
-                 case ITEM_TYPE_MARKER:
-                     sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
-                     stream_release_pending_item(item);
-
 From c056ea67b9d2ff31ccea0f555739b8a886f78efd Mon Sep 17 00:00:00 2001
 From: Derek Lesho <dlesho@codeweavers.com>
 Date: Tue, 12 May 2020 16:48:52 -0500
