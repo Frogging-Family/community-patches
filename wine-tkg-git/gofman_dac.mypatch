@@ -445,184 +445,6 @@ index 000000000000..085413b67bba
 -- 
 2.26.2
 
-From 33588eba362bded7bc59a009684ade077c6ec9bb Mon Sep 17 00:00:00 2001
-From: Paul Gofman <pgofman@codeweavers.com>
-Date: Fri, 15 May 2020 19:45:59 +0300
-Subject: [PATCH 04/44] ntoskrnl.exe: Add KdRefreshDebuggerNotPresent()
- function.
-
----
- dlls/ntoskrnl.exe/ntoskrnl.c        | 7 +++++++
- dlls/ntoskrnl.exe/ntoskrnl.exe.spec | 1 +
- 2 files changed, 8 insertions(+)
-
-diff --git a/dlls/ntoskrnl.exe/ntoskrnl.c b/dlls/ntoskrnl.exe/ntoskrnl.c
-index 77d6ccd38ab5..c5c8a46f3dfb 100644
---- a/dlls/ntoskrnl.exe/ntoskrnl.c
-+++ b/dlls/ntoskrnl.exe/ntoskrnl.c
-@@ -3977,3 +3977,10 @@ BOOLEAN WINAPI RtlIsNtDdiVersionAvailable(ULONG version)
-     FIXME("stub: %d\n", version);
-     return FALSE;
- }
-+
-+BOOLEAN WINAPI KdRefreshDebuggerNotPresent(void)
-+{
-+    TRACE(".\n");
-+
-+    return !KdDebuggerEnabled;
-+}
-diff --git a/dlls/ntoskrnl.exe/ntoskrnl.exe.spec b/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-index 651fe4852b93..5f084425df54 100644
---- a/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-+++ b/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-@@ -517,6 +517,7 @@
- @ stub KdEnteredDebugger
- @ stub KdPollBreakIn
- @ stub KdPowerTransition
-+@ stdcall KdRefreshDebuggerNotPresent()
- @ stub Ke386CallBios
- @ stdcall Ke386IoSetAccessProcess(ptr long)
- @ stub Ke386QueryIoAccessMap
--- 
-2.26.2
-
-From 097bf62f5deb06e3f19201e02d1ffec07f9eeabb Mon Sep 17 00:00:00 2001
-From: Paul Gofman <pgofman@codeweavers.com>
-Date: Fri, 22 May 2020 16:35:51 +0300
-Subject: [PATCH 05/44] include/ddk: Add prototype for
- KeQueryActiveProcessors().
-
----
- include/ddk/wdm.h | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/include/ddk/wdm.h b/include/ddk/wdm.h
-index 707eca0b32f5..5b1f19e4f1a1 100644
---- a/include/ddk/wdm.h
-+++ b/include/ddk/wdm.h
-@@ -1696,6 +1696,7 @@ void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
- void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
- void      WINAPI KeInitializeTimer(KTIMER*);
- void      WINAPI KeLeaveCriticalRegion(void);
-+KAFFINITY WINAPI KeQueryActiveProcessors(void);
- void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
- void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
- ULONG     WINAPI KeQueryTimeIncrement(void);
--- 
-2.26.2
-
-From 799c55e625319d66b6e549945b96a6798e46b39e Mon Sep 17 00:00:00 2001
-From: Paul Gofman <pgofman@codeweavers.com>
-Date: Fri, 15 May 2020 19:51:53 +0300
-Subject: [PATCH 06/44] ntoskrnl.exe: Add KeQueryActiveProcessorCountEx()
- function.
-
----
- dlls/ntoskrnl.exe/ntoskrnl.c        | 12 +++++++++++
- dlls/ntoskrnl.exe/ntoskrnl.exe.spec |  1 +
- dlls/ntoskrnl.exe/tests/driver.c    | 31 +++++++++++++++++++++++++++++
- include/ddk/wdm.h                   |  1 +
- 4 files changed, 45 insertions(+)
-
-diff --git a/dlls/ntoskrnl.exe/ntoskrnl.c b/dlls/ntoskrnl.exe/ntoskrnl.c
-index c5c8a46f3dfb..22b1b6a14e08 100644
---- a/dlls/ntoskrnl.exe/ntoskrnl.c
-+++ b/dlls/ntoskrnl.exe/ntoskrnl.c
-@@ -2395,6 +2395,18 @@ KAFFINITY WINAPI KeQueryActiveProcessors( void )
-     return AffinityMask;
- }
- 
-+ULONG WINAPI KeQueryActiveProcessorCountEx(USHORT group_number)
-+{
-+    TRACE("group_number %u.\n", group_number);
-+
-+    if (group_number && group_number != ALL_PROCESSOR_GROUPS)
-+    {
-+        FIXME("group_number %u not supported.\n", group_number);
-+        return 0;
-+    }
-+
-+    return NtCurrentTeb()->Peb->NumberOfProcessors;
-+}
- 
- /**********************************************************************
-  *           KeQueryInterruptTime   (NTOSKRNL.EXE.@)
-diff --git a/dlls/ntoskrnl.exe/ntoskrnl.exe.spec b/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-index 5f084425df54..d07c7b7f57b0 100644
---- a/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-+++ b/dlls/ntoskrnl.exe/ntoskrnl.exe.spec
-@@ -587,6 +587,7 @@
- @ stub KeProfileInterruptWithSource
- @ stub KePulseEvent
- @ stdcall KeQueryActiveProcessors()
-+@ stdcall KeQueryActiveProcessorCountEx(long)
- @ stdcall KeQueryInterruptTime()
- @ stub KeQueryPriorityThread
- @ stub KeQueryRuntimeThread
-diff --git a/dlls/ntoskrnl.exe/tests/driver.c b/dlls/ntoskrnl.exe/tests/driver.c
-index 63c81d64e8fe..7d28de01934b 100644
---- a/dlls/ntoskrnl.exe/tests/driver.c
-+++ b/dlls/ntoskrnl.exe/tests/driver.c
-@@ -1758,6 +1758,36 @@ static void test_default_modules(void)
-     ok(dxgmms1, "Failed to find dxgmms1.sys\n");
- }
- 
-+static void test_affinity(void)
-+{
-+    ULONG (WINAPI *pKeQueryActiveProcessorCountEx)(USHORT);
-+    KAFFINITY (WINAPI *pKeQueryActiveProcessors)(void);
-+    ULONG cpu_count, count;
-+    KAFFINITY mask;
-+
-+    pKeQueryActiveProcessorCountEx = get_proc_address("KeQueryActiveProcessorCountEx");
-+    if (!pKeQueryActiveProcessorCountEx)
-+    {
-+        win_skip("KeQueryActiveProcessorCountEx is not available.\n");
-+        return;
-+    }
-+
-+    pKeQueryActiveProcessors = get_proc_address("KeQueryActiveProcessors");
-+    ok(!!pKeQueryActiveProcessors, "KeQueryActiveProcessors is not available.\n");
-+
-+    count = pKeQueryActiveProcessorCountEx(1);
-+    ok(!count, "Got unexpected count %u.\n", count);
-+
-+    cpu_count = pKeQueryActiveProcessorCountEx(0);
-+    ok(cpu_count, "Got unexpected cpu_count %u.\n", cpu_count);
-+
-+    count = pKeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-+    ok(count == cpu_count, "Got unexpected count %u.\n", count);
-+
-+    mask = pKeQueryActiveProcessors();
-+    ok(mask == ~((~0u) << cpu_count), "Got unexpected mask %#lx.\n", mask);
-+}
-+
- static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
- {
-     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
-@@ -1812,6 +1842,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
- #if defined(__i386__) || defined(__x86_64__)
-     test_executable_pool();
- #endif
-+    test_affinity();
- 
-     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
- 
-diff --git a/include/ddk/wdm.h b/include/ddk/wdm.h
-index 5b1f19e4f1a1..790d1a12477e 100644
---- a/include/ddk/wdm.h
-+++ b/include/ddk/wdm.h
-@@ -1696,6 +1696,7 @@ void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
- void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
- void      WINAPI KeInitializeTimer(KTIMER*);
- void      WINAPI KeLeaveCriticalRegion(void);
-+ULONG     WINAPI KeQueryActiveProcessorCountEx(USHORT);
- KAFFINITY WINAPI KeQueryActiveProcessors(void);
- void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
- void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
--- 
-2.26.2
-
 From 5ef1d45162127630a70b9b8504540060db8ee621 Mon Sep 17 00:00:00 2001
 From: Paul Gofman <pgofman@codeweavers.com>
 Date: Fri, 15 May 2020 20:01:47 +0300
@@ -679,44 +501,6 @@ index d07c7b7f57b0..dff32aebf9e7 100644
  @ stdcall KeSetTargetProcessorDpc(ptr long)
  @ stub KeSetTimeIncrement
  @ stub KeSetTimer
--- 
-2.26.2
-
-From bbe656f543c4f56c77af9d8155ae1b3a1e1f9898 Mon Sep 17 00:00:00 2001
-From: Paul Gofman <pgofman@codeweavers.com>
-Date: Fri, 15 May 2020 20:41:14 +0300
-Subject: [PATCH 08/44] ntoskrnl: Return 0 for unknown msr registers.
-
----
- dlls/ntoskrnl.exe/instr.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-diff --git a/dlls/ntoskrnl.exe/instr.c b/dlls/ntoskrnl.exe/instr.c
-index 68140c09ef7b..c1c08aba5e37 100644
---- a/dlls/ntoskrnl.exe/instr.c
-+++ b/dlls/ntoskrnl.exe/instr.c
-@@ -627,7 +627,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr, int addl_instr
- 
- static void fake_syscall_function(void)
- {
--    TRACE("() stub\n");
-+    FIXME("() stub\n");
- }
- 
- 
-@@ -815,7 +815,11 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
-                 context->Rax = (ULONG)syscall_address;
-                 break;
-             }
--            default: return ExceptionContinueSearch;
-+            default:
-+                FIXME("reg %#x returning 0.\n");
-+                context->Rdx = 0;
-+                context->Rax = 0;
-+                break;
-             }
-             context->Rip += prefixlen + 2;
-             return ExceptionContinueExecution;
 -- 
 2.26.2
 
@@ -1082,7 +866,7 @@ Subject: [PATCH 16/44] ntdll: Fill more USD fields.
 ---
  dlls/ntdll/nt.c     |  1 -
  dlls/ntdll/thread.c | 30 ++++++++++++++++++++++++++++++
- server/mapping.c    |  2 ++
+ server/fd.c    |  2 ++
  3 files changed, 32 insertions(+), 1 deletion(-)
 
 diff --git a/dlls/ntdll/nt.c b/dlls/ntdll/nt.c
@@ -1101,12 +885,10 @@ diff --git a/dlls/ntdll/thread.c b/dlls/ntdll/thread.c
 index 6161bdd09318..2b294617bd48 100644
 --- a/dlls/ntdll/thread.c
 +++ b/dlls/ntdll/thread.c
-@@ -294,6 +294,36 @@ static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
-         features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRYPTO);
-         break;
+@@ -294,6 +294,34 @@ static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
      }
-+    data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
-+    data->ActiveGroupCount = 1;
+     data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
+     data->ActiveGroupCount = 1;
 +    data->NXSupportPolicy = 0x2;
 +    data->VirtualizationFlags = 0x29;
 +    data->TestRetInstruction = 0xc3;
@@ -1138,19 +920,19 @@ index 6161bdd09318..2b294617bd48 100644
  }
  
  HANDLE user_shared_data_init_done(void)
-diff --git a/server/mapping.c b/server/mapping.c
+diff --git a/server/fd.c b/server/fd.c
 index 0221c02060e2..650d8bcde7f9 100644
---- a/server/mapping.c
-+++ b/server/mapping.c
-@@ -1056,6 +1056,8 @@ static void kusd_set_current_time( void *private )
-     ptr->TickCount.LowPart = tick_count_low;
-     ptr->TickCount.High1Time = tick_count_high;
-     *(volatile ULONG *)&ptr->TickCountLowDeprecated = tick_count_low;
+--- a/server/fd.c
++++ b/server/fd.c
+@@ -381,6 +381,8 @@ static void set_user_shared_data_time(void)
+     user_shared_data->TickCount.LowPart   = tick_count;
+     user_shared_data->TickCount.High1Time = tick_count >> 32;
+     *(volatile ULONG *)&user_shared_data->TickCountLowDeprecated = tick_count;
 +
-+    ptr->LastSystemRITEventTickCount = tick_count_low;
++    user_shared_data->LastSystemRITEventTickCount = tick_count;
  #else
-     __atomic_store_n(&ptr->SystemTime.High2Time, system_time_high, __ATOMIC_SEQ_CST);
-     __atomic_store_n(&ptr->SystemTime.LowPart, system_time_low, __ATOMIC_SEQ_CST);
+     __atomic_store_n(&user_shared_data->SystemTime.High2Time, current_time >> 32, __ATOMIC_SEQ_CST);
+     __atomic_store_n(&user_shared_data->SystemTime.LowPart, current_time, __ATOMIC_SEQ_CST);
 -- 
 2.26.2
 
