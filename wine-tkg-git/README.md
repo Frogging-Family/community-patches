@@ -25,4 +25,3 @@
 - 0001-Add-some-semi-stubs-in-user32.mypatch : Fixes black/green screen when running Steep in fullscreen/windowed fullscreen mode, courtesy of Guy1524
 - guy1524_mfplat_WIP.mypatch : MFPlat support patchset from our Lord and Savior Guy1524, binaryless version - You'll likely want `_proton_mf_hacks="false"` when using it - https://github.com/Guy1524/wine/commits/mfplat_cleanup
 - winex11_limit_resources-nmode.mypatch : Hack to fix DARK SOULS III, Nier: Automata and Sekiro: Shadows Die Twice crashing when there are too many display modes available - This can lead to missing modes on other games if you're affected by the issue - https://github.com/ValveSoftware/wine/pull/83
-- gofman_dac.mypatch : Paul Gofman's denuvo anticheat support patchset - Requires `_use_staging="true"` in your .cfg - https://github.com/ValveSoftware/Proton/issues/3773#issuecomment-633114122
