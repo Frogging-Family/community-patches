@@ -1,0 +1,2029 @@
+From patchwork Tue May 26 19:51:12 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571143
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id E937A1667
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:31 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id B18FC2088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:31 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="OuGZsDad"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B18FC2088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 91181800B7; Tue, 26 May 2020 15:51:29 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 89A0580010; Tue, 26 May 2020 15:51:29 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 763DA800B7; Tue, 26 May 2020 15:51:29 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0019.hostedemail.com
+ [216.40.44.19])
+	by kanga.kvack.org (Postfix) with ESMTP id 5F7A780010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:29 -0400 (EDT)
+Received: from smtpin20.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay05.hostedemail.com (Postfix) with ESMTP id 0C47F181AC9BF
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:29 +0000 (UTC)
+X-FDA: 76859914698.20.key93_0f0d94a26d4c
+X-Spam-Summary: 
+ 2,0,0,8be791cb5b9c8b4a,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1515:1534:1540:1711:1714:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3350:3871:3876:5007:6261:6653:10004:11026:11473:11658:11914:12109:12296:12297:12517:12519:12555:12895:13069:13311:13357:13894:14181:14384:14394:14721:21080:21444:21451:21627:30054,0,RBL:209.85.214.194:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
+X-HE-Tag: key93_0f0d94a26d4c
+X-Filterd-Recvd-Size: 3831
+Received: from mail-pl1-f194.google.com (mail-pl1-f194.google.com
+ [209.85.214.194])
+	by imf04.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:28 +0000 (UTC)
+Received: by mail-pl1-f194.google.com with SMTP id t7so9113602plr.0
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=DT9kV8IQxC/D+uhFJsefv+iJT3TxYB4ReZ7s4ZFOil0=;
+        b=OuGZsDadMk0ouSxBbagElzrDsOFsdbddmk5eH65ga2Wxc3HZgfLVLJcFyhEw8usAcZ
+         HTB+HylhbVE98IfGgUAnUH7V2yMwJESFU4207FlXryYh0fm8menLFq7jByDucoN4/oPf
+         rJyxXSFaoAe7D9VKjzoCoCQGXgjxaau5MP+A01WQYIW/16fxIm7sCIPAjYEsvtXGsM60
+         0/ikp/pt7voJ76qWQsjOrJT4Xr0rTeQIodW8eo5MyOLN0+AY4TmYJZDl/Sm0O9y1vtWI
+         bc7fhd+puE49SaeiR2JWPdxtuJM7gyKt8uZOc2YIZRlech7S/BIEWD8kxVapjAUHpLtp
+         dpXw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=DT9kV8IQxC/D+uhFJsefv+iJT3TxYB4ReZ7s4ZFOil0=;
+        b=e9xz0wLre25p1AMjn8oj3pcK9wS8X2RxZWxSt2v5biggSi0kdkM9fR48hz0T+4CpYR
+         zyBZ2ICXS0E2onaefQce3PY//67vDDS7EVpnU1aN7Kw18R4M2jnpXBKXB5ClXIMqWL0C
+         ir6IY632h85xmvcBzEJYD05kDMecwnOaXFmKdSDdiEcofPZj6cLtVlc1ng1vWCCaWM3A
+         xDnbGxdwWWDTl9hcMqcIUYmWOBunNwYN2iLwecOqg/wGZdbzJHKhjqamYeNPL3dB99jJ
+         a3EPTPcmjwXie9CzUisLo+flAT6Mxp/knWQ+dHsakSNQB/4Ax1NYHQMbn8hyTk1NU2+9
+         3sVQ==
+X-Gm-Message-State: AOAM530Z/GgA+gIarMwUIWMnKRVWrdASpwaievQ4ncTTJdDxZ4PvVCPm
+	sVsc7dsutVboVqQAyNAroitxYQ==
+X-Google-Smtp-Source: 
+ ABdhPJz8Ax0r8XMmPGcDuG+vpoiMfRCzG//xGTpSe/ZiXq6nh5Ywfeb0pH34jS4EKxW64rcgwO66Uw==
+X-Received: by 2002:a17:90a:2a8e:: with SMTP id
+ j14mr894757pjd.136.1590522687551;
+        Tue, 26 May 2020 12:51:27 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.26
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:27 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 01/12] block: read-ahead submission should imply no-wait as
+ well
+Date: Tue, 26 May 2020 13:51:12 -0600
+Message-Id: <20200526195123.29053-2-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+As read-ahead is opportunistic, don't block for request allocation.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ include/linux/blk_types.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index ccb895f911b1..c296463c15eb 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -374,7 +374,8 @@ enum req_flag_bits {
+ #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
+ #define REQ_FUA			(1ULL << __REQ_FUA)
+ #define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
+-#define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)
++#define REQ_RAHEAD		\
++	((1ULL << __REQ_RAHEAD) | (1ULL << __REQ_NOWAIT))
+ #define REQ_BACKGROUND		(1ULL << __REQ_BACKGROUND)
+ #define REQ_NOWAIT		(1ULL << __REQ_NOWAIT)
+ #define REQ_CGROUP_PUNT		(1ULL << __REQ_CGROUP_PUNT)
+
+From patchwork Tue May 26 19:51:13 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571145
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id F39E6913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:33 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id C1A1720899
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:33 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="EEzkohF3"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C1A1720899
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id D07D8800B8; Tue, 26 May 2020 15:51:30 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id C924E80010; Tue, 26 May 2020 15:51:30 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id AE855800B8; Tue, 26 May 2020 15:51:30 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0158.hostedemail.com
+ [216.40.44.158])
+	by kanga.kvack.org (Postfix) with ESMTP id 92E8180010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:30 -0400 (EDT)
+Received: from smtpin11.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay01.hostedemail.com (Postfix) with ESMTP id 50B92180AD81F
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:30 +0000 (UTC)
+X-FDA: 76859914740.11.spark81_6462748ce5328
+X-Spam-Summary: 
+ 2,0,0,f57e48cd4e3c9e93,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1534:1539:1568:1711:1714:1730:1747:1777:1792:2194:2198:2199:2200:2393:2559:2562:3138:3139:3140:3141:3142:3865:3867:3870:3871:3872:4321:5007:6261:6653:7875:10004:11026:11658:11914:12043:12296:12297:12438:12517:12519:12555:12895:13069:13161:13229:13311:13357:13894:14181:14384:14394:14721:21080:21324:21444:21627:30054,0,RBL:209.85.214.195:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:24,LUA_SUMMARY:none
+X-HE-Tag: spark81_6462748ce5328
+X-Filterd-Recvd-Size: 3607
+Received: from mail-pl1-f195.google.com (mail-pl1-f195.google.com
+ [209.85.214.195])
+	by imf26.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:29 +0000 (UTC)
+Received: by mail-pl1-f195.google.com with SMTP id y11so829129plt.12
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:29 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=TvoN8a3WZmoogVlnFEo2G3/jPQNtfJ5pQXb6VgaLeNI=;
+        b=EEzkohF3SUyIeVc607D1E79iz7OYkD/uy0I4GSnchfP+t2/8/jBtqFox0ipMXW7gmS
+         ofFyzP3GFe0yYbASDLZaxrNNYrAZioS6+qyZzi3BNWoxV7sx7HqmGaPk0jbEdJvgnKeB
+         LS9UwziDdS5h+5MFwXcOepQDNcjfOPRuuNqKL+56cp6TcQw3V1rzfELuJiMDiQxFYBUv
+         vodgm8HTVNcfKt1cQ9mCuLi6iS5R/Q8g3QwtsGY6bO7P1eejUGE4Bg2SUpBDQd14zfM1
+         K3pATJ3oH3ooIkQY7kB2SG6VI0b8+IfGy1HVnsFn7Li+LHrtGMCLBa+H3phkx45yiFvC
+         NeTQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=TvoN8a3WZmoogVlnFEo2G3/jPQNtfJ5pQXb6VgaLeNI=;
+        b=dXHkt80wzzeloS8+v19HP+hQcDKAYUpnMS20OK9ccmESAslukcZwOXA6JIQ54zWESG
+         wt5raXpsHWhpEiEclVdZLY5WzvWu0nHP3Sgu3oN7T0IqFyouu2sfK7IZOnrGq27nC+lQ
+         Inl3NRh0Wup4ZgMNB2ROG8c8hXguriSfl/oWOYdfK227tW0PRoSmCgKdmFLlUWZBfDlM
+         NXnrePzdZUABl4WrJtdmL6il1eAKeNBPJCUX+yi4148icfbPA0UOdJdkjoi1XEljnfwg
+         uaa0TFrrfCMRI6M91oSLU2MzypIE9uM+h5xb30apt/46qOAxS0Xmty9TtH0ximn6U06Q
+         Nu9w==
+X-Gm-Message-State: AOAM533ePiA8c6nAeUMtt7UvZW3Fp0GdqedSH2EnRmDhFqI5OjO+h/yI
+	+DW27/RLthYNPHojJHCTE1UOLQ==
+X-Google-Smtp-Source: 
+ ABdhPJzlKhcLATAMmx3CWvH61LMiVxHHoRlGG4C3q4JS7w38d9LDkh0jn/mRK3Wz+nSKoQ/Hn6XBsQ==
+X-Received: by 2002:a17:90a:1b25:: with SMTP id
+ q34mr920742pjq.12.1590522688801;
+        Tue, 26 May 2020 12:51:28 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:28 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 02/12] mm: allow read-ahead with IOCB_NOWAIT set
+Date: Tue, 26 May 2020 13:51:13 -0600
+Message-Id: <20200526195123.29053-3-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+The read-ahead shouldn't block, so allow it to be done even if
+IOCB_NOWAIT is set in the kiocb.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+---
+ mm/filemap.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 23a051a7ef0f..80747f1377d5 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2031,8 +2031,6 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+ 
+ 		page = find_get_page(mapping, index);
+ 		if (!page) {
+-			if (iocb->ki_flags & IOCB_NOWAIT)
+-				goto would_block;
+ 			page_cache_sync_readahead(mapping,
+ 					ra, filp,
+ 					index, last_index - index);
+
+From patchwork Tue May 26 19:51:14 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571147
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id E7EC6913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:35 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id A96CA2088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:35 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="YKbLOw6L"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A96CA2088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 3E343800B9; Tue, 26 May 2020 15:51:32 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 368F680010; Tue, 26 May 2020 15:51:32 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 19536800B9; Tue, 26 May 2020 15:51:32 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0018.hostedemail.com
+ [216.40.44.18])
+	by kanga.kvack.org (Postfix) with ESMTP id 01F7E80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:31 -0400 (EDT)
+Received: from smtpin29.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay05.hostedemail.com (Postfix) with ESMTP id 99FC9181AC9BF
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:31 +0000 (UTC)
+X-FDA: 76859914782.29.cause69_649ac1fbd1648
+X-Spam-Summary: 
+ 2,0,0,8b49e74205115b02,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:69:355:379:541:800:960:968:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1535:1543:1711:1730:1747:1777:1792:2194:2199:2393:2559:2562:3138:3139:3140:3141:3142:3355:3865:3866:3867:3868:3870:3871:3872:3874:4117:4605:5007:6261:6653:7903:9592:10004:11026:11658:11914:12043:12114:12291:12294:12296:12297:12438:12517:12519:12555:12683:12895:13894:14096:14110:14181:14394:14721:21080:21212:21324:21444:21627:21990:30054,0,RBL:209.85.216.66:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:26,LUA_SUMMARY:none
+X-HE-Tag: cause69_649ac1fbd1648
+X-Filterd-Recvd-Size: 6260
+Received: from mail-pj1-f66.google.com (mail-pj1-f66.google.com
+ [209.85.216.66])
+	by imf28.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:31 +0000 (UTC)
+Received: by mail-pj1-f66.google.com with SMTP id s69so257679pjb.4
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:31 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=fQihCl0dLbHaElgiRrlXkibi9/E8OKsaJ7lF0uUyO/s=;
+        b=YKbLOw6LpYloCfEz6cSjXDp7lo/SEH14850NuBSfnHJZqbSNda9ft1KrD9kDTlgX29
+         i5p9OTzKmGtxOrMHS+JBQto/yzM9zXGeRvk09gakJOY0/1BHuWAqj05obqvWTcQqZXjM
+         tSs3FQLGux7Ieod96lB3tb6zv/Ei+e+rH+jvFEsgFfzk6f2Q6xviMQedqciMUxeS5bww
+         YudmGt61FcA28hKFe3zbgPJZzUu27iwTT39ESm3iUzvAQWSmULv85wglM46pdLh9xw2G
+         2vQ4GSnPWkUwbN9Hsml5BFWibSXp84PL/jR8cl2CQ0mI7mUEGk1xtvkYObM/1b+lAY5j
+         3Wiw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=fQihCl0dLbHaElgiRrlXkibi9/E8OKsaJ7lF0uUyO/s=;
+        b=JSjVZ0+BVGyWtAdxccnq2Qha4t55KexrxmvRIVNf7m0Lhop7EuTNR0wGG7a8HH3eYN
+         2gmB18MKpKfFaMFATYyuW+SvbjeNbKiUhRRjA/BRCz0gfgOO4TRyIPz37iY0ErmOkGD5
+         N2bGyf7bUIoECmpfyPKFXDD6se3dmT6pVIun6FfejK27Fam4fBAc3B70UbX978g+wkBE
+         nL6d0/7q1+463Dfa9qzIx3DaYMT601kTZK/pJaFtgmnqJ6DNU69yTvgLrV/4cJ2pt9XK
+         C4tXdi6jYkNdIe6aZT6uD0eanPNIKCFh72Jufhd5Qf9jKPH6d2385BF+EGIg652o9eEY
+         YSdw==
+X-Gm-Message-State: AOAM530UwiczIAY0gjcfodwAAbMdWMF0vH72wOTUMPfbyZKvmDXw0bkN
+	DYhOjsAzbI++T2tT+IHr/pnJAzbpjLwuUw==
+X-Google-Smtp-Source: 
+ ABdhPJyeEiZx5SIpedWyfYllR0duff8tGiFVV6KjQ7XygtXqKPG6eKYMQBb6I07aOaSUrZejp48HpQ==
+X-Received: by 2002:a17:90a:f283:: with SMTP id
+ fs3mr874913pjb.1.1590522690209;
+        Tue, 26 May 2020 12:51:30 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:29 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 03/12] mm: abstract out wake_page_match() from
+ wake_page_function()
+Date: Tue, 26 May 2020 13:51:14 -0600
+Message-Id: <20200526195123.29053-4-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+No functional changes in this patch, just in preparation for allowing
+more callers.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+---
+ include/linux/pagemap.h | 37 +++++++++++++++++++++++++++++++++++++
+ mm/filemap.c            | 35 ++++-------------------------------
+ 2 files changed, 41 insertions(+), 31 deletions(-)
+
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index a8f7bd8ea1c6..53d980f2208d 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -456,6 +456,43 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
+ 	return pgoff;
+ }
+ 
++/* This has the same layout as wait_bit_key - see fs/cachefiles/rdwr.c */
++struct wait_page_key {
++	struct page *page;
++	int bit_nr;
++	int page_match;
++};
++
++struct wait_page_queue {
++	struct page *page;
++	int bit_nr;
++	wait_queue_entry_t wait;
++};
++
++static inline int wake_page_match(struct wait_page_queue *wait_page,
++				  struct wait_page_key *key)
++{
++	if (wait_page->page != key->page)
++	       return 0;
++	key->page_match = 1;
++
++	if (wait_page->bit_nr != key->bit_nr)
++		return 0;
++
++	/*
++	 * Stop walking if it's locked.
++	 * Is this safe if put_and_wait_on_page_locked() is in use?
++	 * Yes: the waker must hold a reference to this page, and if PG_locked
++	 * has now already been set by another task, that task must also hold
++	 * a reference to the *same usage* of this page; so there is no need
++	 * to walk on to wake even the put_and_wait_on_page_locked() callers.
++	 */
++	if (test_bit(key->bit_nr, &key->page->flags))
++		return -1;
++
++	return 1;
++}
++
+ extern void __lock_page(struct page *page);
+ extern int __lock_page_killable(struct page *page);
+ extern int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 80747f1377d5..e891b5bee8fd 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -990,43 +990,16 @@ void __init pagecache_init(void)
+ 	page_writeback_init();
+ }
+ 
+-/* This has the same layout as wait_bit_key - see fs/cachefiles/rdwr.c */
+-struct wait_page_key {
+-	struct page *page;
+-	int bit_nr;
+-	int page_match;
+-};
+-
+-struct wait_page_queue {
+-	struct page *page;
+-	int bit_nr;
+-	wait_queue_entry_t wait;
+-};
+-
+ static int wake_page_function(wait_queue_entry_t *wait, unsigned mode, int sync, void *arg)
+ {
+ 	struct wait_page_key *key = arg;
+ 	struct wait_page_queue *wait_page
+ 		= container_of(wait, struct wait_page_queue, wait);
++	int ret;
+ 
+-	if (wait_page->page != key->page)
+-	       return 0;
+-	key->page_match = 1;
+-
+-	if (wait_page->bit_nr != key->bit_nr)
+-		return 0;
+-
+-	/*
+-	 * Stop walking if it's locked.
+-	 * Is this safe if put_and_wait_on_page_locked() is in use?
+-	 * Yes: the waker must hold a reference to this page, and if PG_locked
+-	 * has now already been set by another task, that task must also hold
+-	 * a reference to the *same usage* of this page; so there is no need
+-	 * to walk on to wake even the put_and_wait_on_page_locked() callers.
+-	 */
+-	if (test_bit(key->bit_nr, &key->page->flags))
+-		return -1;
+-
++	ret = wake_page_match(wait_page, key);
++	if (ret != 1)
++		return ret;
+ 	return autoremove_wake_function(wait, mode, sync, key);
+ }
+ 
+
+From patchwork Tue May 26 19:51:15 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571149
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id AEDF5159A
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:37 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 7C22E2088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:37 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="iE3qXf/O"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7C22E2088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id C4872800BA; Tue, 26 May 2020 15:51:33 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id B0F6880010; Tue, 26 May 2020 15:51:33 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 8EA71800BA; Tue, 26 May 2020 15:51:33 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0050.hostedemail.com
+ [216.40.44.50])
+	by kanga.kvack.org (Postfix) with ESMTP id 6BACF80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:33 -0400 (EDT)
+Received: from smtpin08.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay03.hostedemail.com (Postfix) with ESMTP id 2500F8248076
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:33 +0000 (UTC)
+X-FDA: 76859914866.08.men15_4a124c826d4c
+X-Spam-Summary: 
+ 2,0,0,5ee7e80125f4aafc,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:968:973:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1535:1544:1605:1711:1730:1747:1777:1792:2194:2199:2393:2559:2562:3138:3139:3140:3141:3142:3865:3867:3868:3870:3871:3872:3874:4118:4250:4321:4605:5007:6261:6653:7875:8957:10004:11026:11473:11658:11914:12043:12291:12296:12297:12438:12517:12519:12555:12683:12895:13138:13231:13894:14096:14181:14394:14721:21067:21080:21324:21444:21451:21627:21796:21990:30036:30054,0,RBL:209.85.216.67:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:26,LUA_SUMMARY:none
+X-HE-Tag: men15_4a124c826d4c
+X-Filterd-Recvd-Size: 7259
+Received: from mail-pj1-f67.google.com (mail-pj1-f67.google.com
+ [209.85.216.67])
+	by imf01.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:32 +0000 (UTC)
+Received: by mail-pj1-f67.google.com with SMTP id 5so266415pjd.0
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=91LPx4VFG9btmYMQhwNjB8l3CSYHzquXTBOwjvdo+tY=;
+        b=iE3qXf/OK07yvdsW8Vb51ZnFfsRrhY/I8AyPsPZBuYDCG+TC8jz9R0D0M+GRoONqmI
+         gim5npZm8cxTM+QSweOQXfZsODg5VS6+7bN+CKZ4dMY7gY+QpgkMzMrv59Fphw7RYayS
+         JBGmAVIX3BEE46Smv2GYnsm+ImSrUvQiaACUJ58syDnlB+HNG5sK2LsdT4XG1F3dqp/4
+         oVhakRyiZ0nYbu4FXaNA5/FJOFFKKsGpp/Hce7YkE5gJePG3prwbUWapZwHq23NDXkHD
+         /0mpwLPbH1DZDuHuFhnGHadUwVq75hkc8cYWz+Lkln7BqwK/1OvfBTdLVjGY87S3aO6Z
+         QMtg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=91LPx4VFG9btmYMQhwNjB8l3CSYHzquXTBOwjvdo+tY=;
+        b=ERAkGjiIkRmMIieDJc+vSvlPez/1rpKwB8DI2GzszbUAGFhqUvVWXkBIQhE3v769QP
+         3fqHVFXlvYBB0i4khKP4aJx4g3j6v1qu+AUL24C6WEsmLaitQSLDkX9wb0fPcGIfHtTA
+         zqk+3COaqqE1wkjUpd4W24XWXSzDey5lZSZl+E7g8Y4DFtrsqu3vzC5yUXc5JO8TQDfn
+         3oNU2Jvphihge+ijNM3dgXVWQ6g7VPWN9RYQ8WPZRUTnnYGTW++Akq8M62UvZRDvD6La
+         ewbbLX0yF6+xUe+UuCS6aWF7oikzDqy1HEffomH8ulydfImxtbVaGkleG7qnFE4rwdQE
+         tE8Q==
+X-Gm-Message-State: AOAM530BQjXPE6d9/i7u2AH4BR8hkvO0+Smkkc2iKKanxUSrFL4ROJhD
+	Ah461Yj/uWD1pQAFtx2Hgjs17Q==
+X-Google-Smtp-Source: 
+ ABdhPJzk5ZeLZ9PiNns9o7WtuSDeeuU8oJZ8JIZZ0HjXadMCEeQTkM4QJqeJe1UnHKeyrNQoGn1fyg==
+X-Received: by 2002:a17:90a:2a0d:: with SMTP id
+ i13mr909880pjd.94.1590522691575;
+        Tue, 26 May 2020 12:51:31 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:31 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 04/12] mm: add support for async page locking
+Date: Tue, 26 May 2020 13:51:15 -0600
+Message-Id: <20200526195123.29053-5-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+Normally waiting for a page to become unlocked, or locking the page,
+requires waiting for IO to complete. Add support for lock_page_async()
+and wait_on_page_locked_async(), which are callback based instead. This
+allows a caller to get notified when a page becomes unlocked, rather
+than wait for it.
+
+We add a new iocb field, ki_waitq, to pass in the necessary data for this
+to happen. We can unionize this with ki_cookie, since that is only used
+for polled IO. Polled IO can never co-exist with async callbacks, as it is
+(by definition) polled completions. struct wait_page_key is made public,
+and we define struct wait_page_async as the interface between the caller
+and the core.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+---
+ include/linux/fs.h      |  7 ++++++-
+ include/linux/pagemap.h |  9 +++++++++
+ mm/filemap.c            | 41 +++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 56 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index d3ebb49189df..ba1fff0e7bca 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -314,6 +314,8 @@ enum rw_hint {
+ #define IOCB_SYNC		(1 << 5)
+ #define IOCB_WRITE		(1 << 6)
+ #define IOCB_NOWAIT		(1 << 7)
++/* iocb->ki_waitq is valid */
++#define IOCB_WAITQ		(1 << 8)
+ 
+ struct kiocb {
+ 	struct file		*ki_filp;
+@@ -327,7 +329,10 @@ struct kiocb {
+ 	int			ki_flags;
+ 	u16			ki_hint;
+ 	u16			ki_ioprio; /* See linux/ioprio.h */
+-	unsigned int		ki_cookie; /* for ->iopoll */
++	union {
++		unsigned int		ki_cookie; /* for ->iopoll */
++		struct wait_page_queue	*ki_waitq; /* for async buffered IO */
++	};
+ 
+ 	randomized_struct_fields_end
+ };
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index 53d980f2208d..d3e63c9c61ae 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -495,6 +495,7 @@ static inline int wake_page_match(struct wait_page_queue *wait_page,
+ 
+ extern void __lock_page(struct page *page);
+ extern int __lock_page_killable(struct page *page);
++extern int __lock_page_async(struct page *page, struct wait_page_queue *wait);
+ extern int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
+ 				unsigned int flags);
+ extern void unlock_page(struct page *page);
+@@ -531,6 +532,14 @@ static inline int lock_page_killable(struct page *page)
+ 	return 0;
+ }
+ 
++static inline int lock_page_async(struct page *page,
++				  struct wait_page_queue *wait)
++{
++	if (!trylock_page(page))
++		return __lock_page_async(page, wait);
++	return 0;
++}
++
+ /*
+  * lock_page_or_retry - Lock the page, unless this would block and the
+  * caller indicated that it can handle a retry.
+diff --git a/mm/filemap.c b/mm/filemap.c
+index e891b5bee8fd..c746541b1d49 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1183,6 +1183,42 @@ int wait_on_page_bit_killable(struct page *page, int bit_nr)
+ }
+ EXPORT_SYMBOL(wait_on_page_bit_killable);
+ 
++static int __wait_on_page_locked_async(struct page *page,
++				       struct wait_page_queue *wait, bool set)
++{
++	struct wait_queue_head *q = page_waitqueue(page);
++	int ret = 0;
++
++	wait->page = page;
++	wait->bit_nr = PG_locked;
++
++	spin_lock_irq(&q->lock);
++	if (set)
++		ret = !trylock_page(page);
++	else
++		ret = PageLocked(page);
++	if (ret) {
++		__add_wait_queue_entry_tail(q, &wait->wait);
++		SetPageWaiters(page);
++		if (set)
++			ret = !trylock_page(page);
++		else
++			ret = PageLocked(page);
++		/*
++		 * If we were succesful now, we know we're still on the
++		 * waitqueue as we're still under the lock. This means it's
++		 * safe to remove and return success, we know the callback
++		 * isn't going to trigger.
++		 */
++		if (!ret)
++			__remove_wait_queue(q, &wait->wait);
++		else
++			ret = -EIOCBQUEUED;
++	}
++	spin_unlock_irq(&q->lock);
++	return ret;
++}
++
+ /**
+  * put_and_wait_on_page_locked - Drop a reference and wait for it to be unlocked
+  * @page: The page to wait for.
+@@ -1345,6 +1381,11 @@ int __lock_page_killable(struct page *__page)
+ }
+ EXPORT_SYMBOL_GPL(__lock_page_killable);
+ 
++int __lock_page_async(struct page *page, struct wait_page_queue *wait)
++{
++	return __wait_on_page_locked_async(page, wait, true);
++}
++
+ /*
+  * Return values:
+  * 1 - page is locked; mmap_sem is still held.
+
+From patchwork Tue May 26 19:51:16 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571151
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id ACAD8159A
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:39 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 797E52088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:39 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="bmGfUVJW"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 797E52088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 7DA29800BB; Tue, 26 May 2020 15:51:35 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 761D480010; Tue, 26 May 2020 15:51:35 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 62B8F800BB; Tue, 26 May 2020 15:51:35 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0041.hostedemail.com
+ [216.40.44.41])
+	by kanga.kvack.org (Postfix) with ESMTP id 4AA2D80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:35 -0400 (EDT)
+Received: from smtpin02.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay03.hostedemail.com (Postfix) with ESMTP id 098F18248076
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:35 +0000 (UTC)
+X-FDA: 76859914950.02.food01_6517aaebe9135
+X-Spam-Summary: 
+ 2,0,0,4d6bb21b8fb0c797,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:973:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1535:1542:1711:1730:1747:1777:1792:2194:2198:2199:2200:2393:2559:2562:2689:2901:3138:3139:3140:3141:3142:3353:3865:3867:3868:3870:3871:3872:3874:4250:4321:5007:6119:6261:6653:7875:7903:8957:9592:10004:11026:11658:11914:12043:12114:12291:12296:12297:12438:12517:12519:12555:12683:12895:13161:13229:13894:14096:14181:14394:14721:21080:21324:21444:21627:21990:30054,0,RBL:209.85.214.196:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:22,LUA_SUMMARY:none
+X-HE-Tag: food01_6517aaebe9135
+X-Filterd-Recvd-Size: 5387
+Received: from mail-pl1-f196.google.com (mail-pl1-f196.google.com
+ [209.85.214.196])
+	by imf31.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:34 +0000 (UTC)
+Received: by mail-pl1-f196.google.com with SMTP id x10so9111173plr.4
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=ooHBrOZD/3Y3JOqiI+j5WGnGx9rNLKp4UPlTrA3k0fA=;
+        b=bmGfUVJWYu6f/+lClc0yvwBvsEefc8SiuJxE38gUHmvCG67ZCMQ1ZoFC93WjnhwWQ4
+         yZg7fQlvm/Sucx7ncKy3qvV98rMGm86zWQnvA8hq14lOsPQmzOry1k+ft5gveL4FUJQL
+         gaUBcnu8T8B55uU9BUZgRqOrmN0p82G3CTFOtVxJUrhxYK5Gn/8JEk4HKkHRhEAIvpxF
+         8iJj/6xBx4Ipgxa4B/+4ClHWKS0rVZdsYpFYzgcgIZxh9GvRIk8QENgpCADWhtcWb7U6
+         btJvYpMYxIv2afcSGCvbCXlq8oQ8SvKxQmlD9hcdrFZzniK3vSqmkl4k4ZoCvIJr0Avu
+         Vabw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=ooHBrOZD/3Y3JOqiI+j5WGnGx9rNLKp4UPlTrA3k0fA=;
+        b=S5bCfmWhRqOtFYXnsQPtgL+J/vQR/yqGCZu2sxniBv0lVaDEh9ql/IDqIdG2k6UGyP
+         lHkNIMpRAyP6QTn2QT8g0YiuVxhfa5Hbj0FvotvtlWj3LyEVSZ+ItzUm3I6yL1vJgkh5
+         ujsjmqArfu4Nj/H76CfW57caLgEJ2d/eQgJpZw3+wJUdMsGs7WYQpwvifPcsODuDLCts
+         YlzU8w4IObRw9h4WxInm3fJ0yBa4rOVhkqskHHQCjTUJb2SlpxTsrrt7Ay4E7VB9SV27
+         yLqs5euTqSxkRpgNC8XCLqrxIW70jP2BRXaoaqgvxWzDbz7qqTvsTjHDRQWWrqfbVAY4
+         I2dA==
+X-Gm-Message-State: AOAM5322HEULQ/rfGbXWaNP2/m2TMxmfKW1Ju1RN7BnafT7pGwSzkpNu
+	SIyuX1IFGuyLGC3i6N0uAoSaG5737zSv+g==
+X-Google-Smtp-Source: 
+ ABdhPJwGQ4LouRwKTJPsAC18WrHUCMfjZtLRZJD5qeryOylS8TBNaNMGloP6eX183Bgo+/GUML+3Rg==
+X-Received: by 2002:a17:902:b110:: with SMTP id
+ q16mr1318137plr.221.1590522693552;
+        Tue, 26 May 2020 12:51:33 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:33 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 05/12] mm: support async buffered reads in
+ generic_file_buffered_read()
+Date: Tue, 26 May 2020 13:51:16 -0600
+Message-Id: <20200526195123.29053-6-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+Use the async page locking infrastructure, if IOCB_WAITQ is set in the
+passed in iocb. The caller must expect an -EIOCBQUEUED return value,
+which means that IO is started but not done yet. This is similar to how
+O_DIRECT signals the same operation. Once the callback is received by
+the caller for IO completion, the caller must retry the operation.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+---
+ mm/filemap.c | 33 ++++++++++++++++++++++++++-------
+ 1 file changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index c746541b1d49..18022de7dc33 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1219,6 +1219,14 @@ static int __wait_on_page_locked_async(struct page *page,
+ 	return ret;
+ }
+ 
++static int wait_on_page_locked_async(struct page *page,
++				     struct wait_page_queue *wait)
++{
++	if (!PageLocked(page))
++		return 0;
++	return __wait_on_page_locked_async(compound_head(page), wait, false);
++}
++
+ /**
+  * put_and_wait_on_page_locked - Drop a reference and wait for it to be unlocked
+  * @page: The page to wait for.
+@@ -2058,17 +2066,25 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+ 					index, last_index - index);
+ 		}
+ 		if (!PageUptodate(page)) {
+-			if (iocb->ki_flags & IOCB_NOWAIT) {
+-				put_page(page);
+-				goto would_block;
+-			}
+-
+ 			/*
+ 			 * See comment in do_read_cache_page on why
+ 			 * wait_on_page_locked is used to avoid unnecessarily
+ 			 * serialisations and why it's safe.
+ 			 */
+-			error = wait_on_page_locked_killable(page);
++			if (iocb->ki_flags & IOCB_WAITQ) {
++				if (written) {
++					put_page(page);
++					goto out;
++				}
++				error = wait_on_page_locked_async(page,
++								iocb->ki_waitq);
++			} else {
++				if (iocb->ki_flags & IOCB_NOWAIT) {
++					put_page(page);
++					goto would_block;
++				}
++				error = wait_on_page_locked_killable(page);
++			}
+ 			if (unlikely(error))
+ 				goto readpage_error;
+ 			if (PageUptodate(page))
+@@ -2156,7 +2172,10 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+ 
+ page_not_up_to_date:
+ 		/* Get exclusive access to the page ... */
+-		error = lock_page_killable(page);
++		if (iocb->ki_flags & IOCB_WAITQ)
++			error = lock_page_async(page, iocb->ki_waitq);
++		else
++			error = lock_page_killable(page);
+ 		if (unlikely(error))
+ 			goto readpage_error;
+ 
+
+From patchwork Tue May 26 19:51:17 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571153
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 822DD913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:41 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 4F59A2088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:41 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="QGGh7eDv"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4F59A2088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id CBBA4800BC; Tue, 26 May 2020 15:51:36 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id C488280010; Tue, 26 May 2020 15:51:36 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 9AA7B800BC; Tue, 26 May 2020 15:51:36 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0073.hostedemail.com
+ [216.40.44.73])
+	by kanga.kvack.org (Postfix) with ESMTP id 837C080010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:36 -0400 (EDT)
+Received: from smtpin05.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay01.hostedemail.com (Postfix) with ESMTP id 36413180AD81D
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:36 +0000 (UTC)
+X-FDA: 76859914992.05.band22_6545a01153807
+X-Spam-Summary: 
+ 2,0,0,883e1a1d076334d7,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:973:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1534:1540:1711:1714:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3351:3622:3865:3866:3867:3868:3874:4321:5007:6261:6653:10004:11026:11473:11658:11914:12296:12297:12438:12517:12519:12555:12895:12986:13069:13311:13357:13894:14096:14181:14384:14394:14721:21080:21444:21450:21451:21627:30054:30070,0,RBL:209.85.210.194:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:25,LUA_SUMMARY:none
+X-HE-Tag: band22_6545a01153807
+X-Filterd-Recvd-Size: 3749
+Received: from mail-pf1-f194.google.com (mail-pf1-f194.google.com
+ [209.85.210.194])
+	by imf34.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:35 +0000 (UTC)
+Received: by mail-pf1-f194.google.com with SMTP id n15so10658243pfd.0
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:35 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=pJi+qFrBerZp7lBzD9z2X8A704PrrK58u6ckL/rX8b0=;
+        b=QGGh7eDvuMEBseMP4f9z7p3YtnoMdEdl9ZhyIAyPiRAlOPWyjOt58ZYAEOyE5NGpZ+
+         VbiVeaEvFBaRPyUFJs+jXjd5VlpU+FnFUdGnRwd4iM9vS4L8882zLFU0dJLNP83bH/7X
+         Hr9aSoECE600nn2BUNPRRieqpYPuc2kJasfGr0Oad4cVuC7JJqYajXm+cBZv+VfHISga
+         vLPJeD20yZMDEi0ileA+x1DrR5XEs54TlbjSVb6dXpEJAnHRCLPDGSG+Q65Af5so6wyt
+         UoNhrMBuw8SKSezT9NYfONZtHHhz+/qyOtkgNQTZkmJfGXNjvokqDQxWupSNHXy0H+/a
+         mcwA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=pJi+qFrBerZp7lBzD9z2X8A704PrrK58u6ckL/rX8b0=;
+        b=nOculddE5eHIvyYNHQbkU+uE3H+o8CMTWm8uy2qWCyoJGugcYitBN3pYuKrR593Pu1
+         kgQrd3uupA8MvTYHgJXdG5gVXUNuIvIAZkRTpLX0/ZPmwJeJM/7NIqkO7twc9EUpusc/
+         TjeIG4ii59TrWs8MPOAl4rSoOTCLAVMl83PYgRd2HRzTcZakyntpl6074iZGywe0A2+J
+         YURAr5jhHR1i+7O0YsD/JbiHypJ/x+c7SpLjJBFWMQv2S6ab9pQDO4Pmu3KLch7ZSGZr
+         pSwpBALJuxbV0V2K6ZEbQ49hDkTjdARE5/CQa2xpFt5v5C1DwXoKRq3FT4nkzpuG61kH
+         bGjg==
+X-Gm-Message-State: AOAM533dg3QABIIwx4WHP0RVPZLN0uJkDyB9nCEm5IiBnZl7Og6YdkFS
+	JFMBW5TE5BLcB6v56SLTDapt/A==
+X-Google-Smtp-Source: 
+ ABdhPJzJqSQxVJW7x8nTJ31d7qT/FMci6We/odd5NaY49/EasjZOkFDNFy9QZL38JZHs/iDqJ2x1gQ==
+X-Received: by 2002:a63:5245:: with SMTP id s5mr481181pgl.394.1590522694841;
+        Tue, 26 May 2020 12:51:34 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.33
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:34 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 06/12] fs: add FMODE_BUF_RASYNC
+Date: Tue, 26 May 2020 13:51:17 -0600
+Message-Id: <20200526195123.29053-7-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+If set, this indicates that the file system supports IOCB_WAITQ for
+buffered reads.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ include/linux/fs.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ba1fff0e7bca..5ffc6d236b01 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -175,6 +175,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ /* File does not contribute to nr_files count */
+ #define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
+ 
++/* File supports async buffered reads */
++#define FMODE_BUF_RASYNC	((__force fmode_t)0x40000000)
++
+ /*
+  * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
+  * that indicates that they should check the contents of the iovec are
+
+From patchwork Tue May 26 19:51:18 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571157
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 4EF4E913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:43 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 1C8F92088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:43 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="V4vZlEEo"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1C8F92088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 517C9800BD; Tue, 26 May 2020 15:51:38 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 4C7FA80010; Tue, 26 May 2020 15:51:38 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 36948800BD; Tue, 26 May 2020 15:51:38 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0135.hostedemail.com
+ [216.40.44.135])
+	by kanga.kvack.org (Postfix) with ESMTP id 2023D80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:38 -0400 (EDT)
+Received: from smtpin02.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay04.hostedemail.com (Postfix) with ESMTP id BA88A52DD
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:37 +0000 (UTC)
+X-FDA: 76859915034.02.scale83_657dc0d271837
+X-Spam-Summary: 
+ 2,0,0,fe46e1c907c4635e,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1515:1534:1538:1566:1711:1714:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3876:3877:4321:5007:6114:6261:6642:6653:10004:11026:11473:11658:11914:12297:12517:12519:12555:12895:13069:13311:13357:13894:14181:14384:14394:14721:21080:21444:21627:21990:30054,0,RBL:209.85.216.68:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:24,LUA_SUMMARY:none
+X-HE-Tag: scale83_657dc0d271837
+X-Filterd-Recvd-Size: 3474
+Received: from mail-pj1-f68.google.com (mail-pj1-f68.google.com
+ [209.85.216.68])
+	by imf16.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:37 +0000 (UTC)
+Received: by mail-pj1-f68.google.com with SMTP id 5so266532pjd.0
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=7SUIxRwptQ6YWj2W/l7Dp7FzKmS+sjQ+qLVh2r/v7CQ=;
+        b=V4vZlEEoKDqieT7hflzw5LCDI+LKcZUvo3Ldv1B6nIJyQFjQVObJEjYJvLZcOXvigJ
+         XFaZZNKcVEjx92yoP/mrgXgpnR0CotgPlUTXVNVfzoKp9JzK30dNsQEmJb3wosGrLUxB
+         U8RsYVcKqFttW2FE5KGyEAXW3lYLtI/Up6eRarLnAsqMbQv1c3x5NKGKDbBaB/ydFz6t
+         7nJ6/vrORT3XMoHvYvJSZPS6MwjnIf9/choDZ58RJSYg3LkxqDzYmJhgdB5KpzqaEp1D
+         jz+Rq1oQarSSrrXlfv6K57XzM5S6Jo9ouSoj57WYGLAnQKn8EBEWyWXJUyXm1pphBhbm
+         UMOg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=7SUIxRwptQ6YWj2W/l7Dp7FzKmS+sjQ+qLVh2r/v7CQ=;
+        b=kFsDXYkaNeIPyeyoCtSPOXhdXA8mko4vbuBDJ3gfJILaSWuHSVFpn1qPg6tGBmOv8h
+         n3G16wjLE6yQyDmnbIx9h5taGK+pbp6lDO3oI0m1Lx2DEDrk23KKl4vwm9wqqUnEyAF+
+         HVlp/UzEUrL25fu2qrDgQL0ODEfgucXd6pKckOyrPNU2EZDVLDM2ZmpzgQrT20XIpY8U
+         FD4Gah6ON8yuzFNO6bJcAvzgMYD8HVSj34z0S3ZfDdAOSetKRw4sShO9Uc7IF3xRFPos
+         eueRY8JLvhN2MVr4SbkQNZB9Jwe+TuOxVKlE9RFgrdDqWO2Z47CpHEH9Ki2wYBzURJqf
+         Ragw==
+X-Gm-Message-State: AOAM53223lsRXBQDOcEqsC3o70Zsuh6CH29/4iMxK8t3wHorSMPrG70J
+	+3ooStN+fV08lE+YCei1ezLugQ==
+X-Google-Smtp-Source: 
+ ABdhPJzyYUJtjkoA0PGX2KjnNxmXZglyIl+UX6NMsOMleygDwAvXOfiUub9ZxxKR/u6SZWeIJxQwQA==
+X-Received: by 2002:a17:902:bc42:: with SMTP id
+ t2mr2580008plz.233.1590522696165;
+        Tue, 26 May 2020 12:51:36 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:35 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 07/12] ext4: flag as supporting buffered async reads
+Date: Tue, 26 May 2020 13:51:18 -0600
+Message-Id: <20200526195123.29053-8-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/ext4/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 0d624250a62b..9f7d9bf427b4 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -826,7 +826,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
+ 			return ret;
+ 	}
+ 
+-	filp->f_mode |= FMODE_NOWAIT;
++	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+ 	return dquot_file_open(inode, filp);
+ }
+ 
+
+From patchwork Tue May 26 19:51:19 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571159
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 12299913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:45 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id D36CD207D8
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:44 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="rFyVjlx1"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D36CD207D8
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 2F7AA800BE; Tue, 26 May 2020 15:51:40 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 2328180010; Tue, 26 May 2020 15:51:40 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 0D411800BE; Tue, 26 May 2020 15:51:40 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0205.hostedemail.com
+ [216.40.44.205])
+	by kanga.kvack.org (Postfix) with ESMTP id E2DAA80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:39 -0400 (EDT)
+Received: from smtpin29.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay02.hostedemail.com (Postfix) with ESMTP id 6257D5DDC
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:39 +0000 (UTC)
+X-FDA: 76859915118.29.moon83_65b913eed3d17
+X-Spam-Summary: 
+ 2,0,0,c1def4541b191afa,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1515:1534:1538:1567:1711:1714:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3876:3877:5007:6114:6261:6642:6653:10004:11026:11473:11658:11914:12297:12517:12519:12555:12895:13069:13311:13357:13894:14181:14384:14394:14721:21080:21444:21627:30054,0,RBL:209.85.215.195:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
+X-HE-Tag: moon83_65b913eed3d17
+X-Filterd-Recvd-Size: 3521
+Received: from mail-pg1-f195.google.com (mail-pg1-f195.google.com
+ [209.85.215.195])
+	by imf22.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:38 +0000 (UTC)
+Received: by mail-pg1-f195.google.com with SMTP id w20so5537799pga.6
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=LpuXvU/PwSGQGjarIP5I58hv7Zj24N1R3UNEgL0jNDI=;
+        b=rFyVjlx1z2FAJn581hW2m8bZ9qQeVyi56a/pWp00XB5VUt4lek5ugSoCmtZrlde+kL
+         tqa+1PfUl7M2/e9l+7pKHpZQtgFYG4+bog1h7E0GzkngfisOv6OenkOwIP49E+Nby6+f
+         n3A60kLcYP3f42QbUwlhziWKSrx9XE0R68EGvyIxzXWOUrQT6B0FfWHTWWDCwdxgu/93
+         ZQMy6v5XLA5PHMfQ8913VJLQtb5tlNTD/giDskk7TgQrwjFvlPGLsUSQCT2W4wbP22Be
+         mdo47Iq7BMkJzVco7I1VX/a7oWaZcUGsobhAzz8Kq1gdvewllJ0BMVepmGsBwrX++cOp
+         OxHw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=LpuXvU/PwSGQGjarIP5I58hv7Zj24N1R3UNEgL0jNDI=;
+        b=t4InsRIupRyt4q9/bkTc2qbylyaxFx9FhqgywVufvsWxXKhojGaZFAk0hGfgW2OMKN
+         6SjKpa3GjzR1Ggq8pdpRq6cJXRrYj+akfdXy0H5ShNrmqHIYNL8bY2QLnHtnFzLpYCHf
+         2LvvU4dLunDpBzB/3m64T192qUGQ6F07pWAZBgRyvGpNt9+zahaaQPUNIhHosLTIvci+
+         nIJLtOARcpcz0Vlk+oqmoZyIbIxSfFoP7ldvTAvkQ02TLPVfyI8zRDG4seEhlNOXjjmm
+         c3uEuGd09J1AypeZton40CBKGKcnANOAtw+nVaHAAsujzG/xEgVhRLCcHdrX5YuQTA3C
+         BHVA==
+X-Gm-Message-State: AOAM5308ApxM+f0a1luECjGvND+g9Ewt2bH6EOABz8J/eXMKwikU0f4W
+	tGZkND74GooH9/ibdsKdPGN0uA==
+X-Google-Smtp-Source: 
+ ABdhPJxpwoTNNsMNmh/v14vfI6qih++e4eczlzPNldN5B/zhIcZmJK8bBxIbqtxwi5eARBPbplx1tw==
+X-Received: by 2002:a62:e408:: with SMTP id r8mr392923pfh.213.1590522697426;
+        Tue, 26 May 2020 12:51:37 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:36 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 08/12] block: flag block devices as supporting IOCB_WAITQ
+Date: Tue, 26 May 2020 13:51:19 -0600
+Message-Id: <20200526195123.29053-9-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/block_dev.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index d1e08bba925a..980cfce01c9a 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1851,7 +1851,7 @@ static int blkdev_open(struct inode * inode, struct file * filp)
+ 	 */
+ 	filp->f_flags |= O_LARGEFILE;
+ 
+-	filp->f_mode |= FMODE_NOWAIT;
++	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+ 
+ 	if (filp->f_flags & O_NDELAY)
+ 		filp->f_mode |= FMODE_NDELAY;
+
+From patchwork Tue May 26 19:51:20 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571161
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id D27741667
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:46 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 9FFBA20899
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:46 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="yFrvO5Xl"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9FFBA20899
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id B39C0800BF; Tue, 26 May 2020 15:51:41 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id A235780010; Tue, 26 May 2020 15:51:41 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 87330800BF; Tue, 26 May 2020 15:51:41 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0034.hostedemail.com
+ [216.40.44.34])
+	by kanga.kvack.org (Postfix) with ESMTP id 6F8D780010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:41 -0400 (EDT)
+Received: from smtpin01.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay02.hostedemail.com (Postfix) with ESMTP id 367F14DDA
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:41 +0000 (UTC)
+X-FDA: 76859915202.01.shirt48_65fb849218b48
+X-Spam-Summary: 
+ 10,1,0,421e2e063bc57677,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1515:1534:1538:1566:1711:1714:1730:1747:1777:1792:2194:2199:2393:2559:2562:3138:3139:3140:3141:3142:3876:3877:4321:5007:6114:6119:6261:6642:6653:10004:11026:11473:11658:11914:12043:12297:12438:12517:12519:12555:12895:13069:13311:13357:13523:13524:13894:14181:14384:14394:14721:21080:21444:21627:21990:30054,0,RBL:209.85.215.194:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
+X-HE-Tag: shirt48_65fb849218b48
+X-Filterd-Recvd-Size: 3545
+Received: from mail-pg1-f194.google.com (mail-pg1-f194.google.com
+ [209.85.215.194])
+	by imf15.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:40 +0000 (UTC)
+Received: by mail-pg1-f194.google.com with SMTP id w20so5537834pga.6
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:39 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=39qQrTBLEctUrGanLy/C45/WjdVfQkC7faPzmr+qhpI=;
+        b=yFrvO5Xl3qNEXOkExAlKW5HCKxIsDSMlTDL6yu/qdDNmAN9gaTkhr8Ji+yI9XJMB6r
+         Yyj0QZ3VaFi/iX801MVu58AB5V7toUQ/3YSKHrzjYv7i2pgw3diwzJ9VU9sKkiQ+CqO5
+         +3TnFQnSzV+5hEs5v5Y4SsfGIfcKj9q7W3SSj/g2m24bxPjK6B7OSCJCgOwvDr/T+fH0
+         FXKEQYV/edda3rOI2u6He8F3YutgqUpDtRr1cjsP0bBekPjb/tjeT+Zdyk9nrP1RvMHF
+         IL3sBKXh1sO3XzmReF4iBAlL3BzPeFNzf+QnoSzUJnqeO7X206hePi35FPbwAjeQ87ro
+         IySQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=39qQrTBLEctUrGanLy/C45/WjdVfQkC7faPzmr+qhpI=;
+        b=mhBTsNC8jkIMBEmBKIhj6fFDpcBWqUQxuLqdSu6IkfrTzDpXLr7WT9TsZjL3/MR7q9
+         2vlISBACgP3y7bpueqpr5zO4Qwe3q8N2N+j+4U+LqxipaOMrFM7DJT50g8bUy6rjd9YW
+         XAnbuRwtqbJ5OVsLmknxEaQT7KZzbWtAZxO5MMbOpEjx5Tn/JcInojaMUOW4DGlQqGdn
+         bpcoRGwfrrXs6t7/pes9VuThgZwMlqNThzpw/cX1/rwUMtDY9OWt9Ll3E9d+yF9RhaDY
+         V+El/5/Rr/9uFGntyJ4ulLti4DU18+mmbksF+1s7dLsMECTkV8kHx0kAGBEnw8cC6KiB
+         1Gog==
+X-Gm-Message-State: AOAM533M+Donmq5UeR5hdAEmsz4u0iJtP5Szc31Rpszp2bpCTgT60RHw
+	tJ4e/QkBSgv+J5w/o4jtQQ+BbA==
+X-Google-Smtp-Source: 
+ ABdhPJywnc6qZ+WtihMTbkb+pFwn9JjcTK1HqNCVBDIVrphWDInm6gN1LVPRjjrnGs3CvW4hueDaXA==
+X-Received: by 2002:a62:14d6:: with SMTP id 205mr417227pfu.75.1590522699174;
+        Tue, 26 May 2020 12:51:39 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.37
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:38 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 09/12] xfs: flag files as supporting buffered async reads
+Date: Tue, 26 May 2020 13:51:20 -0600
+Message-Id: <20200526195123.29053-10-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+XFS uses generic_file_read_iter(), which already supports this.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/xfs/xfs_file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 4b8bdecc3863..97f44fbf17f2 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -1080,7 +1080,7 @@ xfs_file_open(
+ 		return -EFBIG;
+ 	if (XFS_FORCED_SHUTDOWN(XFS_M(inode->i_sb)))
+ 		return -EIO;
+-	file->f_mode |= FMODE_NOWAIT;
++	file->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+ 	return 0;
+ }
+ 
+
+From patchwork Tue May 26 19:51:21 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571167
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id D16FB159A
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:48 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 9C887208C9
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:48 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="UT8tDTtj"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9C887208C9
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 67B98800C0; Tue, 26 May 2020 15:51:42 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 5BB1E80010; Tue, 26 May 2020 15:51:42 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 432D9800C0; Tue, 26 May 2020 15:51:42 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0102.hostedemail.com
+ [216.40.44.102])
+	by kanga.kvack.org (Postfix) with ESMTP id 2168680010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:42 -0400 (EDT)
+Received: from smtpin13.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay03.hostedemail.com (Postfix) with ESMTP id CBB4F8248076
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:41 +0000 (UTC)
+X-FDA: 76859915202.13.room58_66163498dcc10
+X-Spam-Summary: 
+ 2,0,0,37023159d6ec8184,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1515:1534:1539:1568:1711:1714:1730:1747:1777:1792:2194:2199:2393:2559:2562:3138:3139:3140:3141:3142:3876:3877:4321:5007:6114:6261:6642:6653:10004:11026:11473:11658:11914:12297:12438:12517:12519:12555:12895:13069:13311:13357:13894:14181:14384:14394:14721:21080:21444:21627:21990:30054,0,RBL:209.85.216.67:@kernel.dk:.lbl8.mailshell.net-66.100.201.201
+ 62.2.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:24,LUA_SUMMARY:none
+X-HE-Tag: room58_66163498dcc10
+X-Filterd-Recvd-Size: 3623
+Received: from mail-pj1-f67.google.com (mail-pj1-f67.google.com
+ [209.85.216.67])
+	by imf48.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:41 +0000 (UTC)
+Received: by mail-pj1-f67.google.com with SMTP id q24so265764pjd.1
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=mDbeWlveWyEr17EututM6ewZlLrenoq+wrG4TB+c+O8=;
+        b=UT8tDTtjIxNNLckeUW39C1DftMV8tadKSzZHS24JY/ZgL6QUhytEvq2lkIf1qolpKk
+         U19xBYg0KGV33rpnvi79D2PmiTq7vV4GnQy/vbDB5t3xuGIzSzGqlvQmaVY0B+9G+GIX
+         llYo8cOvcrKG7jjvG4eBsx1q+LF9dT2crnAC1DmoY/wdrKeOH+NZ2+jAdxVlTNFeGy4a
+         bQz1a2+aBWm5/WLAaDmlh/4XzvXPR5G3jeezjLE44Z3L1BaD260oHfxmj3fx6/puUmDQ
+         a+gZr/lzYlcH0GBmCG9QZp0U8aQKyRwejv/NOtaCLlRLWl4GrEw481VCXscus2avzuQ2
+         95Ew==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=mDbeWlveWyEr17EututM6ewZlLrenoq+wrG4TB+c+O8=;
+        b=q6ST0RXB+n2SRs4YuPvKD0xOnrbzfykKQLTyTSbttqh9JeaO4hke72hXwOJnomQK6Q
+         xSn9mL7VXNR+6VIkIg9z1cz5XPGFR7XiY6cBqkRMRsAY8P+9iFX0qXy++9VZ+3ZcDN0B
+         La1293HaJK+lVLo4WqoV01J2bx6kuIolNlrxoGHz9W/SLq2AkT3qXxSLaTdsDwblXm8o
+         qHnHedvQEMhjR6Cnh2s1X9h4tgqbAC7HxfvdtPBQs8yVIcZT2nae4txPyxP+uHv0q3R5
+         BJRMeo/eHrRByKnURIgy2se87nTNYI2CWdVTBNVHzSGg9/tDn3OQsNlxfaAemAgH8JrF
+         e1UA==
+X-Gm-Message-State: AOAM530CS9pnfJVpfKfCixtIbIQ60G5T/Sat4y3LNMAKjSjDEFNaM5K4
+	gMTuTYUTOfWUFH+fBxT1bGjXiQ==
+X-Google-Smtp-Source: 
+ ABdhPJyosEhz0s+kAgLEF75WSYNIzH1LsNfIRNs9Hso+92gcwzjdxDZZ5u7k8VwB526quKNtSk2K0Q==
+X-Received: by 2002:a17:90a:a78f:: with SMTP id
+ f15mr930733pjq.226.1590522700418;
+        Tue, 26 May 2020 12:51:40 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:39 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 10/12] btrfs: flag files as supporting buffered async reads
+Date: Tue, 26 May 2020 13:51:21 -0600
+Message-Id: <20200526195123.29053-11-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+btrfs uses generic_file_read_iter(), which already supports this.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Chris Mason <clm@fb.com>
+---
+ fs/btrfs/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 719e68ab552c..c933b6a1b4a8 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -3480,7 +3480,7 @@ static loff_t btrfs_file_llseek(struct file *file, loff_t offset, int whence)
+ 
+ static int btrfs_file_open(struct inode *inode, struct file *filp)
+ {
+-	filp->f_mode |= FMODE_NOWAIT;
++	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+ 	return generic_file_open(inode, filp);
+ }
+ 
+
+From patchwork Tue May 26 19:51:22 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571169
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id B3639159A
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:50 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 70F882088E
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:50 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="MLDFg6dO"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 70F882088E
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 0FD0A800C1; Tue, 26 May 2020 15:51:44 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 0116E80010; Tue, 26 May 2020 15:51:43 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id D311B800C1; Tue, 26 May 2020 15:51:43 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0204.hostedemail.com
+ [216.40.44.204])
+	by kanga.kvack.org (Postfix) with ESMTP id B66F880010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:43 -0400 (EDT)
+Received: from smtpin09.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay01.hostedemail.com (Postfix) with ESMTP id 7555F180AD81D
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:43 +0000 (UTC)
+X-FDA: 76859915286.09.slave38_66548eec3124b
+X-Spam-Summary: 
+ 2,0,0,7d75bce34a17aab2,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:41:355:379:541:800:960:988:989:1260:1311:1314:1345:1359:1431:1437:1515:1534:1541:1711:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3352:3865:3867:3868:3870:3872:3874:4321:5007:6261:6653:10004:11026:11473:11658:11914:12043:12114:12291:12297:12438:12517:12519:12555:12895:12986:13069:13311:13357:13894:14096:14181:14384:14394:14721:21080:21324:21444:21627:21990:30054,0,RBL:209.85.216.66:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:22,LUA_SUMMARY:none
+X-HE-Tag: slave38_66548eec3124b
+X-Filterd-Recvd-Size: 4304
+Received: from mail-pj1-f66.google.com (mail-pj1-f66.google.com
+ [209.85.216.66])
+	by imf15.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:43 +0000 (UTC)
+Received: by mail-pj1-f66.google.com with SMTP id ci23so256896pjb.5
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:42 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=egusxH2Kf4IsegITvpm+Q3F8VxKliDk7k1e8lkissGM=;
+        b=MLDFg6dOL3wi94Sm49zoJiHajT2Z6Uem1NGpbbefsORGLMzmbgt6H7oJbyNaRmzLhC
+         8Gf5ZNcnIwrFrsP15fHb8Hmk8a2hfjKN86KGFvtSh4PMPlyXApwguNjE2pUXQI5wzJ0a
+         rImtmWOl8q0Gt2VD5UOeqH755bpc04N3G1iq2vwGTCann04vKvGxeoLEFP4xQ4fRN5L5
+         Wg9gBx9FYIQvKM0euflOkFd88eUTLbrv+ERHN3wTJKYKJYMp38rMrtrLJwTNL4ghE1HN
+         EtuRhPWgN+n1jwAN6pgdhE4EdIt7SHFVS5ROARRrp8WYRbT1BdjRgRCf0aEwWTyQqK88
+         EjdQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=egusxH2Kf4IsegITvpm+Q3F8VxKliDk7k1e8lkissGM=;
+        b=gnabI6FmJBVc02EisFgXIqhJsPpZq2YTMllBsohdDHwStSTplcWpJz2b3Pwl6pxM7Y
+         QKO9KzCzWwqIbqLhQe40j3QugS8IQ6c9CkvO74RJQJj2G71uAT9J6rF3wd57l0WzkqKf
+         yDz+NB+5+inkUMW1zb2VkRxn0xd71QsgsaGboCGdRyT13qj+2m27lG3T1ko2paFJFKF1
+         yKSsTg9Vwbp4jp+tGIxwNdTvflZJEKUbtSksJgm2OrchEbgB7dPl8OmTw5ylY19y8AB+
+         MDN3SndivoUafI1ht2BX/QWezxtyEikhfgVUgvzNd1Nj3FrKa4zcqfllSL+ik9nG0EKT
+         Uftg==
+X-Gm-Message-State: AOAM531MjzHvz0qzwy/lJe2Joidy3+EqaxdTGgtQroArFAnkAS/B4KjX
+	A2vtgXW27I1Xsu5J+wZZ7bczDA==
+X-Google-Smtp-Source: 
+ ABdhPJxAwu286c9tdXeF8Jkxcn+Zoh3JziTFwAwrgLKM/2XtZ0wj0VRphyzFquzNho/fJP8ygPEQiw==
+X-Received: by 2002:a17:902:b289:: with SMTP id
+ u9mr2621523plr.138.1590522701930;
+        Tue, 26 May 2020 12:51:41 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:41 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 11/12] mm: add kiocb_wait_page_queue_init() helper
+Date: Tue, 26 May 2020 13:51:22 -0600
+Message-Id: <20200526195123.29053-12-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+Checks if the file supports it, and initializes the values that we need.
+Caller passes in 'data' pointer, if any, and the callback function to
+be used.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+---
+ include/linux/pagemap.h | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
+index d3e63c9c61ae..8b65420410ee 100644
+--- a/include/linux/pagemap.h
++++ b/include/linux/pagemap.h
+@@ -493,6 +493,27 @@ static inline int wake_page_match(struct wait_page_queue *wait_page,
+ 	return 1;
+ }
+ 
++static inline int kiocb_wait_page_queue_init(struct kiocb *kiocb,
++					     struct wait_page_queue *wait,
++					     wait_queue_func_t func,
++					     void *data)
++{
++	/* Can't support async wakeup with polled IO */
++	if (kiocb->ki_flags & IOCB_HIPRI)
++		return -EINVAL;
++	if (kiocb->ki_filp->f_mode & FMODE_BUF_RASYNC) {
++		wait->wait.func = func;
++		wait->wait.private = data;
++		wait->wait.flags = 0;
++		INIT_LIST_HEAD(&wait->wait.entry);
++		kiocb->ki_flags |= IOCB_WAITQ;
++		kiocb->ki_waitq = wait;
++		return 0;
++	}
++
++	return -EOPNOTSUPP;
++}
++
+ extern void __lock_page(struct page *page);
+ extern int __lock_page_killable(struct page *page);
+ extern int __lock_page_async(struct page *page, struct wait_page_queue *wait);
+
+From patchwork Tue May 26 19:51:23 2020
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Jens Axboe <axboe@kernel.dk>
+X-Patchwork-Id: 11571171
+Return-Path: <SRS0=wqBs=7I=kvack.org=owner-linux-mm@kernel.org>
+Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
+ [172.30.200.123])
+	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id B4AF1913
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:52 +0000 (UTC)
+Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
+	by mail.kernel.org (Postfix) with ESMTP id 74357207D8
+	for <patchwork-linux-mm@patchwork.kernel.org>;
+ Tue, 26 May 2020 19:51:52 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key)
+ header.d=kernel-dk.20150623.gappssmtp.com
+ header.i=@kernel-dk.20150623.gappssmtp.com header.b="BAnRbAHj"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 74357207D8
+Authentication-Results: mail.kernel.org;
+ dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: mail.kernel.org;
+ spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix)
+	id 53F82800C2; Tue, 26 May 2020 15:51:45 -0400 (EDT)
+Delivered-To: linux-mm-outgoing@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 40)
+	id 4CAB880010; Tue, 26 May 2020 15:51:45 -0400 (EDT)
+X-Original-To: int-list-linux-mm@kvack.org
+X-Delivered-To: int-list-linux-mm@kvack.org
+Received: by kanga.kvack.org (Postfix, from userid 63042)
+	id 3B86E800C2; Tue, 26 May 2020 15:51:45 -0400 (EDT)
+X-Original-To: linux-mm@kvack.org
+X-Delivered-To: linux-mm@kvack.org
+Received: from forelay.hostedemail.com (smtprelay0014.hostedemail.com
+ [216.40.44.14])
+	by kanga.kvack.org (Postfix) with ESMTP id 23F9B80010
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 15:51:45 -0400 (EDT)
+Received: from smtpin30.hostedemail.com (10.5.19.251.rfc1918.com
+ [10.5.19.251])
+	by forelay04.hostedemail.com (Postfix) with ESMTP id D15DC52B3
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:44 +0000 (UTC)
+X-FDA: 76859915328.30.year36_6685eaafe7c4b
+X-Spam-Summary: 
+ 2,0,0,47fd29941f2610b9,d41d8cd98f00b204,axboe@kernel.dk,,RULES_HIT:2:41:355:379:541:800:960:966:973:988:989:1260:1311:1314:1345:1359:1431:1434:1437:1515:1535:1605:1606:1730:1747:1777:1792:2196:2199:2393:2559:2562:3138:3139:3140:3141:3142:3865:3867:3868:3870:3871:3872:4119:4385:4398:5007:6119:6261:6653:7903:8603:10004:11026:11473:11658:11914:12043:12291:12296:12297:12438:12517:12519:12555:12683:12895:13161:13229:13894:14394:21080:21324:21444:21451:21627:21740:21990:30054:30070,0,RBL:209.85.214.195:@kernel.dk:.lbl8.mailshell.net-62.2.0.100
+ 66.100.201.201,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
+ bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:25,LUA_SUMMARY:none
+X-HE-Tag: year36_6685eaafe7c4b
+X-Filterd-Recvd-Size: 8366
+Received: from mail-pl1-f195.google.com (mail-pl1-f195.google.com
+ [209.85.214.195])
+	by imf16.hostedemail.com (Postfix) with ESMTP
+	for <linux-mm@kvack.org>; Tue, 26 May 2020 19:51:44 +0000 (UTC)
+Received: by mail-pl1-f195.google.com with SMTP id k22so9112118pls.10
+        for <linux-mm@kvack.org>; Tue, 26 May 2020 12:51:44 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=Yu5b4WPlNLJ4FShHKrav5N/oC/rLKGyUa0V1npLkROk=;
+        b=BAnRbAHjptEKaSP7aORnMOMvcRRwJYbUJCnBMqSaZ5LExh/WyjZAx0kpm9bGHRNipQ
+         c9xKOXLv3vjiGsiBY1sSp47ys77lF0zegk2Z/RxBhYkJ+oizHWibDzDtaVyKsqqZtscm
+         FwEZma7bB2podeT+bwe2UFoh0El2zE5bb2ykyavUywEuTB1tSqo2t2I71EDQL0x1hfyY
+         EpM1AheRzrX3I6SAVuYiX/AKHnQYJkQtPWkZ9rw2ptTOJVNcB9NTHSHihcMpSOsbvfIi
+         +n+bRE/L+0dLet27JP+fhpHeclePFF8u5DEjtYpBV85c3CaIk2/0DZUoZRk4tv9rWv1y
+         zZ+w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=Yu5b4WPlNLJ4FShHKrav5N/oC/rLKGyUa0V1npLkROk=;
+        b=KGkSbQTUBJ+PZSsGCglfkhJj/PyVswv0eNWC7Qpg5XUOoVIoGZz3ulijpXvb4RLh5B
+         vTNUbS4RCNaSKvHufIE6CEXDgks4+ATgw9qhE/3SKo42TQP/hiW7Zh9U6ZQ8Lip8EA12
+         Z7zvIy0gGxLhIQOJmkpcP/RJ7lyVqOhGLLvR3BM8SmsF+AbKF3RVRmg8M2e88+R/RaSj
+         XjWDAI6skx29vwXwHm9JQRgHvyTmGhSKzF3GbrUDkRyQnq1gomj4OPEHDdMZBhc0ULAV
+         9/vESpLJLI3KbVNdMG56zdA6ZEZQtaWo7QtdtYjsIsALWEXLipuZnCmlTNaugP3xOM4K
+         0UgA==
+X-Gm-Message-State: AOAM530XB3brgnEL8bENhxOpwQQ9eREStF3nXzGBSTWbgNUgsc/+lDoZ
+	IrhTNrZm1rGNtjvbyPWuOT7GRQ==
+X-Google-Smtp-Source: 
+ ABdhPJyp1ndQMqu6aI+tmLSQqXTreoaTLldbZ84COMrIiZ1LVkC/ujNtpmTAZp5Rn4xnmw8iMWAw9Q==
+X-Received: by 2002:a17:902:228:: with SMTP id
+ 37mr2636599plc.105.1590522703244;
+        Tue, 26 May 2020 12:51:43 -0700 (PDT)
+Received: from x1.lan ([2605:e000:100e:8c61:94bb:59d2:caf6:70e1])
+        by smtp.gmail.com with ESMTPSA id
+ c184sm313943pfc.57.2020.05.26.12.51.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 May 2020 12:51:42 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: io-uring@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	akpm@linux-foundation.org,
+	Jens Axboe <axboe@kernel.dk>
+Subject: [PATCH 12/12] io_uring: support true async buffered reads,
+ if file provides it
+Date: Tue, 26 May 2020 13:51:23 -0600
+Message-Id: <20200526195123.29053-13-axboe@kernel.dk>
+X-Mailer: git-send-email 2.26.2
+In-Reply-To: <20200526195123.29053-1-axboe@kernel.dk>
+References: <20200526195123.29053-1-axboe@kernel.dk>
+MIME-Version: 1.0
+X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
+Sender: owner-linux-mm@kvack.org
+Precedence: bulk
+X-Loop: owner-majordomo@kvack.org
+List-ID: <linux-mm.kvack.org>
+
+If the file is flagged with FMODE_BUF_RASYNC, then we don't have to punt
+the buffered read to an io-wq worker. Instead we can rely on page
+unlocking callbacks to support retry based async IO. This is a lot more
+efficient than doing async thread offload.
+
+The retry is done similarly to how we handle poll based retry. From
+the unlock callback, we simply queue the retry to a task_work based
+handler.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/io_uring.c | 130 ++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 126 insertions(+), 4 deletions(-)
+
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index e6865afa8467..95df63b0b2ce 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -79,6 +79,7 @@
+ #include <linux/fs_struct.h>
+ #include <linux/splice.h>
+ #include <linux/task_work.h>
++#include <linux/pagemap.h>
+ 
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/io_uring.h>
+@@ -498,6 +499,8 @@ struct io_async_rw {
+ 	struct iovec			*iov;
+ 	ssize_t				nr_segs;
+ 	ssize_t				size;
++	struct wait_page_queue		wpq;
++	struct callback_head		task_work;
+ };
+ 
+ struct io_async_ctx {
+@@ -2568,6 +2571,119 @@ static int io_read_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 	return 0;
+ }
+ 
++static void io_async_buf_cancel(struct callback_head *cb)
++{
++	struct io_async_rw *rw;
++	struct io_ring_ctx *ctx;
++	struct io_kiocb *req;
++
++	rw = container_of(cb, struct io_async_rw, task_work);
++	req = rw->wpq.wait.private;
++	ctx = req->ctx;
++
++	spin_lock_irq(&ctx->completion_lock);
++	io_cqring_fill_event(req, -ECANCELED);
++	io_commit_cqring(ctx);
++	spin_unlock_irq(&ctx->completion_lock);
++
++	io_cqring_ev_posted(ctx);
++	req_set_fail_links(req);
++	io_double_put_req(req);
++}
++
++static void io_async_buf_retry(struct callback_head *cb)
++{
++	struct io_async_rw *rw;
++	struct io_ring_ctx *ctx;
++	struct io_kiocb *req;
++
++	rw = container_of(cb, struct io_async_rw, task_work);
++	req = rw->wpq.wait.private;
++	ctx = req->ctx;
++
++	__set_current_state(TASK_RUNNING);
++	mutex_lock(&ctx->uring_lock);
++	__io_queue_sqe(req, NULL);
++	mutex_unlock(&ctx->uring_lock);
++}
++
++static int io_async_buf_func(struct wait_queue_entry *wait, unsigned mode,
++			     int sync, void *arg)
++{
++	struct wait_page_queue *wpq;
++	struct io_kiocb *req = wait->private;
++	struct io_async_rw *rw = &req->io->rw;
++	struct wait_page_key *key = arg;
++	struct task_struct *tsk;
++	int ret;
++
++	wpq = container_of(wait, struct wait_page_queue, wait);
++
++	ret = wake_page_match(wpq, key);
++	if (ret != 1)
++		return ret;
++
++	list_del_init(&wait->entry);
++
++	init_task_work(&rw->task_work, io_async_buf_retry);
++	/* submit ref gets dropped, acquire a new one */
++	refcount_inc(&req->refs);
++	tsk = req->task;
++	ret = task_work_add(tsk, &rw->task_work, true);
++	if (unlikely(ret)) {
++		/* queue just for cancelation */
++		init_task_work(&rw->task_work, io_async_buf_cancel);
++		tsk = io_wq_get_task(req->ctx->io_wq);
++		task_work_add(tsk, &rw->task_work, true);
++	}
++	wake_up_process(tsk);
++	return 1;
++}
++
++static bool io_rw_should_retry(struct io_kiocb *req)
++{
++	struct kiocb *kiocb = &req->rw.kiocb;
++	int ret;
++
++	/* never retry for NOWAIT, we just complete with -EAGAIN */
++	if (req->flags & REQ_F_NOWAIT)
++		return false;
++
++	/* already tried, or we're doing O_DIRECT */
++	if (kiocb->ki_flags & (IOCB_DIRECT | IOCB_WAITQ))
++		return false;
++	/*
++	 * just use poll if we can, and don't attempt if the fs doesn't
++	 * support callback based unlocks
++	 */
++	if (file_can_poll(req->file) || !(req->file->f_mode & FMODE_BUF_RASYNC))
++		return false;
++
++	/*
++	 * If request type doesn't require req->io to defer in general,
++	 * we need to allocate it here
++	 */
++	if (!req->io && __io_alloc_async_ctx(req))
++		return false;
++
++	ret = kiocb_wait_page_queue_init(kiocb, &req->io->rw.wpq,
++						io_async_buf_func, req);
++	if (!ret) {
++		get_task_struct(current);
++		req->task = current;
++		return true;
++	}
++
++	return false;
++}
++
++static int io_iter_do_read(struct io_kiocb *req, struct iov_iter *iter)
++{
++	if (req->file->f_op->read_iter)
++		return call_read_iter(req->file, &req->rw.kiocb, iter);
++	return loop_rw_iter(READ, req->file, &req->rw.kiocb, iter);
++}
++
+ static int io_read(struct io_kiocb *req, bool force_nonblock)
+ {
+ 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+@@ -2601,10 +2717,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
+ 	if (!ret) {
+ 		ssize_t ret2;
+ 
+-		if (req->file->f_op->read_iter)
+-			ret2 = call_read_iter(req->file, kiocb, &iter);
+-		else
+-			ret2 = loop_rw_iter(READ, req->file, kiocb, &iter);
++		ret2 = io_iter_do_read(req, &iter);
+ 
+ 		/* Catch -EAGAIN return for forced non-blocking submission */
+ 		if (!force_nonblock || ret2 != -EAGAIN) {
+@@ -2619,6 +2732,15 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
+ 			if (!(req->flags & REQ_F_NOWAIT) &&
+ 			    !file_can_poll(req->file))
+ 				req->flags |= REQ_F_MUST_PUNT;
++			/* if we can retry, do so with the callbacks armed */
++			if (io_rw_should_retry(req)) {
++				ret2 = io_iter_do_read(req, &iter);
++				if (ret2 != -EAGAIN) {
++					kiocb_done(kiocb, ret2);
++					goto out_free;
++				}
++			}
++			kiocb->ki_flags &= ~IOCB_WAITQ;
+ 			return -EAGAIN;
+ 		}
+ 	}
