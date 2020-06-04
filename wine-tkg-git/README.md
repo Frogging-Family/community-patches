@@ -17,6 +17,7 @@
 - blackops2_unhandled_exception_fix.mypatch : Fix for the Unhandled Exception crash of Call of Duty - Black Ops 2 on start up - Won't work on Proton due to CEG - https://bugs.winehq.org/show_bug.cgi?id=46472
 - NFSWLauncherfix.mypatch : Fix for Need for Speed World's SBRW launcher - https://github.com/SoapboxRaceWorld/wine
 - gta4_gamepad_workaround.mypatch : Workaround for GTA IV gamepad issues thanks to @AlexeyProkhin - https://github.com/ValveSoftware/Proton/issues/350#issuecomment-606425633
+- starcitizen_voip_fix.mypatch : Fix for VOIP functionality in Star Citizen thanks to @snatella - https://github.com/snatella/wine-runner-sc - https://paste.debian.net/hidden/4907fc09/
 
 ## Misc
 - rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
