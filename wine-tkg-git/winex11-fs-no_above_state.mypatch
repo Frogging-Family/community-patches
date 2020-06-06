@@ -12,7 +12,7 @@ diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
 index 94c9dde6516..2801bb7121a 100644
 --- a/dlls/winex11.drv/window.c
 +++ b/dlls/winex11.drv/window.c
-@@ -1078,11 +1078,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
+@@ -1078,18 +1078,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
  
      ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
      if ((ex_style & WS_EX_TOPMOST) &&
@@ -20,7 +20,14 @@ index 94c9dde6516..2801bb7121a 100644
 -             * minimized will incorrectly show a black window.  this workaround
 -             * should be removed when the fix is widely distributed.  see
 -             * mutter issue #306. */
--            !(wm_is_mutter(data->display) && (new_state & (1 << NET_WM_STATE_FULLSCREEN))))
+-            !(wm_is_mutter(data->display) && (new_state & (1 << NET_WM_STATE_FULLSCREEN))) &&
+-
+-            /* KDE refuses to allow alt-tabbing out of fullscreen+above
+-             * windows. Other WMs (XFCE) don't make fullscreen (without above)
+-             * windows appear above their panels. KDE still does the right
+-             * thing with fullscreen-only windows, so let's comprimise by not
+-             * setting above on KDE. */
+-            !wm_is_kde(data->display))
 +            !(new_state & (1 << NET_WM_STATE_FULLSCREEN)))
          new_state |= (1 << NET_WM_STATE_ABOVE);
      if (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE))
