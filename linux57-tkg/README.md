@@ -1,6 +1,6 @@
 # linux57-tkg patches
 
-- async_buffered_reads.mypatch - Implement true async buffered reads in io_uring - https://patchwork.kernel.org/cover/11571139/
+- async_buffered_reads.mypatch - Implement true async buffered reads in io_uring; Incompatible with bcachefs - https://patchwork.kernel.org/cover/11571139/
 - fgsgsbase.mypatch - Patchset aiming at enhancing performance of Intel CPUs (ivybridge and up) - https://lkml.org/lkml/2020/5/28/1358
 - le9i.mypatch - An attempt to improve Linux's OOM behaviour - https://web.archive.org/web/20191018064145/https://gist.github.com/howaboutsynergy/04fd9be927835b055ac15b8b64658e85
 - mm_proactive_compaction.mypatch - https://lkml.org/lkml/2019/10/30/1076
