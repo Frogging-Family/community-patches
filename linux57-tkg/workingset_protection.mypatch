@@ -1490,7 +1490,7 @@ index 37943bf..eb02d18 100644
  
  	BUG_ON(!PageLocked(page));
  	BUG_ON(mapping != page_mapping(page));
-@@ -901,13 +902,14 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+@@ -901,12 +902,13 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
  	if (PageSwapCache(page)) {
  		swp_entry_t swap = { .val = page_private(page) };
  		mem_cgroup_swapout(page, swap);
@@ -1503,7 +1503,6 @@ index 37943bf..eb02d18 100644
  	} else {
  		void (*freepage)(struct page *);
 -		void *shadow = NULL;
- 		int empty;
  
  		freepage = mapping->a_ops->freepage;
  		/*
