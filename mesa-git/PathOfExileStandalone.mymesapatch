@@ -1,0 +1,14 @@
+diff --git a/src/util/00-mesa-defaults.conf b/src/util/00-mesa-defaults.conf
+--- a/src/util/00-mesa-defaults.conf
++++ b/src/util/00-mesa-defaults.conf
+@@ -702,5 +702,9 @@ TODO: document the other workarounds.
+         <application name="Path of Exile" executable="PathOfExile_x64Steam.exe">
+             <option name="radv_no_dynamic_bounds" value="true" />
+         </application>
++
++        <application name="Path of Exile Standalone" executable="PathOfExile_x64.exe">
++            <option name="radv_no_dynamic_bounds" value="true" />
++        </application>
+     </device>
+ </driconf>
+ 
