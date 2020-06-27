@@ -1,8 +1,11 @@
-# wine-tkg-git patches
+# wine-tkg-git and proton-tkg patches
 
 **More userpatches for wine-tkg are also made available by @openglfreak : https://github.com/openglfreak/wine-tkg-userpatches**
 
 *Thank you!*
+
+### Wine/Proton-tkg-git will auto-clone this repo two dirs up from their buildscript dir (`../../community-patches`) if valid community patches are found in their .cfg file (`_community_patches=""` array).
+### Alternatively, you can also clone this repo by hand next to the `wine-tkg-git` root dir (the one containing both `wine-tkg-git` and `proton-tkg` dirs) so the build system sees it - `git clone https://github.com/Frogging-Family/community-patches.git`.
 
 ## Proton patches
 - amdags.mypatch : Add amdags dll (proton patch)
