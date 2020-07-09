@@ -5283,9 +5283,9 @@ index fe156e43abf..5c69ac38e5f 100644
  
  C_SRCS = \
 +	handler.c \
+ 	evr.c \
  	main.c \
  	samplegrabber.c \
- 	sar.c \
 diff --git a/dlls/mf/handler.c b/dlls/mf/handler.c
 new file mode 100644
 index 00000000000..da40049377e
