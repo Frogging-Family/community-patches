@@ -1,0 +1,29 @@
+From f8ffe01f50fa6b3e06ab32fc0b8897f1271ab5cc Mon Sep 17 00:00:00 2001
+From: Lorenzo Ferrillo <lorenzofer@live.it>
+Date: Sat, 11 Apr 2020 15:58:56 +0200
+Subject: [PATCH] Move file SHFileOperation allow from wildchar move
+
+Current wine implementation of SHFileOperation FO_MOVE don't allow wildcard move operations involving more then 1 file  unless the move operation also involve a folder.
+This patch allow wildcard move operations to work also in this case
+
+Fix wine bug: https://bugs.winehq.org/show_bug.cgi?id=39269
+---
+ dlls/shell32/shlfileop.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dlls/shell32/shlfileop.c b/dlls/shell32/shlfileop.c
+index 24f162023a..d1f1ab0587 100644
+--- a/dlls/shell32/shlfileop.c
++++ b/dlls/shell32/shlfileop.c
+@@ -1462,7 +1462,7 @@ static int move_files(FILE_OPERATION *op, BOOL multidest, const FILE_LIST *flFro
+         return ERROR_CANCELLED;
+     }
+ 
+-    if (!multidest && !flFrom->bAnyDirectories &&
++    if (!multidest && !flFrom->bAnyDirectories && !flFrom->bAnyFromWildcard &&
+         flFrom->dwNumFiles > flTo->dwNumFiles)
+     {
+         return ERROR_CANCELLED;
+-- 
+2.26.0
+
