@@ -1,122 +1,92 @@
-From patchwork Wed Jun 17 05:26:18 2020
+From patchwork Thu Jul 23 07:49:15 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609039
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 436A790
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:51 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id 1089B2082F
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:51 +0000 (UTC)
+X-Patchwork-Id: 1278078
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 602EAC433E1
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:45 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id 41E0A2086A
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:45 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="DcY3ORY8"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1089B2082F
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id 7DDCA6B0005; Wed, 17 Jun 2020 01:26:49 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id 791A16B0006; Wed, 17 Jun 2020 01:26:49 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id 5BBAB6B0007; Wed, 17 Jun 2020 01:26:49 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0062.hostedemail.com
- [216.40.44.62])
-	by kanga.kvack.org (Postfix) with ESMTP id 45EAF6B0005
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:26:49 -0400 (EDT)
-Received: from smtpin14.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay02.hostedemail.com (Postfix) with ESMTP id 0C8B0356E
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:49 +0000 (UTC)
-X-FDA: 76937569338.14.clock45_280e45726e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin14.hostedemail.com (Postfix) with ESMTP id 2AF41182299A6
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:44 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,b50501f3d17372e3,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:41:355:379:541:800:960:973:988:989:1260:1345:1359:1437:1534:1541:1711:1730:1747:1777:1792:2198:2199:2393:2559:2562:2693:2731:2897:3138:3139:3140:3141:3142:3352:3865:3866:3867:3868:3870:3871:3872:3874:4250:4321:5007:6261:6653:7576:7875:9010:9036:9413:10004:11026:11473:11658:11914:12296:12297:12517:12519:12555:12679:12895:13069:13141:13230:13311:13357:14096:14181:14384:14394:14721:21080:21444:21451:21627:21666:21740:30054:30069,0,RBL:209.85.215.196:@gmail.com:.lbl8.mailshell.net-62.50.0.100
- 66.100.201.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
-X-HE-Tag: clock45_280e45726e05
-X-Filterd-Recvd-Size: 4502
-Received: from mail-pg1-f196.google.com (mail-pg1-f196.google.com
- [209.85.215.196])
-	by imf39.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:43 +0000 (UTC)
-Received: by mail-pg1-f196.google.com with SMTP id v11so701110pgb.6
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:26:43 -0700 (PDT)
+ header.b="qD6EyCZk"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1726941AbgGWHtn (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:49:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43714 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725911AbgGWHtm (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:49:42 -0400
+Received: from mail-pl1-x642.google.com (mail-pl1-x642.google.com
+ [IPv6:2607:f8b0:4864:20::642])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 376F4C0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:42 -0700 (PDT)
+Received: by mail-pl1-x642.google.com with SMTP id p1so2198121pls.4
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=fNm3FGkY7NVgNGky8cgORMXuHncktdvkO+TFSQgkjpI=;
-        b=DcY3ORY8xDdagE0AWcEaW+6hhR3H8CwMIoZyO+6Kk6Lc8LJrvv+GUHe0WVxyKRG0NI
-         DvzZjBgyyqHQ2FEKaVHuW4mbYh2ZBesedtSubVk3wtmJTXTTf5o6gnDg/Lru3jz5Db/h
-         SQfGsNHLBHQPEf+mN4iszszrtSYZRO5ZJEbTziTTpsJ6Fu53ZCyGWB+MoDwB7S4sHn2j
-         Xozp4oqsXmfPUm+bUrpJCUPP+qcScSV2uhcKWSVmQDTtAB1JhEyAwAz8u1f9RMdT5KT7
-         yPeq+/v9TiqjSuMBk6SBq4pHnduqd+cNGW1Okc5N8odI6knZg/XE080ut7HNimq4lKN1
-         +iTw==
+        bh=1UCSqZniNnTE35feVIizYvg4RG2zVK/dCufRYKNlqjU=;
+        b=qD6EyCZkACwRJmkSQcmtfH1KJCv+oDbD6kA6ZDtKoid5MwB7ln+eO8xv/pxxVuP6F2
+         oEFyTzW+aYiHnS2rItKXGCGE3zSTgGx7D3x4vdzM3uf+UbeGDcCaa7u+yYiYaY88e+wU
+         2wCYAAjN8L8ZMqGLuXhjLfk+NR+IpNp6fo5dCnc2rdXBJATUMXDc3LY7xvkcpq8lmUMM
+         XNPx2ErBM8mrr7Q2wcovixdL2m/BKimi/8x/32QJQfJfqr00QfaTwnpCihu3nMXHlSVf
+         tXNH2WZAS60llBQxSOR8auD2qiUm9o4fytDDM7nThC3cTKsEI9Mig5LDWGyLWlP232I6
+         BoUg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=fNm3FGkY7NVgNGky8cgORMXuHncktdvkO+TFSQgkjpI=;
-        b=fRLejfluNN97G3OWWtCs/dRzGCbExIEc79s0G1H/8lhrna8/244fvEeGvXEkmhahSD
-         K9lnHbgz7t7GNMGiasrkM3svUlId8D8cZmNzrANo9CcVp83AMtkQpA+6T9yz3eaopyhc
-         VRVgd4Ym5vX/p73vHopNyy91PpaR9v0terudXbsyXkqeUFHRMdVeQXd8sGo31j0dnJjK
-         JrWNC6R8+UQhudJSj6jfi0GgqRck5q2+U3ieTiXmYcGB0mEuL/xRJgrs4MsGCVH0FeGu
-         sT8UHplD526qFInqZoN1rwDsJImROERI+2eEhwxo0JjYPXkNHTqO7hpuKXmrUUSWB/nZ
-         a7Bw==
-X-Gm-Message-State: AOAM532UJMEuTO4ixxyRftm6f+2cnBVbC1fMuf9ZYKfBfBE5Rc4RR4HM
-	5gp2i9WM+Mrwm+6q6MBhTQU=
+        bh=1UCSqZniNnTE35feVIizYvg4RG2zVK/dCufRYKNlqjU=;
+        b=dle8Mcc6t4iDaoMCSN4w3JA05yoJs1MdXpuUuL1x7f4sqIjVDcA1wHon5iHI+Bh4Wc
+         seslMcFIrf4JwOGtN8atqU5K+bkoZvDoibADKN/PpT8vWlaP7ov+/CqS7xKgsYWiMfDb
+         CT0zvN1fkD3OlVw+ss2jZCCb88ER1eYPJaqLfmhUtrViUAiE+xjWgLTeYW1ZKF3J51jP
+         2DFrGkoKQaWaLilrYhc5NVZoPJboof70kKCtD33xLyB7f3JCkJ4ioKEHcMHjDCoHTWJQ
+         0hIAZlb74hEMgxVNOz6/RNniXCxyzRtU12RfJYxRDd5O2Godd4DOtU8Gj4ctdv5K2znf
+         bABw==
+X-Gm-Message-State: AOAM530cg2dmJI0C/6kgxYTsvbL8FqLhip7SheNBLXtb2fR7/RMez6js
+        RkseJetjRzQDcZ6jOXLdcew=
 X-Google-Smtp-Source: 
- ABdhPJwtfBHaEiJIonwdo1j9yacX62+q/Jp6zKj9q+Q7JfsXgSeE351IKk3vnJ5BLJfOBYBDNclm4Q==
-X-Received: by 2002:a63:5b0e:: with SMTP id p14mr5059100pgb.43.1592371602744;
-        Tue, 16 Jun 2020 22:26:42 -0700 (PDT)
+ ABdhPJw4ffA3MDbbGZ1G5Y9GV5noSdpTDkCNTSfbhFNZutuP4EPnEmzNdF3uLhTknqVaIMAYSgNTKg==
+X-Received: by 2002:a17:902:8c86:: with SMTP id
+ t6mr2901356plo.41.1595490581765;
+        Thu, 23 Jul 2020 00:49:41 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.39
+ f71sm9164879pje.0.2020.07.23.00.49.38
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:42 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:41 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 1/6] mm/vmscan: make active/inactive ratio as 1:1 for anon
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 1/6] mm/vmscan: make active/inactive ratio as 1:1 for anon
  lru
-Date: Wed, 17 Jun 2020 14:26:18 +0900
-Message-Id: <1592371583-30672-2-git-send-email-iamjoonsoo.kim@lge.com>
+Date: Thu, 23 Jul 2020 16:49:15 +0900
+Message-Id: <1595490560-15117-2-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: 2AF41182299A6
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam05
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
@@ -126,25 +96,31 @@ that is, pages on the active LRU list. Although, this problem will be
 fixed in the following patchset, the preparation is required and
 this patch does it.
 
-What following patchset does is to restore workingset protection. In this
-case, newly created or swap-in pages are started their lifetime on the
-inactive list. If inactive list is too small, there is not enough chance
-to be referenced and the page cannot become the workingset.
+What following patch does is to implement workingset protection. After
+the following patchset, newly created or swap-in pages will start their
+lifetime on the inactive list. If inactive list is too small, there is not
+enough chance to be referenced and the page cannot become the workingset.
 
-In order to provide enough chance to the newly anonymous pages, this patch
-makes active/inactive LRU ratio as 1:1.
+In order to provide the newly anonymous or swap-in pages enough chance to
+be referenced again, this patch makes active/inactive LRU ratio as 1:1.
+
+This is just a temporary measure. Later patch in the series introduces
+workingset detection for anonymous LRU that will be used to better decide
+if pages should start on the active and inactive list. Afterwards this
+patch is effectively reverted.
 
 Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  mm/vmscan.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 749d239..9f940c4 100644
+index 6acc956..d5a19c7 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -2212,7 +2212,7 @@ static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
+@@ -2208,7 +2208,7 @@ static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
  	active = lruvec_page_state(lruvec, NR_LRU_BASE + active_lru);
  
  	gb = (inactive + active) >> (30 - PAGE_SHIFT);
@@ -154,125 +130,94 @@ index 749d239..9f940c4 100644
  	else
  		inactive_ratio = 1;
 
-From patchwork Wed Jun 17 05:26:19 2020
+From patchwork Thu Jul 23 07:49:16 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609037
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 3A51C913
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:49 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id EE30A208B3
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:48 +0000 (UTC)
+X-Patchwork-Id: 1278079
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E41CCC433E4
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:47 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id B5AC92086A
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:47 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="TMAH0J/Y"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EE30A208B3
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id 371456B0003; Wed, 17 Jun 2020 01:26:48 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id 322096B0005; Wed, 17 Jun 2020 01:26:48 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id 23E7E6B0006; Wed, 17 Jun 2020 01:26:48 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0191.hostedemail.com
- [216.40.44.191])
-	by kanga.kvack.org (Postfix) with ESMTP id 0D9DD6B0003
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:26:48 -0400 (EDT)
-Received: from smtpin02.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay01.hostedemail.com (Postfix) with ESMTP id BCEBE180AD801
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:47 +0000 (UTC)
-X-FDA: 76937569254.02.geese16_0b02d7226e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin02.hostedemail.com (Postfix) with ESMTP id 96E5A15FC
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:47 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,3ad1b2b3577ac17e,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:1:41:355:379:541:800:960:966:973:988:989:1260:1345:1359:1437:1605:1730:1747:1777:1792:2194:2196:2199:2200:2393:2559:2562:2636:2693:2901:2904:3138:3139:3140:3141:3142:3865:3866:3867:3868:3870:3871:3872:3873:3874:4250:4321:4385:4470:4605:5007:6119:6261:6653:7576:7903:8603:8660:8957:9010:9413:9707:10004:11026:11232:11233:11473:11657:11658:11914:12043:12050:12296:12297:12438:12517:12519:12555:12679:12895:12986:13148:13153:13161:13172:13180:13228:13229:13230:14096:14394:21080:21433:21444:21451:21627:21666:21740:21939:21990:30003:30034:30054:30079,0,RBL:209.85.210.193:@gmail.com:.lbl8.mailshell.net-62.50.0.100
- 66.100.201.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:24,LUA_SUMMARY:none
-X-HE-Tag: geese16_0b02d7226e05
-X-Filterd-Recvd-Size: 13792
-Received: from mail-pf1-f193.google.com (mail-pf1-f193.google.com
- [209.85.210.193])
-	by imf48.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:46 +0000 (UTC)
-Received: by mail-pf1-f193.google.com with SMTP id a127so541758pfa.12
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:26:46 -0700 (PDT)
+ header.b="aKKrBrNf"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1727075AbgGWHtq (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:49:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43726 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725911AbgGWHtp (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:49:45 -0400
+Received: from mail-pj1-x1044.google.com (mail-pj1-x1044.google.com
+ [IPv6:2607:f8b0:4864:20::1044])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C0D67C0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:45 -0700 (PDT)
+Received: by mail-pj1-x1044.google.com with SMTP id k71so2791988pje.0
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:45 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=vmRNk7yUM9fFqnh0E7GxTLrrZ7/Cn3kew7vDIw5Ffcg=;
-        b=TMAH0J/YV3EgCO2B24mOeRYf+GljszWc1juopRAukGyNhrhIu0pxSoeoQH0Mefjsel
-         mTxmBgo0NSMkTzkzw4opm8QcsRXNtmEtHkAdQqXCJihNdmP19DXrQxKiV1nYaw2pGx63
-         JPlPwVPpIcfnC4YPFvwlNcqU1g+flpKvdeAlgbTCnGUekVSYvkOfFhE5wj4OyKlGFzEt
-         g96ZI8n8CkV0iiukLGBV2aSB9wcDEa/HfK5N7roFIsAdI0NWeJDU6MvjvXvWrWyiNVKF
-         ZnGrYDmqZYFNoYs+dXJY3j+Rdi6dZDRCBkeBshJ1UUNQ5P3NEDBvOpfrPBh0IONgsj9H
-         WvNg==
+        bh=5r7ZBhmToWfTh6yXZt2NTooBEemow+91NRlzlx63OaA=;
+        b=aKKrBrNfvnuVnx6fk6ZNyxZpIturi5UukrlUbtgchTUg3LoYtaKBLQXQQl846pivrU
+         OzVCoEjsAbTk57NfakzdF5y5fWOeEhyvofMScO0C2cgHk3VUOCkgYrxppZE9z7iY//up
+         BCFrnJcja1Zx4ScJMAFuBWoat2/OUwUCLJ4cu0i0mRoyF7i7eqOHSOyRu5msm16S6Qlu
+         rSjSCqdBrRxQYPeEuDq2jOBkCl+yX9bPNTqR3Gt3q1ygFZOFyw0OVYKUpTzjKgMLpylU
+         3kgX5JBz5QJ42NSQFWBGpxCxu6muuyDv37Yb74wKAWpi88250gaL3O7DqckUFM0voS2k
+         +pJg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=vmRNk7yUM9fFqnh0E7GxTLrrZ7/Cn3kew7vDIw5Ffcg=;
-        b=A7lMOmdO+FFDfdfrwSCP+Qz0C1XaZc8eGOJ8Lh9TNn5sujukn0Fa62W4Uu6XxJMrAM
-         381Nj6x1MYJdwBJtORuMo0cWXYrDLA3tVWxPTEJkcnwrsagJwPyG+InP38n3uOp2DnG4
-         3rcNLzfkHa+PRqrXifYUyVwQIDLPtWfL4D2GWekFXkJGCN1OSXY+guRNpuj+RyGGEd9y
-         iKqyzsXhWppn388Y+/dmcYRer0V4NqPPPXkF7CNHP0n1qAhB9UuWsxVUimYMZvxVJYsZ
-         OHN598qytgNzo6c8dxJtBFQfGC0XIx+uSDfJ5ULXEQH+XFdQSi//2bPaT2j22GJwMoVc
-         9FaA==
-X-Gm-Message-State: AOAM531S41n2eoIiolaRN1rAbE+1F0tz5CyHKNQDRyzo2TWKyN0JzTAW
-	+/6xR5lQb4WbzJCxzenaol1U/nxFgXo=
+        bh=5r7ZBhmToWfTh6yXZt2NTooBEemow+91NRlzlx63OaA=;
+        b=T9Rux7Vm0jaw2dc1O11y+gGTOZzVrSwOjfMy42bwDYVDslI/n4WYAnvXgYGHZSUtI7
+         Q0xmQh6qWh7lv3sFEafrDBp8bVNdZiFJgfm0HbRzK3v53I1AroQeRXKlF8ZRQPirg9DW
+         mU4oqztfT3C8r+zLAxuyS2wQat/6j1wb6RE+tAXmEh5ZomavD9rXOMZBkbaqsjfvFZax
+         xh+9m1qGKTy9GKKPODvQC94cCEH9Zoy1UKKnCWvQ2v9W2mBKVYShWG96NnQSVbK0OJvb
+         c+IYUNPJJxj/keVvLZWnulsjKULY7rLBIxM2wpWjLiex/2rzlrHB2j1A3t8uAbuqyUNE
+         H2RQ==
+X-Gm-Message-State: AOAM530xZrtudsJ12/RzAv9iZQyNClyEuDNu/htUsv1YvME4xmh2P66p
+        0vEC9u8siXrMHQes91Bq3Eo7cDJD
 X-Google-Smtp-Source: 
- ABdhPJxQJ58nlLN/jPiwSln6bfax/824jahBqbjTJu4Rk5OAUgjB1BlzIFtp813Dmc83EmnX4JK1Ew==
-X-Received: by 2002:a63:35cc:: with SMTP id
- c195mr4813470pga.180.1592371606108;
-        Tue, 16 Jun 2020 22:26:46 -0700 (PDT)
+ ABdhPJzOmqRN5+guEfjcZ2SZmYbkAu/w/sMiuUlFAihfvY02WYYdo6MpTqejFdG0eBvSrzPSPqKzdQ==
+X-Received: by 2002:a17:902:7d8b:: with SMTP id
+ a11mr2816332plm.72.1595490585244;
+        Thu, 23 Jul 2020 00:49:45 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.43
+ f71sm9164879pje.0.2020.07.23.00.49.42
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:45 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:44 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 2/6] mm/vmscan: protect the workingset on anonymous LRU
-Date: Wed, 17 Jun 2020 14:26:19 +0900
-Message-Id: <1592371583-30672-3-git-send-email-iamjoonsoo.kim@lge.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 2/6] mm/vmscan: protect the workingset on anonymous LRU
+Date: Thu, 23 Jul 2020 16:49:16 +0900
+Message-Id: <1595490560-15117-3-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: 96E5A15FC
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam03
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
@@ -316,14 +261,10 @@ Note that, this implementation has a drawback that the page cannot
 be promoted and will be swapped-out if re-access interval is greater than
 the size of inactive list but less than the size of total(active+inactive).
 To solve this potential issue, following patch will apply workingset
-detection that is applied to file LRU some day before.
-
-v6: Before this patch, all anon pages (inactive + active) are considered
-as workingset. However, with this patch, only active pages are considered
-as workingset. So, file refault formula which uses the number of all
-anon pages is changed to use only the number of active anon pages.
+detection similar to the one that's already applied to file LRU.
 
 Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  include/linux/swap.h    |  2 +-
@@ -336,14 +277,13 @@ Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
  mm/swapfile.c           |  2 +-
  mm/userfaultfd.c        |  2 +-
  mm/vmscan.c             |  4 +---
- mm/workingset.c         |  2 --
- 11 files changed, 19 insertions(+), 23 deletions(-)
+ 10 files changed, 19 insertions(+), 21 deletions(-)
 
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 5b3216b..f4f5f94 100644
+index 7eb59bc..51ec9cd 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
-@@ -353,7 +353,7 @@ extern void deactivate_page(struct page *page);
+@@ -352,7 +352,7 @@ extern void deactivate_page(struct page *page);
  extern void mark_page_lazyfree(struct page *page);
  extern void swap_setup(void);
  
@@ -353,7 +293,7 @@ index 5b3216b..f4f5f94 100644
  
  /* linux/mm/vmscan.c */
 diff --git a/kernel/events/uprobes.c b/kernel/events/uprobes.c
-index bb08628..67814de 100644
+index f500204..02791f8 100644
 --- a/kernel/events/uprobes.c
 +++ b/kernel/events/uprobes.c
 @@ -184,7 +184,7 @@ static int __replace_page(struct vm_area_struct *vma, unsigned long addr,
@@ -366,10 +306,10 @@ index bb08628..67814de 100644
  		/* no new page, just dec_mm_counter for old_page */
  		dec_mm_counter(mm, MM_ANONPAGES);
 diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 78c84be..ffbf5ad 100644
+index 15c9690..2068518 100644
 --- a/mm/huge_memory.c
 +++ b/mm/huge_memory.c
-@@ -640,7 +640,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
+@@ -619,7 +619,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
  		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
  		page_add_new_anon_rmap(page, vma, haddr, true);
  		mem_cgroup_commit_charge(page, memcg, false, true);
@@ -378,24 +318,6 @@ index 78c84be..ffbf5ad 100644
  		pgtable_trans_huge_deposit(vma->vm_mm, vmf->pmd, pgtable);
  		set_pmd_at(vma->vm_mm, haddr, vmf->pmd, entry);
  		add_mm_counter(vma->vm_mm, MM_ANONPAGES, HPAGE_PMD_NR);
-@@ -1338,7 +1338,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
- 		mem_cgroup_commit_charge(pages[i], memcg, false, false);
--		lru_cache_add_active_or_unevictable(pages[i], vma);
-+		lru_cache_add_inactive_or_unevictable(pages[i], vma);
- 		vmf->pte = pte_offset_map(&_pmd, haddr);
- 		VM_BUG_ON(!pte_none(*vmf->pte));
- 		set_pte_at(vma->vm_mm, haddr, vmf->pte, entry);
-@@ -1492,7 +1492,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
--		lru_cache_add_active_or_unevictable(new_page, vma);
-+		lru_cache_add_inactive_or_unevictable(new_page, vma);
- 		set_pmd_at(vma->vm_mm, haddr, vmf->pmd, entry);
- 		update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		if (!page) {
 diff --git a/mm/khugepaged.c b/mm/khugepaged.c
 index b043c40..02fb51f 100644
 --- a/mm/khugepaged.c
@@ -410,10 +332,10 @@ index b043c40..02fb51f 100644
  	set_pmd_at(mm, address, pmd, _pmd);
  	update_mmu_cache_pmd(vma, address, pmd);
 diff --git a/mm/memory.c b/mm/memory.c
-index 3359057..f221f96 100644
+index 45e1dc0..25769b6 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -2711,7 +2711,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
+@@ -2717,7 +2717,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
  		ptep_clear_flush_notify(vma, vmf->address, vmf->pte);
  		page_add_new_anon_rmap(new_page, vma, vmf->address, false);
  		mem_cgroup_commit_charge(new_page, memcg, false, false);
@@ -422,7 +344,7 @@ index 3359057..f221f96 100644
  		/*
  		 * We call the notify macro here because, when using secondary
  		 * mmu page tables (such as kvm shadow page tables), we want the
-@@ -3260,11 +3260,10 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
+@@ -3268,10 +3268,9 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
  	if (unlikely(page != swapcache && swapcache)) {
  		page_add_new_anon_rmap(page, vma, vmf->address, false);
  		mem_cgroup_commit_charge(page, memcg, false, false);
@@ -435,7 +357,7 @@ index 3359057..f221f96 100644
  	}
  
  	swap_free(entry);
-@@ -3408,7 +3407,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+@@ -3416,7 +3415,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
  	inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
  	page_add_new_anon_rmap(page, vma, vmf->address, false);
  	mem_cgroup_commit_charge(page, memcg, false, false);
@@ -444,7 +366,7 @@ index 3359057..f221f96 100644
  setpte:
  	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
  
-@@ -3666,7 +3665,7 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct page *page)
+@@ -3674,7 +3673,7 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct page *page)
  		inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
  		page_add_new_anon_rmap(page, vma, vmf->address, false);
  		mem_cgroup_commit_charge(page, memcg, false, false);
@@ -454,10 +376,10 @@ index 3359057..f221f96 100644
  		inc_mm_counter_fast(vma->vm_mm, mm_counter_file(page));
  		page_add_file_rmap(page, false);
 diff --git a/mm/migrate.c b/mm/migrate.c
-index c95912f..f0ec043 100644
+index c233781..4fef341 100644
 --- a/mm/migrate.c
 +++ b/mm/migrate.c
-@@ -2856,7 +2856,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
+@@ -2912,7 +2912,7 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
  	inc_mm_counter(mm, MM_ANONPAGES);
  	page_add_new_anon_rmap(page, vma, addr, false);
  	if (!is_zone_device_page(page))
@@ -467,7 +389,7 @@ index c95912f..f0ec043 100644
  
  	if (flush) {
 diff --git a/mm/swap.c b/mm/swap.c
-index c5d5114..7cf3ab5 100644
+index 587be74..d16d65d 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -476,23 +476,24 @@ void lru_cache_add(struct page *page)
@@ -497,15 +419,15 @@ index c5d5114..7cf3ab5 100644
 -		SetPageActive(page);
 -	else if (!TestSetPageMlocked(page)) {
 +	unevictable = (vma->vm_flags & (VM_LOCKED | VM_SPECIAL)) == VM_LOCKED;
-+	if (unevictable && !TestSetPageMlocked(page)) {
++	if (unlikely(unevictable) && !TestSetPageMlocked(page)) {
  		/*
  		 * We use the irq-unsafe __mod_zone_page_stat because this
  		 * counter is not modified from interrupt context, and the pte
 diff --git a/mm/swapfile.c b/mm/swapfile.c
-index c047789..38f6433 100644
+index 7b0974f..6bd9b4c 100644
 --- a/mm/swapfile.c
 +++ b/mm/swapfile.c
-@@ -1920,7 +1920,7 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
+@@ -1921,7 +1921,7 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
  	} else { /* ksm created a completely new copy */
  		page_add_new_anon_rmap(page, vma, addr, false);
  		mem_cgroup_commit_charge(page, memcg, false, false);
@@ -528,10 +450,10 @@ index b804193..9a3d451 100644
  	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
  
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 9f940c4..4745e88 100644
+index d5a19c7..9406948 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -1003,8 +1003,6 @@ static enum page_references page_check_references(struct page *page,
+@@ -998,8 +998,6 @@ static enum page_references page_check_references(struct page *page,
  		return PAGEREF_RECLAIM;
  
  	if (referenced_ptes) {
@@ -540,7 +462,7 @@ index 9f940c4..4745e88 100644
  		/*
  		 * All mapped pages start out with page table
  		 * references from the instantiating fault, so we need
-@@ -1027,7 +1025,7 @@ static enum page_references page_check_references(struct page *page,
+@@ -1022,7 +1020,7 @@ static enum page_references page_check_references(struct page *page,
  		/*
  		 * Activate file-backed executable pages after first usage.
  		 */
@@ -549,152 +471,105 @@ index 9f940c4..4745e88 100644
  			return PAGEREF_ACTIVATE;
  
  		return PAGEREF_KEEP;
-#diff --git a/mm/workingset.c b/mm/workingset.c
-#index 50b7937..fc16d97c 100644
-#--- a/mm/workingset.c
-#+++ b/mm/workingset.c
-#@@ -357,8 +357,6 @@ void workingset_refault(struct page *page, void *shadow)
-# 	workingset_size = lruvec_page_state(eviction_lruvec, NR_ACTIVE_FILE);
-# 	if (mem_cgroup_get_nr_swap_pages(memcg) > 0) {
-# 		workingset_size += lruvec_page_state(eviction_lruvec,
-#-						     NR_INACTIVE_ANON);
-#-		workingset_size += lruvec_page_state(eviction_lruvec,
-# 						     NR_ACTIVE_ANON);
-# 	}
-# 	if (refault_distance > workingset_size)
 
-From patchwork Wed Jun 17 05:26:20 2020
+From patchwork Thu Jul 23 07:49:17 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609041
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 8596390
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:53 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id 452D9208E4
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:53 +0000 (UTC)
+X-Patchwork-Id: 1278081
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 945C4C433E3
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:51 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id 6E01622B43
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:51 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="RhsRvMKj"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 452D9208E4
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id 6F3026B0006; Wed, 17 Jun 2020 01:26:51 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id 6CDD96B0007; Wed, 17 Jun 2020 01:26:51 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id 5E49B6B0008; Wed, 17 Jun 2020 01:26:51 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0196.hostedemail.com
- [216.40.44.196])
-	by kanga.kvack.org (Postfix) with ESMTP id 47A916B0006
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:26:51 -0400 (EDT)
-Received: from smtpin13.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay03.hostedemail.com (Postfix) with ESMTP id 03E428245571
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:51 +0000 (UTC)
-X-FDA: 76937569422.13.car03_0f1226826e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin13.hostedemail.com (Postfix) with ESMTP id CE8A018140D60
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:50 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,4afa659ac4fa6ce6,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:1:2:41:355:379:541:800:960:973:988:989:1260:1345:1359:1437:1605:1730:1747:1777:1792:2198:2199:2393:2559:2562:2693:2914:3138:3139:3140:3141:3142:3865:3866:3867:3870:3872:4050:4250:4321:4605:5007:6261:6653:7576:7903:8603:8957:9413:9707:10004:11026:11232:11233:11473:11658:11914:12043:12296:12297:12438:12517:12519:12555:12679:12895:14096:14394:21080:21325:21433:21444:21451:21627:21666:21740:30004:30012:30045:30054:30056,0,RBL:209.85.216.67:@gmail.com:.lbl8.mailshell.net-66.100.201.100
- 62.50.0.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:25,LUA_SUMMARY:none
-X-HE-Tag: car03_0f1226826e05
-X-Filterd-Recvd-Size: 10439
-Received: from mail-pj1-f67.google.com (mail-pj1-f67.google.com
- [209.85.216.67])
-	by imf40.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:50 +0000 (UTC)
-Received: by mail-pj1-f67.google.com with SMTP id ga6so456534pjb.1
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:26:50 -0700 (PDT)
+ header.b="u8cXPsMo"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1727773AbgGWHtu (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:49:50 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43742 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725911AbgGWHtt (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:49:49 -0400
+Received: from mail-pj1-x1042.google.com (mail-pj1-x1042.google.com
+ [IPv6:2607:f8b0:4864:20::1042])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2BC11C0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:49 -0700 (PDT)
+Received: by mail-pj1-x1042.google.com with SMTP id gc15so3981346pjb.0
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=LqAOrLNplaMBqdY/rTyoQrQcxqZrPjXktX70kNlPxVs=;
-        b=RhsRvMKjie6x723miQooKnqgSSbdE9r7uTdUvENQTq+FVnX42ve0e5PcTXw657lo8G
-         nLywbBbWJNegPWhAcn7UZEIuw1HzUBxVtune9XA37/3FN7Xgddmtd+tGv2RP9skb1mKL
-         eysC6e2IZ7YmtaHyI8nQkWaPhLKLkJZYe7drnQWbqjsdyfRzTBofndFYu26NS1NO5nrx
-         U2IiVS//aXASmtjpBJPxam85oTZaBv4G5Io/dlA0G8DrHc5a3LV+TnlY1Q53UyV4Sldd
-         PhrhcjXHZF6CwIfb8XHtUiAQEWLRb3oZnZkcRzrocHUYK2l85O1bYbaoMY7Xxap27gaj
-         HtIQ==
+        bh=F16ehYtLz0xefegEOJ/APaSEoIC5nLFPwAu2t4aT5Rk=;
+        b=u8cXPsMobMbSqpjcoLbBncTigilPGdxwy9HmBwGbqEKKFOCoWRZHZ1l5J2P47lwO2m
+         Ij3yU94fDkmn72Ho0r9k+03FMEa5hgmjhhoA3iBHEPX8qPjXGNj37flvm2e/zLZlZcam
+         g7Lz+MWzgcEUF+dLhanvWH4gqzbJsIWJha5TAd0u5sNZlNNzBtAjMhxngFvuJ3SgvN0T
+         sqGuy9ck7IAI0mJPbNKcjWyOKfUSJg4xcC0FXeBBY8eZIoUdPY8FD500mwljZ973Unzu
+         IFy2e97YL4CyYBQfsArb6Gv2GDHWkdJkUkB4Nxvqpgr9AU0adZ4s9eSfJpX6A5V7SICF
+         0mww==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=LqAOrLNplaMBqdY/rTyoQrQcxqZrPjXktX70kNlPxVs=;
-        b=JffmkfAcAWoY+O2Kp/vxgIRYLDrI6Z6W6M3FAcoAGuRCx8iLLdSuvpa/2voV3h0tHy
-         TWoUTKyRlaLoTnO1567DWagsH0ZHOEDmSBJ7lsHFlThJpsXfwHkPfMuFatruKUDRORYW
-         zY6DrUJ6E1pEFxD7ckk785sgP63OnmU1nov5in+bRzwo7B+/O6wxnJZi8Wz4d1unuC9i
-         qrWlKeC7m9kvMwPAkvnwKl6kFpZVlYahqXZBaghI+e1xxQwzoMQQhRP7jbfmqfZjKv/j
-         a1egPASmf/eqZSDBsT1ZDwvaWxNnQOmI7kwMRih5mapZdExZ+OiviJKNhyk/O6V5ALrI
-         Pkew==
-X-Gm-Message-State: AOAM533QaS/BCodVqtFlkBV3ewE9CAQSh0UgspTWyBJMYsBOJKl306lQ
-	pi+ePpF5fVUGxJWQp9PEOB8=
+        bh=F16ehYtLz0xefegEOJ/APaSEoIC5nLFPwAu2t4aT5Rk=;
+        b=XgHCeK7tJqM9IXVfTpWiv+qhUlpJ+u/aVZomm2JulEdRKDaRYeYpuHfVgknzyFpTiM
+         pOp53yuHLuB8ts+6oRG4wnTqSWpi6SkhC7pNCEpsFIpUZ68J5MZRBTpvu5uaLp4wn1SU
+         PHHUJEMMywxeUyBZGIqSxWWsVKngEZyejl5LpXKGgiXm8cw16XIDPeaumudwwap+wIe1
+         91DRNUSEJKpsYetPPlncykn0VMnDuvpJkrp11r4YhOpyqs3792zJSTdLg+UnBb3TGAAz
+         OzHzwgaH7+VbGnEgPjBbwWfOMP5OL4C09heJ6OwXQCYwwJ4I97f1tHPR1xqEhJWK4FPS
+         Bdrg==
+X-Gm-Message-State: AOAM531ThCjsoXm9bymRLR0piH+vVMxXvsEdivCZOkg2/kvIZgIPrjAp
+        sGUPKEWscIuG/bAC6S+UImo=
 X-Google-Smtp-Source: 
- ABdhPJzKADQ5ElC8hqTHmAdFLRipScrGlc0p5LLDRIHX9sWKdEgBxG0YNVeIT/vP5g3vj9UrE8EIbw==
-X-Received: by 2002:a17:90b:390e:: with SMTP id
- ob14mr5695642pjb.221.1592371609477;
-        Tue, 16 Jun 2020 22:26:49 -0700 (PDT)
+ ABdhPJyuDwJTe5YD2AibkK0NRvsERns6+W/ultD7PRy4o6JLYcHQviwlHZUB67cEDk4TYzIFyQOHEg==
+X-Received: by 2002:a17:90a:2683:: with SMTP id
+ m3mr3226109pje.8.1595490588712;
+        Thu, 23 Jul 2020 00:49:48 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.46
+ f71sm9164879pje.0.2020.07.23.00.49.45
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:48 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:48 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 3/6] mm/workingset: extend the workingset detection for
- anon LRU
-Date: Wed, 17 Jun 2020 14:26:20 +0900
-Message-Id: <1592371583-30672-4-git-send-email-iamjoonsoo.kim@lge.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 3/6] mm/workingset: prepare the workingset detection
+ infrastructure for anon LRU
+Date: Thu, 23 Jul 2020 16:49:17 +0900
+Message-Id: <1595490560-15117-4-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: CE8A018140D60
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam01
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
-In the following patch, workingset detection will be applied to
-anonymous LRU. To prepare it, this patch adds some code to
-distinguish/handle the both LRUs.
-
-v6: do not introduce a new nonresident_age for anon LRU since
-we need to use *unified* nonresident_age to implement workingset
-detection for anon LRU.
+To prepare the workingset detection for anon LRU, this patch splits
+workingset event counters for refault, activate and restore into anon
+and file variants, as well as the refaults counter in struct lruvec.
 
 Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  include/linux/mmzone.h | 16 +++++++++++-----
@@ -705,10 +580,10 @@ Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
  5 files changed, 43 insertions(+), 21 deletions(-)
 
 diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-index f6f8849..8e9d0b9 100644
+index 635a96c..efbd95d 100644
 --- a/include/linux/mmzone.h
 +++ b/include/linux/mmzone.h
-@@ -179,9 +179,15 @@ enum node_stat_item {
+@@ -173,9 +173,15 @@ enum node_stat_item {
  	NR_ISOLATED_ANON,	/* Temporary isolated pages from anon lru */
  	NR_ISOLATED_FILE,	/* Temporary isolated pages from file lru */
  	WORKINGSET_NODES,
@@ -727,7 +602,7 @@ index f6f8849..8e9d0b9 100644
  	WORKINGSET_NODERECLAIM,
  	NR_ANON_MAPPED,	/* Mapped anonymous pages */
  	NR_FILE_MAPPED,	/* pagecache pages mapped into pagetables.
-@@ -259,8 +265,8 @@ struct lruvec {
+@@ -277,8 +283,8 @@ struct lruvec {
  	struct zone_reclaim_stat	reclaim_stat;
  	/* Evictions & activations on the inactive file list */
  	atomic_long_t			inactive_age;
@@ -739,10 +614,10 @@ index f6f8849..8e9d0b9 100644
  	unsigned long			flags;
  #ifdef CONFIG_MEMCG
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 0b38b6a..2127dd1 100644
+index 14dd98d..e84c2b5 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -1425,10 +1425,16 @@ static char *memory_stat_format(struct mem_cgroup *memcg)
+@@ -1530,10 +1530,16 @@ static char *memory_stat_format(struct mem_cgroup *memcg)
  	seq_buf_printf(&s, "%s %lu\n", vm_event_name(PGMAJFAULT),
  		       memcg_events(memcg, PGMAJFAULT));
  
@@ -764,10 +639,10 @@ index 0b38b6a..2127dd1 100644
  		       memcg_page_state(memcg, WORKINGSET_NODERECLAIM));
  
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 4745e88..3caa35f 100644
+index 9406948..6dda5b2 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -2695,7 +2695,10 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -2683,7 +2683,10 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  	if (!sc->force_deactivate) {
  		unsigned long refaults;
  
@@ -779,7 +654,7 @@ index 4745e88..3caa35f 100644
  			sc->may_deactivate |= DEACTIVATE_ANON;
  		else
  			sc->may_deactivate &= ~DEACTIVATE_ANON;
-@@ -2706,8 +2709,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -2694,8 +2697,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  		 * rid of any stale active pages quickly.
  		 */
  		refaults = lruvec_page_state(target_lruvec,
@@ -790,7 +665,7 @@ index 4745e88..3caa35f 100644
  		    inactive_is_low(target_lruvec, LRU_INACTIVE_FILE))
  			sc->may_deactivate |= DEACTIVATE_FILE;
  		else
-@@ -2984,8 +2987,10 @@ static void snapshot_refaults(struct mem_cgroup *target_memcg, pg_data_t *pgdat)
+@@ -2972,8 +2975,10 @@ static void snapshot_refaults(struct mem_cgroup *target_memcg, pg_data_t *pgdat)
  	unsigned long refaults;
  
  	target_lruvec = mem_cgroup_lruvec(target_memcg, pgdat);
@@ -804,10 +679,10 @@ index 4745e88..3caa35f 100644
  
  /*
 diff --git a/mm/vmstat.c b/mm/vmstat.c
-index 80c9b62..8843e75 100644
+index 5b35c0e..6eecfcb 100644
 --- a/mm/vmstat.c
 +++ b/mm/vmstat.c
-@@ -1149,9 +1149,12 @@ const char * const vmstat_text[] = {
+@@ -1190,9 +1190,12 @@ const char * const vmstat_text[] = {
  	"nr_isolated_anon",
  	"nr_isolated_file",
  	"workingset_nodes",
@@ -824,7 +699,7 @@ index 80c9b62..8843e75 100644
  	"nr_anon_pages",
  	"nr_mapped",
 diff --git a/mm/workingset.c b/mm/workingset.c
-index fc16d97c..8395e60 100644
+index 21b2986..2d77e4d 100644
 --- a/mm/workingset.c
 +++ b/mm/workingset.c
 @@ -6,6 +6,7 @@
@@ -852,7 +727,7 @@ index fc16d97c..8395e60 100644
  
  	/*
  	 * Compare the distance to the existing workingset size. We
-@@ -364,12 +366,12 @@ void workingset_refault(struct page *page, void *shadow)
+@@ -366,12 +368,12 @@ void workingset_refault(struct page *page, void *shadow)
  
  	SetPageActive(page);
  	advance_inactive_age(memcg, pgdat);
@@ -868,150 +743,116 @@ index fc16d97c..8395e60 100644
  out:
  	rcu_read_unlock();
 
-From patchwork Wed Jun 17 05:26:21 2020
+From patchwork Thu Jul 23 07:49:18 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609043
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 4D6A6913
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:56 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id 0CD2F207E8
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:56 +0000 (UTC)
+X-Patchwork-Id: 1278080
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 85C76C433EA
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:55 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id 5C5B420714
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:55 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="EnKfKujo"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0CD2F207E8
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id B61246B0007; Wed, 17 Jun 2020 01:26:54 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id B11BE6B0008; Wed, 17 Jun 2020 01:26:54 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id 9B1276B000A; Wed, 17 Jun 2020 01:26:54 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0240.hostedemail.com
- [216.40.44.240])
-	by kanga.kvack.org (Postfix) with ESMTP id 836566B0007
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:26:54 -0400 (EDT)
-Received: from smtpin27.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay05.hostedemail.com (Postfix) with ESMTP id 3924F181AC9B6
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:54 +0000 (UTC)
-X-FDA: 76937569548.27.horse21_210648826e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin27.hostedemail.com (Postfix) with ESMTP id 152373D663
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:54 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,a6a6c469d8663f5b,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:1:2:41:355:379:541:800:960:966:968:973:988:989:1260:1345:1359:1437:1605:1730:1747:1777:1792:2194:2196:2198:2199:2200:2201:2393:2553:2559:2562:2693:2898:3138:3139:3140:3141:3142:3865:3866:3867:3868:3870:3871:3872:3874:4051:4321:4385:4605:5007:6119:6261:6653:7576:7903:8957:9413:10004:11026:11473:11658:11914:12043:12291:12296:12297:12438:12517:12519:12555:12679:12683:12895:13255:14096:14394:21080:21324:21444:21451:21627:21666:21740:21795:21990:30051:30054:30070:30075:30090,0,RBL:209.85.214.196:@gmail.com:.lbl8.mailshell.net-62.50.0.100
- 66.100.201.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:1:0,LFtime:23,LUA_SUMMARY:none
-X-HE-Tag: horse21_210648826e05
-X-Filterd-Recvd-Size: 11965
-Received: from mail-pl1-f196.google.com (mail-pl1-f196.google.com
- [209.85.214.196])
-	by imf23.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:53 +0000 (UTC)
-Received: by mail-pl1-f196.google.com with SMTP id j4so407695plk.3
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:26:53 -0700 (PDT)
+ header.b="VZj9lyZJ"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1727794AbgGWHty (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:49:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43754 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725911AbgGWHtx (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:49:53 -0400
+Received: from mail-pg1-x542.google.com (mail-pg1-x542.google.com
+ [IPv6:2607:f8b0:4864:20::542])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4518AC0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:53 -0700 (PDT)
+Received: by mail-pg1-x542.google.com with SMTP id s189so2658660pgc.13
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:53 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=lFkuSuUp5TYSJoojYtE5bRpFMA9GIu0QTze8kgGtVS0=;
-        b=EnKfKujoKQOlNwyGBGhvACo6Hiy3EHRsb8UziRI3Pg0rCyC3Bo9TavEt+QyTzTuAZs
-         LkOMEwzMYe0fDGfMBo7Gr1IP+G0a5ow7RmAbAObaIskfkNBvaf/OSShU/TO/1jTgiuhH
-         s3GpvI6IoHp6i7cFa5f9PKZZbTuOi1URqjjycsl8MePCXp9RvpZOkqnn9wKlYaFv9uEJ
-         juf6+gm/AUJs57CDEzoWr5kBi/+KUBK94mN7LZDZI7DptsgzXu5WlVqWtEyI9vKm4yyL
-         EobT2rmCiKxA9mRg5c4UfWlaisBn102ghKvg9A6mBqz+erOLQNya6d6SxWz1PDMPMe81
-         jN5w==
+        bh=x/km7mgDbJXIYaMWCyJ3YkoTJJc8gYFxyZlip+EPAcI=;
+        b=VZj9lyZJphVJvmiWmMbxbSbRxIBQTdhWuwF2+Gt4QuWV+HVnZAg6CG25f5qkTIT0EM
+         /vzTGj1n51ZceEemZz2rcJBss9HEios9DGkGrpE5q2fFZlBedYXqluFggQP3CEZIc0Zm
+         4md1wtlEKkweHkRRUWEHUEMQcApGrF+jRyJyHKZ5qTDwfJosxGZ5dynUH476wmYv46mF
+         KeE9vSHSy+Iti9SXAXTtwgQZDSMWcZvGyK4ZJr/NIxnv5XSi0Qgi/MkCsZ883/5XQCEK
+         mBjEofY5IzVWvaHhkYJEqVItOWqDg59cKlQyRqL/NRqiylWFKEFAaxlh7wqhtj5UBThd
+         B6IA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=lFkuSuUp5TYSJoojYtE5bRpFMA9GIu0QTze8kgGtVS0=;
-        b=hQjz2nd0Lld9XZTaVEIgsCo97jmik8uNvU9rb0eMucE++kuj7/U/WkxVr2+e/Rh/3m
-         3bnR8f8s7QZEDIkC6yhdLVAzagjEHWNBADNWxNFK5XHwq3UpuUL3yHlVV0zpvxtb0DjT
-         0FV/MLNKXy6Xulex11vT0CRSq/KA6O+SWeyKJwws5PSsGZi8DJAJGHdIXgcP8eT0KktL
-         Hs2eIe5yNd85PWp+44uk+1oIspritOgPEG9fLEtkJNEwZJyiucb6T08RPv2NbcNzVwIU
-         DTRJeMXpi2nBto5oWtDRpJ39+ACNDbW4Iu4YLyQCanh9RULoNtqCZ4V264jsjeF6ytPY
-         5T3w==
-X-Gm-Message-State: AOAM5300RDL6Qq1diqMDTh6cGr1xKuBbs/ICcrlr3juNIRtQFErGbsZl
-	L5HxGJMaP0AxqxsBxuQ0Qdg=
+        bh=x/km7mgDbJXIYaMWCyJ3YkoTJJc8gYFxyZlip+EPAcI=;
+        b=XTRaAb2+MbTAvNmrqhLZIyOCScYys5CQE/b+VcHIwf7z+ATe3aWhkSZ/4WVQ3lBcQz
+         pVM7kpD5EybxkuIdGGA3ocqGYaju2L3i/uhojweDegG81jzPVmJWCM+FjjKcqqzJPsYk
+         A0hnn/VssxlOMdkaY73oRUZD3aLs/NaXD0MWm7eR+9HWm1AbCcZGrAxp864nPErVnrIc
+         oNhOMXMwUT/GuK+F4WBGKU5vca9nGudRBsbvCxFHpqYdHVgBzqDfnDDBswZkwbWCo+bc
+         1bD5htyTuCkb2T+1zf1oI6bqXdj4Lzliy4G6z/0NyF6UJO9btpEgL+DRL1qDDs+wOZIU
+         BevQ==
+X-Gm-Message-State: AOAM530C0/dJEdiL5iTXsz3y/E2kK9Lsn6iQi8vHMITkVApfPBg5i1rV
+        uyzeUOpGuT5XbJFgal3RNZs=
 X-Google-Smtp-Source: 
- ABdhPJxN7f5QRTmVFREoHWEZWboIAFqlsGa1WlYMkDPSQKGxMiPZvXW4bz4YPSQ+AFIt3S96SLXWAg==
-X-Received: by 2002:a17:90a:36cf:: with SMTP id
- t73mr6605699pjb.100.1592371612725;
-        Tue, 16 Jun 2020 22:26:52 -0700 (PDT)
+ ABdhPJx3qGLhzpu9c9r6KiQh3xC+l6KbpPMe54G3ggrDKw3Iq5RDFibido+r9b9gzhVw8dqdwHsI7Q==
+X-Received: by 2002:a65:63d4:: with SMTP id n20mr3270504pgv.213.1595490592760;
+        Thu, 23 Jul 2020 00:49:52 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.49
+ f71sm9164879pje.0.2020.07.23.00.49.48
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:52 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:51 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 4/6] mm/swapcache: support to handle the exceptional
- entries in swapcache
-Date: Wed, 17 Jun 2020 14:26:21 +0900
-Message-Id: <1592371583-30672-5-git-send-email-iamjoonsoo.kim@lge.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 4/6] mm/swapcache: support to handle the shadow entries
+Date: Thu, 23 Jul 2020 16:49:18 +0900
+Message-Id: <1595490560-15117-5-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: 152373D663
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam04
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
-Swapcache doesn't handle the exceptional entries since there is no case
-using it. In the following patch, workingset detection for anonymous
-page will be implemented and it stores the shadow entries as exceptional
-entries into the swapcache. So, we need to handle the exceptional entries
-and this patch implements it.
+Workingset detection for anonymous page will be implemented in the
+following patch and it requires to store the shadow entries into the
+swapcache. This patch implements an infrastructure to store the shadow
+entry in the swapcache.
 
 Acked-by: Johannes Weiner <hannes@cmpxchg.org>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  include/linux/swap.h | 17 ++++++++++++----
  mm/shmem.c           |  3 ++-
- mm/swap_state.c      | 56 ++++++++++++++++++++++++++++++++++++++++++++++------
+ mm/swap_state.c      | 57 ++++++++++++++++++++++++++++++++++++++++++++++------
  mm/swapfile.c        |  2 ++
  mm/vmscan.c          |  2 +-
- 5 files changed, 68 insertions(+), 12 deletions(-)
+ 5 files changed, 69 insertions(+), 12 deletions(-)
 
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index f4f5f94..901da54 100644
+index 51ec9cd..8a4c592 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
-@@ -416,10 +416,13 @@ extern struct address_space *swapper_spaces[];
+@@ -414,10 +414,13 @@ extern struct address_space *swapper_spaces[];
  extern unsigned long total_swapcache_pages(void);
  extern void show_swap_cache_info(void);
  extern int add_to_swap(struct page *page);
@@ -1028,7 +869,7 @@ index f4f5f94..901da54 100644
  extern void free_page_and_swap_cache(struct page *);
  extern void free_pages_and_swap_cache(struct page **, int);
  extern struct page *lookup_swap_cache(swp_entry_t entry,
-@@ -572,13 +576,13 @@ static inline int add_to_swap(struct page *page)
+@@ -570,13 +574,13 @@ static inline int add_to_swap(struct page *page)
  }
  
  static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
@@ -1044,7 +885,7 @@ index f4f5f94..901da54 100644
  {
  }
  
-@@ -586,6 +590,11 @@ static inline void delete_from_swap_cache(struct page *page)
+@@ -584,6 +588,11 @@ static inline void delete_from_swap_cache(struct page *page)
  {
  }
  
@@ -1057,10 +898,10 @@ index f4f5f94..901da54 100644
  {
  	return 0;
 diff --git a/mm/shmem.c b/mm/shmem.c
-index a0dbe62..e9a99a2 100644
+index 89b357a..85ed46f 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -1374,7 +1374,8 @@ static int shmem_writepage(struct page *page, struct writeback_control *wbc)
+@@ -1434,7 +1434,8 @@ static int shmem_writepage(struct page *page, struct writeback_control *wbc)
  		list_add(&info->swaplist, &shmem_swaplist);
  
  	if (add_to_swap_cache(page, swap,
@@ -1071,10 +912,10 @@ index a0dbe62..e9a99a2 100644
  		shmem_recalc_inode(inode);
  		info->swapped++;
 diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 1050fde..43c4e3a 100644
+index 66e750f..13d8d66 100644
 --- a/mm/swap_state.c
 +++ b/mm/swap_state.c
-@@ -110,12 +110,15 @@ void show_swap_cache_info(void)
+@@ -110,12 +110,14 @@ void show_swap_cache_info(void)
   * add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
   * but sets SwapCache flag and private instead of mapping and index.
   */
@@ -1086,18 +927,25 @@ index 1050fde..43c4e3a 100644
  	pgoff_t idx = swp_offset(entry);
  	XA_STATE_ORDER(xas, &address_space->i_pages, idx, compound_order(page));
  	unsigned long i, nr = hpage_nr_pages(page);
-+	unsigned long nrexceptional = 0;
 +	void *old;
  
  	VM_BUG_ON_PAGE(!PageLocked(page), page);
  	VM_BUG_ON_PAGE(PageSwapCache(page), page);
-@@ -131,10 +134,17 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
+@@ -125,16 +127,25 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
+ 	SetPageSwapCache(page);
+ 
+ 	do {
++		unsigned long nr_shadows = 0;
++
+ 		xas_lock_irq(&xas);
+ 		xas_create_range(&xas);
+ 		if (xas_error(&xas))
  			goto unlock;
  		for (i = 0; i < nr; i++) {
  			VM_BUG_ON_PAGE(xas.xa_index != idx + i, page);
 +			old = xas_load(&xas);
 +			if (xa_is_value(old)) {
-+				nrexceptional++;
++				nr_shadows++;
 +				if (shadowp)
 +					*shadowp = old;
 +			}
@@ -1105,11 +953,11 @@ index 1050fde..43c4e3a 100644
  			xas_store(&xas, page);
  			xas_next(&xas);
  		}
-+		address_space->nrexceptional -= nrexceptional;
++		address_space->nrexceptional -= nr_shadows;
  		address_space->nrpages += nr;
  		__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, nr);
  		ADD_CACHE_INFO(add_total, nr);
-@@ -154,7 +164,8 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
+@@ -154,7 +165,8 @@ int add_to_swap_cache(struct page *page, swp_entry_t entry, gfp_t gfp)
   * This must be called only on pages that have
   * been verified to be in the swap cache.
   */
@@ -1119,7 +967,7 @@ index 1050fde..43c4e3a 100644
  {
  	struct address_space *address_space = swap_address_space(entry);
  	int i, nr = hpage_nr_pages(page);
-@@ -166,12 +177,14 @@ void __delete_from_swap_cache(struct page *page, swp_entry_t entry)
+@@ -166,12 +178,14 @@ void __delete_from_swap_cache(struct page *page, swp_entry_t entry)
  	VM_BUG_ON_PAGE(PageWriteback(page), page);
  
  	for (i = 0; i < nr; i++) {
@@ -1135,7 +983,7 @@ index 1050fde..43c4e3a 100644
  	address_space->nrpages -= nr;
  	__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, -nr);
  	ADD_CACHE_INFO(del_total, nr);
-@@ -208,7 +221,7 @@ int add_to_swap(struct page *page)
+@@ -208,7 +222,7 @@ int add_to_swap(struct page *page)
  	 * Add it to the swap cache.
  	 */
  	err = add_to_swap_cache(page, entry,
@@ -1144,7 +992,7 @@ index 1050fde..43c4e3a 100644
  	if (err)
  		/*
  		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
-@@ -246,13 +259,44 @@ void delete_from_swap_cache(struct page *page)
+@@ -246,13 +260,44 @@ void delete_from_swap_cache(struct page *page)
  	struct address_space *address_space = swap_address_space(entry);
  
  	xa_lock_irq(&address_space->i_pages);
@@ -1159,38 +1007,38 @@ index 1050fde..43c4e3a 100644
 +void clear_shadow_from_swap_cache(int type, unsigned long begin,
 +				unsigned long end)
 +{
-+	unsigned long curr;
++	unsigned long curr = begin;
 +	void *old;
-+	swp_entry_t entry = swp_entry(type, begin);
-+	struct address_space *address_space = swap_address_space(entry);
-+	XA_STATE(xas, &address_space->i_pages, begin);
 +
-+retry:
-+	xa_lock_irq(&address_space->i_pages);
-+	for (curr = begin; curr <= end; curr++) {
-+		entry = swp_entry(type, curr);
-+		if (swap_address_space(entry) != address_space) {
-+			xa_unlock_irq(&address_space->i_pages);
-+			address_space = swap_address_space(entry);
-+			begin = curr;
-+			xas_set(&xas, begin);
-+			goto retry;
++	for (;;) {
++		unsigned long nr_shadows = 0;
++		swp_entry_t entry = swp_entry(type, curr);
++		struct address_space *address_space = swap_address_space(entry);
++		XA_STATE(xas, &address_space->i_pages, curr);
++
++		xa_lock_irq(&address_space->i_pages);
++		xas_for_each(&xas, old, end) {
++			if (!xa_is_value(old))
++				continue;
++			xas_store(&xas, NULL);
++			nr_shadows++;
 +		}
++		address_space->nrexceptional -= nr_shadows;
++		xa_unlock_irq(&address_space->i_pages);
 +
-+		old = xas_load(&xas);
-+		if (!xa_is_value(old))
-+			continue;
-+		xas_store(&xas, NULL);
-+		address_space->nrexceptional--;
-+		xas_next(&xas);
++		/* search the next swapcache until we meet end */
++		curr >>= SWAP_ADDRESS_SPACE_SHIFT;
++		curr++;
++		curr <<= SWAP_ADDRESS_SPACE_SHIFT;
++		if (curr > end)
++			break;
 +	}
-+	xa_unlock_irq(&address_space->i_pages);
 +}
 +
  /* 
   * If we are the only user, then try to free up the swap cache. 
   * 
-@@ -429,7 +473,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+@@ -429,7 +474,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
  		__SetPageLocked(new_page);
  		__SetPageSwapBacked(new_page);
  		err = add_to_swap_cache(new_page, entry,
@@ -1200,7 +1048,7 @@ index 1050fde..43c4e3a 100644
  			/* Initiate read into locked page */
  			SetPageWorkingset(new_page);
 diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 38f6433..4630db1 100644
+index 6bd9b4c..3dba9be 100644
 --- a/mm/swapfile.c
 +++ b/mm/swapfile.c
 @@ -696,6 +696,7 @@ static void add_to_avail_list(struct swap_info_struct *p)
@@ -1211,7 +1059,7 @@ index 38f6433..4630db1 100644
  	unsigned long end = offset + nr_entries - 1;
  	void (*swap_slot_free_notify)(struct block_device *, unsigned long);
  
-@@ -721,6 +722,7 @@ static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
+@@ -722,6 +723,7 @@ static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
  			swap_slot_free_notify(si->bdev, offset);
  		offset++;
  	}
@@ -1220,10 +1068,10 @@ index 38f6433..4630db1 100644
  
  static void set_cluster_next(struct swap_info_struct *si, unsigned long next)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 3caa35f..37943bf 100644
+index 6dda5b2..b9b543e 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -901,7 +901,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+@@ -896,7 +896,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
  	if (PageSwapCache(page)) {
  		swp_entry_t swap = { .val = page_private(page) };
  		mem_cgroup_swapout(page, swap);
@@ -1233,148 +1081,118 @@ index 3caa35f..37943bf 100644
  		put_swap_page(page, swap);
  		workingset_eviction(page, target_memcg);
 
-From patchwork Wed Jun 17 05:26:22 2020
+From patchwork Thu Jul 23 07:49:19 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609045
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id 278CC90
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:59 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id E0059207E8
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:26:58 +0000 (UTC)
+X-Patchwork-Id: 1278082
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47E32C433EB
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:59 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id 218DC20714
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:49:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="bAE70EED"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E0059207E8
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id BD5376B0008; Wed, 17 Jun 2020 01:26:57 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id B87A06B000A; Wed, 17 Jun 2020 01:26:57 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id A9CB86B000D; Wed, 17 Jun 2020 01:26:57 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0237.hostedemail.com
- [216.40.44.237])
-	by kanga.kvack.org (Postfix) with ESMTP id 8B2186B0008
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:26:57 -0400 (EDT)
-Received: from smtpin19.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay01.hostedemail.com (Postfix) with ESMTP id 4E2F8180AD804
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:57 +0000 (UTC)
-X-FDA: 76937569674.19.crime65_2d0fe4026e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin19.hostedemail.com (Postfix) with ESMTP id 2B0121AD1B4
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:57 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,09e4b877a62108e9,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:2:41:355:379:541:800:960:966:968:973:988:989:1260:1345:1359:1437:1535:1606:1730:1747:1777:1792:2196:2199:2393:2553:2559:2562:2693:3138:3139:3140:3141:3142:3308:3355:3865:3866:3867:3868:3871:3872:3874:4120:4321:4385:4605:5007:6261:6653:7576:7903:8603:8957:9413:9707:10004:11026:11473:11658:11914:12043:12296:12297:12438:12517:12519:12555:12679:12895:13161:13229:14096:14394:21080:21324:21444:21451:21611:21627:21666:21740:21990:30054:30090,0,RBL:209.85.214.194:@gmail.com:.lbl8.mailshell.net-62.50.0.100
- 66.100.201.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
-X-HE-Tag: crime65_2d0fe4026e05
-X-Filterd-Recvd-Size: 9022
-Received: from mail-pl1-f194.google.com (mail-pl1-f194.google.com
- [209.85.214.194])
-	by imf38.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:26:56 +0000 (UTC)
-Received: by mail-pl1-f194.google.com with SMTP id n9so413602plk.1
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:26:56 -0700 (PDT)
+ header.b="R7YCPWss"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1727815AbgGWHt6 (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:49:58 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43770 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726141AbgGWHt5 (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:49:57 -0400
+Received: from mail-pg1-x544.google.com (mail-pg1-x544.google.com
+ [IPv6:2607:f8b0:4864:20::544])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EFF96C0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:56 -0700 (PDT)
+Received: by mail-pg1-x544.google.com with SMTP id z5so2670936pgb.6
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:49:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=/q7PqyUFq8ro73/rjx7hpg/m6AeXPnwJqUXUOXyFoLA=;
-        b=bAE70EEDpb3cKJ1GELlSXkWCL8XQVe6CoN5lpbF5YGQhMIe/bL3I0mqhSboaJRMsOo
-         VoHzLZ+k25b2gOJBUps5N4La65d1NgxMVAht52cGB2+Vmnbkd0PqynlpvXI+6nSRcxq5
-         M9fUbdwMUAbKIU8pRnF5Uw0/9Phr06jE6/skkjSjnWTnlGu6ZN8C5Atzm5z5/3F4b3qw
-         5+WRke53BMP38aQihn81I20yvea/e4l+nW9J0xuI5yV7EkVM1eVnVAvXhCeGF71Wfmkl
-         8opHUw/SfLehNQuT0AG1E3JIpzIIOQwr5fQHXrAjToNc2lyITg6jMWw7BxLDqeD5APk/
-         gtOg==
+        bh=nMJaxT009VYfWfSDnZgpATklA3yQDr7DBKWPTY196gs=;
+        b=R7YCPWssLYkFwfeNv++E63VyhosRbAta7GEpT410A48DocTsjm+U9spvC+FGC4GbG1
+         DMmF5sa8+mV3XtZCLkSejYScLOj6ech5jTf5LXYtzkrACQAh0JROkFNHRUa9HK5d5WGi
+         cu0ypSLgfpTlaS3wtHx429qp+D1GC65BhLjYrfJkQ7y7tN9PZ6uwzxode7IqjFTuHpxn
+         0GeJKzopBE7D87FXts2ARy7PrWnjM+TdaumuJYXHzVYGYEi3BejRzKX/A2Ynh3JvgqrC
+         a95dS4VNz/V4eksltGQ4VXYUQF0DqqPtIgawpQw70cxzRBsiUtIBKhETHenNMCWNXGAt
+         mMUA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=/q7PqyUFq8ro73/rjx7hpg/m6AeXPnwJqUXUOXyFoLA=;
-        b=HpxOLT7xcDZE9ajCTlv63tRphTGY99ObWVY7lf6WJYo0/Jo5rp2BD/A5t7TyEgldt7
-         pXT9W/1m0SP8Qu+uRLgATBNr5gP5CtG30t0CxZFzC3JaSH3SWMq3AFEQ9zGO9jW05pwx
-         VfZh6pfDhd6DyUWU9QseP9Cl5hWLs2RhyHs1fy23Pt8+GwWKKHCM5j5sGTAiPTBGfYde
-         T0zbmtjohUZv6cOsmjFjsSA2K7oxZjjDzo2OGzmZO75A9Fnpn8Y1ZmsvuW1YbI7Uvm7K
-         Y1Joa6jQJHn6nTYzqJjsaNK8PvqlJuZxJyODNLIKZ+rjCrXk5Jyrdfjy8mPrZKtn0+7U
-         rmGw==
-X-Gm-Message-State: AOAM532YGyG9Syx40+oyDHKymjp4yGEW2lrzH/9wIpDAgvNRUbRBTc9o
-	Y/66tBrcatfl3/KAhByIPOg=
+        bh=nMJaxT009VYfWfSDnZgpATklA3yQDr7DBKWPTY196gs=;
+        b=BJ5QrmzLrBastmyH2GM//NcWez5G6exlG+YsJTGhaWEiW0+Ae6Fx15K0GXuFzDXEnV
+         c5bSGmlA9t/qUsfTCW88umgDZljKjQlHkEW8nJff1UpWIzBOS8x4s8ameL/1Bfl8+KHu
+         eS/oFVHjyWFT2SxHIw/BissB7e3nIJlkXrNCLPyPPn7pVlyGKbbzPpWul8Um/ZfyqWzE
+         81az6yIlikIy4GLqWukOJ4rVbVsZYJjk+Vkf1Ru8+W0Svg3V6RRfjTbPc/l6cudOS1Me
+         oRksFM6iIPdEPa/oxyUnD1Zt04hwHF2jvDs4BFHzQ5ClEIft7Rycl3dDnNU8zOawF5mK
+         Dkaw==
+X-Gm-Message-State: AOAM532jAND3ISNYGHZ8sxtfAWzh6hEofLu7fPGD2fIxLqJ/RyO0DIOv
+        SKQ8Ht6cMHBt0SYh7vA+2tg=
 X-Google-Smtp-Source: 
- ABdhPJxdKduDz+SWZBN478mAlpjDGDY5E3e4SOkTSwjz3zhCrsfKYWjei2KBsHQlYtORk6BWGK4H1Q==
-X-Received: by 2002:a17:90a:a897:: with SMTP id
- h23mr6411895pjq.90.1592371615912;
-        Tue, 16 Jun 2020 22:26:55 -0700 (PDT)
+ ABdhPJzp5KHRuQLAVPZV8wbiRpxdEWsbICYGtwOlPVfriVsHhXh60AgQSrA2aCyBYN0Q2Ax8ZXnJeg==
+X-Received: by 2002:a63:e045:: with SMTP id n5mr3323394pgj.274.1595490596480;
+        Thu, 23 Jul 2020 00:49:56 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.52
+ f71sm9164879pje.0.2020.07.23.00.49.53
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:55 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:56 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 5/6] mm/swap: implement workingset detection for anonymous
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 5/6] mm/swap: implement workingset detection for anonymous
  LRU
-Date: Wed, 17 Jun 2020 14:26:22 +0900
-Message-Id: <1592371583-30672-6-git-send-email-iamjoonsoo.kim@lge.com>
+Date: Thu, 23 Jul 2020 16:49:19 +0900
+Message-Id: <1595490560-15117-6-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: 2B0121AD1B4
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam05
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
 This patch implements workingset detection for anonymous LRU.
-All the infrastructure is implemented by the previous patches so this patch
-just activates the workingset detection by installing/retrieving
-the shadow entry.
+All the infrastructure is implemented by the previous patches so this
+patch just activates the workingset detection by installing/retrieving
+the shadow entry and adding refault calculation.
 
+Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  include/linux/swap.h |  6 ++++++
  mm/memory.c          | 11 ++++-------
  mm/swap_state.c      | 23 ++++++++++++++++++-----
  mm/vmscan.c          |  7 ++++---
- mm/workingset.c      |  5 +++--
- 5 files changed, 35 insertions(+), 17 deletions(-)
+ mm/workingset.c      | 15 +++++++++++----
+ 5 files changed, 43 insertions(+), 19 deletions(-)
 
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 901da54..9ee78b8 100644
+index 8a4c592..6610469 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
-@@ -416,6 +416,7 @@ extern struct address_space *swapper_spaces[];
+@@ -414,6 +414,7 @@ extern struct address_space *swapper_spaces[];
  extern unsigned long total_swapcache_pages(void);
  extern void show_swap_cache_info(void);
  extern int add_to_swap(struct page *page);
@@ -1382,7 +1200,7 @@ index 901da54..9ee78b8 100644
  extern int add_to_swap_cache(struct page *page, swp_entry_t entry,
  			gfp_t gfp, void **shadowp);
  extern void __delete_from_swap_cache(struct page *page,
-@@ -575,6 +576,11 @@ static inline int add_to_swap(struct page *page)
+@@ -573,6 +574,11 @@ static inline int add_to_swap(struct page *page)
  	return 0;
  }
  
@@ -1395,10 +1213,10 @@ index 901da54..9ee78b8 100644
  					gfp_t gfp_mask, void **shadowp)
  {
 diff --git a/mm/memory.c b/mm/memory.c
-index f221f96..2411cf57 100644
+index 25769b6..4934dbc 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -3094,6 +3094,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
+@@ -3100,6 +3100,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
  	int locked;
  	int exclusive = 0;
  	vm_fault_t ret = 0;
@@ -1406,9 +1224,9 @@ index f221f96..2411cf57 100644
  
  	if (!pte_unmap_same(vma->vm_mm, vmf->pmd, vmf->pte, vmf->orig_pte))
  		goto out;
-#@@ -3143,13 +3144,9 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
-# 				if (err)
+#@@ -3151,13 +3152,9 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 # 					goto out_page;
+# 				}
 # 
 #-				/*
 #-				 * XXX: Move to lru_cache_add() when it
@@ -1424,7 +1242,7 @@ index f221f96..2411cf57 100644
 # 				lru_cache_add(page);
 # 				swap_readpage(page, true);
 diff --git a/mm/swap_state.c b/mm/swap_state.c
-index 43c4e3a..90c5bd1 100644
+index 13d8d66..146a86d 100644
 --- a/mm/swap_state.c
 +++ b/mm/swap_state.c
 @@ -106,6 +106,20 @@ void show_swap_cache_info(void)
@@ -1448,7 +1266,7 @@ index 43c4e3a..90c5bd1 100644
  /*
   * add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
   * but sets SwapCache flag and private instead of mapping and index.
-@@ -405,6 +419,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+@@ -406,6 +420,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
  	struct page *found_page = NULL, *new_page = NULL;
  	struct swap_info_struct *si;
  	int err;
@@ -1456,7 +1274,7 @@ index 43c4e3a..90c5bd1 100644
  	*new_page_allocated = false;
  
  	do {
-@@ -473,7 +488,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+@@ -474,7 +489,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
  		__SetPageLocked(new_page);
  		__SetPageSwapBacked(new_page);
  		err = add_to_swap_cache(new_page, entry,
@@ -1465,7 +1283,7 @@ index 43c4e3a..90c5bd1 100644
  		if (likely(!err)) {
  			/* Initiate read into locked page */
  			SetPageWorkingset(new_page);
-#@@ -483,10 +498,8 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+#@@ -484,10 +499,8 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
 # 		goto fail_unlock;
 # 	}
 # 
@@ -1479,10 +1297,10 @@ index 43c4e3a..90c5bd1 100644
 # 	/* Caller will initiate read into locked page */
 # 	SetPageWorkingset(page);
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 37943bf..eb02d18 100644
+index b9b543e..9d4e28c 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -859,6 +859,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+@@ -854,6 +854,7 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
  {
  	unsigned long flags;
  	int refcount;
@@ -1490,7 +1308,7 @@ index 37943bf..eb02d18 100644
  
  	BUG_ON(!PageLocked(page));
  	BUG_ON(mapping != page_mapping(page));
-@@ -901,12 +902,13 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
+@@ -896,12 +897,13 @@ static int __remove_mapping(struct address_space *mapping, struct page *page,
  	if (PageSwapCache(page)) {
  		swp_entry_t swap = { .val = page_private(page) };
  		mem_cgroup_swapout(page, swap);
@@ -1507,7 +1325,7 @@ index 37943bf..eb02d18 100644
  		freepage = mapping->a_ops->freepage;
  		/*
 diff --git a/mm/workingset.c b/mm/workingset.c
-index 8395e60..3769ae6 100644
+index 2d77e4d..92e6611 100644
 --- a/mm/workingset.c
 +++ b/mm/workingset.c
 @@ -353,7 +353,7 @@ void workingset_refault(struct page *page, void *shadow)
@@ -1517,147 +1335,119 @@ index 8395e60..3769ae6 100644
 -	 * the memory was available to the page cache.
 +	 * the memory was available to the workingset.
  	 */
- 	if (refault_distance > active_file)
+ 	if (refault_distance > workingset_size)
  		goto out;
 
-From patchwork Wed Jun 17 05:26:23 2020
+From patchwork Thu Jul 23 07:49:20 2020
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 X-Patchwork-Submitter: Joonsoo Kim <js1304@gmail.com>
-X-Patchwork-Id: 11609047
-Return-Path: <SRS0=4wsg=76=kvack.org=owner-linux-mm@kernel.org>
-Received: from mail.kernel.org (pdx-korg-mail-1.web.codeaurora.org
- [172.30.200.123])
-	by pdx-korg-patchwork-2.web.codeaurora.org (Postfix) with ESMTP id CBFE290
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:27:02 +0000 (UTC)
-Received: from kanga.kvack.org (kanga.kvack.org [205.233.56.17])
-	by mail.kernel.org (Postfix) with ESMTP id 9A0B4207E8
-	for <patchwork-linux-mm@patchwork.kernel.org>;
- Wed, 17 Jun 2020 05:27:02 +0000 (UTC)
+X-Patchwork-Id: 1278083
+Return-Path: <SRS0=Rqeb=BC=vger.kernel.org=linux-kernel-owner@kernel.org>
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DDD24C433F2
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:50:02 +0000 (UTC)
+Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
+	by mail.kernel.org (Postfix) with ESMTP id B983020714
+	for <linux-kernel@archiver.kernel.org>; Thu, 23 Jul 2020 07:50:02 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
 	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com
- header.b="EnsDu/n7"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9A0B4207E8
-Authentication-Results: mail.kernel.org;
- dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org;
- spf=pass smtp.mailfrom=owner-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix)
-	id 8A30C6B000A; Wed, 17 Jun 2020 01:27:01 -0400 (EDT)
-Delivered-To: linux-mm-outgoing@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 40)
-	id 82C3A6B000D; Wed, 17 Jun 2020 01:27:01 -0400 (EDT)
-X-Original-To: int-list-linux-mm@kvack.org
-X-Delivered-To: int-list-linux-mm@kvack.org
-Received: by kanga.kvack.org (Postfix, from userid 63042)
-	id 766F16B000E; Wed, 17 Jun 2020 01:27:01 -0400 (EDT)
-X-Original-To: linux-mm@kvack.org
-X-Delivered-To: linux-mm@kvack.org
-Received: from forelay.hostedemail.com (smtprelay0087.hostedemail.com
- [216.40.44.87])
-	by kanga.kvack.org (Postfix) with ESMTP id 5ECBD6B000A
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 01:27:01 -0400 (EDT)
-Received: from smtpin20.hostedemail.com (10.5.19.251.rfc1918.com
- [10.5.19.251])
-	by forelay02.hostedemail.com (Postfix) with ESMTP id 189ED356E
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:27:01 +0000 (UTC)
-X-FDA: 76937569842.20.coil31_280e3a426e05
-Received: from filter.hostedemail.com (10.5.16.251.rfc1918.com [10.5.16.251])
-	by smtpin20.hostedemail.com (Postfix) with ESMTP id DC97B180C07A3
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:27:00 +0000 (UTC)
-X-Spam-Summary: 
- 2,0,0,5359596858e5a657,d41d8cd98f00b204,js1304@gmail.com,,RULES_HIT:41:355:379:541:800:960:973:988:989:1260:1345:1359:1437:1534:1540:1711:1730:1747:1777:1792:2393:2559:2562:3138:3139:3140:3141:3142:3352:3865:3866:3867:3871:4321:5007:6261:6653:7576:7875:9036:9413:10004:11026:11473:11658:11914:12296:12297:12517:12519:12555:12679:12895:12986:13069:13161:13229:13311:13357:14096:14130:14181:14384:14394:14721:21080:21444:21451:21627:21666:21740:30054:30069,0,RBL:209.85.216.68:@gmail.com:.lbl8.mailshell.net-62.18.0.100
- 66.100.201.100,CacheIP:none,Bayesian:0.5,0.5,0.5,Netcheck:none,DomainCache:0,MSF:not
- bulk,SPF:fp,MSBL:0,DNSBL:neutral,Custom_rules:0:0:0,LFtime:23,LUA_SUMMARY:none
-X-HE-Tag: coil31_280e3a426e05
-X-Filterd-Recvd-Size: 3981
-Received: from mail-pj1-f68.google.com (mail-pj1-f68.google.com
- [209.85.216.68])
-	by imf15.hostedemail.com (Postfix) with ESMTP
-	for <linux-mm@kvack.org>; Wed, 17 Jun 2020 05:27:00 +0000 (UTC)
-Received: by mail-pj1-f68.google.com with SMTP id jz3so458508pjb.0
-        for <linux-mm@kvack.org>; Tue, 16 Jun 2020 22:27:00 -0700 (PDT)
+ header.b="CeWtf3J/"
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
+        id S1727843AbgGWHuB (ORCPT
+        <rfc822;linux-kernel@archiver.kernel.org>);
+        Thu, 23 Jul 2020 03:50:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43778 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726141AbgGWHuA (ORCPT
+        <rfc822;linux-kernel@vger.kernel.org>);
+        Thu, 23 Jul 2020 03:50:00 -0400
+Received: from mail-pl1-x642.google.com (mail-pl1-x642.google.com
+ [IPv6:2607:f8b0:4864:20::642])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54BB7C0619DC
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:50:00 -0700 (PDT)
+Received: by mail-pl1-x642.google.com with SMTP id d1so2191148plr.8
+        for <linux-kernel@vger.kernel.org>;
+ Thu, 23 Jul 2020 00:50:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=1xjkUNXRrltW0v367905hcdOUoCgRbDmUvJ+4nENETw=;
-        b=EnsDu/n7ObTOMuNzMgWv+/zLljv5adhFJhPwWDW0B+zK20kJONNEtDVAGtRUm+eNdN
-         yFiJ7UJqUa51Gynnn8GlKK14oTD4h7g0VEOiEsXn2rVeLyUdbvJbCjaJHCsiRKFsTlXz
-         1FWIAGZYRNj/Z7jwW8YM6sqyPkrV5ca3trdH2iAJbi7J0wvX5sMLVP0N9BoXjbqWLLpu
-         jJ9VIOgjoL562ZRdzLEL2bRA8dhfzZqrvecZYMLi/1ifbxpmalhtwJHo9Gjp/MeZN23v
-         b5lHMeEy9GcGCNTfkeF4AyFDOqmn70EIg3NorqBg2xZCPU8uUZXxqjcC4kDK6WzqoMMg
-         6rzQ==
+        bh=3HuTQ/JQezOnQWBclDWinVTSov3cMUHQQKMb60R61nw=;
+        b=CeWtf3J/fe5CWpS/C02jYJTX+X0M4mhlH6qtW4J6oXHKNDwFC5AdatQ4KkFv7+qaY5
+         WmAvWVmeRiEH/AEv1MdjKDMnnf8CVMHvuDvhgrRhk1cu6FvlDl/Cb5E9+6vUIzDxL3iz
+         VlUf21Er7+02Yye9ivzDIFgnTCy5V9kAw656qTOCrPct6H5OzmiUJdQJKzZ2AYmUiVkw
+         VqeY5yv/FsxXjNztlGCzOlrG9gFJ4WNLBrx3asqJjIMmRIdJ1nVIDHQXojSgm2WHKohB
+         sHa8LAhfLxAbDxLP55J8jRqsnW0RBduvaUA3AXGY7ImmdJte7joxuO+cnHuPHjp2o80U
+         I03A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references;
-        bh=1xjkUNXRrltW0v367905hcdOUoCgRbDmUvJ+4nENETw=;
-        b=GmlPC+2XzTX7+8a4e6Ay48ZBJyxWjLAQN4vEzZ1jPq0rLJ6nn36c44k1+NPVyNTo6P
-         xs4RXFOWzDPvA6q6/I+6LYYi0z1BdMS8eDBIBiyTi1BZ+LTVUm+T1/xL9+EFJgfgobTH
-         95rjDFSpCAUmtJ/m2nHAIXXmxwmQMUMPYwDkgbEiU85Zv2jIgbBQcVbcAeA/hO7wX5M2
-         c3CYJk776b0+zoLMz5wqHIP7m0i7zoUEyHVtbi9AW0PH9MkqaSDSQ/4oR4tMvR4UOQ17
-         vXaitzptYOuG4J6zqE3QObR9M53N1vQVGu8ZK/MsnQTN4uTxyDKHX99Mq7tsE7nmnAuf
-         z7XA==
-X-Gm-Message-State: AOAM5331EVEXr8lmEAkaNanF/epsjpTsvtjGbb0EH2gS5t+RABZaCMok
-	XHLMZM0L7cwIvTb2KmVFba8=
+        bh=3HuTQ/JQezOnQWBclDWinVTSov3cMUHQQKMb60R61nw=;
+        b=fNJt8Z3XFBmznvTBoMNRnFAh/X066PjKS13xidg+DXZRFCZobZOke88z1u9QFnOt7S
+         O6E0/8g5OCwoDgCggeW/USeHgTp/zCiMsDtk9eDeeG7ERRXSC6ZSKrDWlJjmIezzOPcj
+         WwC5kNYSkN8JSjwPqnsBvdNDA8BFc0Syjl5BUEkIdd3ssyWEU9FSgXDKFwUn/FJGQEGQ
+         yRR2+vqBRr3dSQHoGA0HNBqQRIlazw/MwGLmoafeiDwO/D5ty2l3j6yQ9Od++dCz86sV
+         ypXZacmzlzpAJCXWYNTiyM5574eS+zdMpjnRlVPetGuuL4N9nh6CVXTifvxL13JymvO1
+         muxA==
+X-Gm-Message-State: AOAM530lX8rRuxk9Z+6b/FIkDrT8o/rQNcwIj8FdNCG1J/vOtsRjrRQP
+        LB3ExyNPgDh2pMA6VaO4fwI=
 X-Google-Smtp-Source: 
- ABdhPJyXLZtdfd5w3dIrNxpAD+EcH91c6nLcyKwApnjCfWiCWHpzt+5xo/Beb011cKcVfXvfO09q3g==
-X-Received: by 2002:a17:902:6947:: with SMTP id
- k7mr5232713plt.258.1592371619698;
-        Tue, 16 Jun 2020 22:26:59 -0700 (PDT)
+ ABdhPJz3wuro1emp72i5a+d23okpY576BgStha83cOxdM892LTC7weNec9VKSTTLT1fLG4E2MtsN5g==
+X-Received: by 2002:a17:902:b786:: with SMTP id
+ e6mr2928794pls.88.1595490599891;
+        Thu, 23 Jul 2020 00:49:59 -0700 (PDT)
 Received: from localhost.localdomain ([114.206.198.176])
         by smtp.gmail.com with ESMTPSA id
- d184sm8830068pfd.85.2020.06.16.22.26.56
+ f71sm9164879pje.0.2020.07.23.00.49.56
         (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 16 Jun 2020 22:26:58 -0700 (PDT)
+        Thu, 23 Jul 2020 00:49:59 -0700 (PDT)
 From: js1304@gmail.com
 X-Google-Original-From: iamjoonsoo.kim@lge.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	Michal Hocko <mhocko@kernel.org>,
-	Hugh Dickins <hughd@google.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Vlastimil Babka <vbabka@suse.cz>,
-	Mel Gorman <mgorman@techsingularity.net>,
-	kernel-team@lge.com,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: [PATCH v6 6/6] mm/vmscan: restore active/inactive ratio for anonymous
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Michal Hocko <mhocko@kernel.org>,
+        Hugh Dickins <hughd@google.com>,
+        Minchan Kim <minchan@kernel.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Matthew Wilcox <willy@infradead.org>, kernel-team@lge.com,
+        Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: [PATCH v7 6/6] mm/vmscan: restore active/inactive ratio for anonymous
  LRU
-Date: Wed, 17 Jun 2020 14:26:23 +0900
-Message-Id: <1592371583-30672-7-git-send-email-iamjoonsoo.kim@lge.com>
+Date: Thu, 23 Jul 2020 16:49:20 +0900
+Message-Id: <1595490560-15117-7-git-send-email-iamjoonsoo.kim@lge.com>
 X-Mailer: git-send-email 2.7.4
-In-Reply-To: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-References: <1592371583-30672-1-git-send-email-iamjoonsoo.kim@lge.com>
-X-Rspamd-Queue-Id: DC97B180C07A3
-X-Spamd-Result: default: False [0.00 / 100.00]
-X-Rspamd-Server: rspam01
-X-Bogosity: Ham, tests=bogofilter, spamicity=0.000000, version=1.2.4
-Sender: owner-linux-mm@kvack.org
+In-Reply-To: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+References: <1595490560-15117-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
 Precedence: bulk
-X-Loop: owner-majordomo@kvack.org
-List-ID: <linux-mm.kvack.org>
+List-ID: <linux-kernel.vger.kernel.org>
+X-Mailing-List: linux-kernel@vger.kernel.org
 
 From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 
-Now, workingset detection is implemented for anonymous LRU.
-We don't have to worry about the misfound for workingset due to
-the ratio of active/inactive. Let's restore the ratio.
+Now that workingset detection is implemented for anonymous LRU, we don't
+need large inactive list to allow detecting frequently accessed pages
+before they are reclaimed, anymore. This effectively reverts the temporary
+measure put in by commit "mm/vmscan: make active/inactive ratio as 1:1 for
+anon lru".
 
 Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 ---
  mm/vmscan.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index eb02d18..ec77691 100644
+index 9d4e28c..b0de23d 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -2211,7 +2211,7 @@ static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
+@@ -2207,7 +2207,7 @@ static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
  	active = lruvec_page_state(lruvec, NR_LRU_BASE + active_lru);
  
  	gb = (inactive + active) >> (30 - PAGE_SHIFT);
