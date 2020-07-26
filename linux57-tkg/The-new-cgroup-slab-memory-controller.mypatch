@@ -3202,7 +3202,7 @@ index 8bca0cb4b928..f219a29052d9 100644
 -					     gfp_t gfp, int order,
 -					     struct kmem_cache *s)
 -{
--	unsigned int nr_pages = 1 << order;
+-	int nr_pages = 1 << order;
 -	struct mem_cgroup *memcg;
 -	struct lruvec *lruvec;
 -	int ret;
@@ -3240,7 +3240,7 @@ index 8bca0cb4b928..f219a29052d9 100644
 -static __always_inline void memcg_uncharge_slab(struct page *page, int order,
 -						struct kmem_cache *s)
 -{
--	unsigned int nr_pages = 1 << order;
+-	int nr_pages = 1 << order;
 -	struct mem_cgroup *memcg;
 -	struct lruvec *lruvec;
 -
@@ -4088,7 +4088,7 @@ index 314084e2e6e7..9365db635c58 100644
  	struct kmem_cache *cachep;
  	struct work_struct work;
  };
-@@ -2862,31 +2861,24 @@ static void memcg_kmem_cache_create_func(struct work_struct *w)
+@@ -2862,33 +2861,24 @@ static void memcg_kmem_cache_create_func(struct work_struct *w)
  {
  	struct memcg_kmem_cache_create_work *cw =
  		container_of(w, struct memcg_kmem_cache_create_work, work);
@@ -4115,8 +4115,11 @@ index 314084e2e6e7..9365db635c58 100644
 -		return;
 -
  	cw = kmalloc(sizeof(*cw), GFP_NOWAIT | __GFP_NOWARN);
- 	if (!cw)
+-	if (!cw) {
+-		css_put(&memcg->css);
++	if (!cw)
  		return;
+-	}
  
 -	cw->memcg = memcg;
  	cw->cachep = cachep;
@@ -7349,7 +7352,7 @@ index 6e77a8d704b1..4100ca5f8bfa 100644
  	else
  		return -EINVAL;
  	return length;
-@@ -5590,98 +5575,9 @@ static ssize_t slab_attr_store(struct kobject *kobj,
+@@ -5590,99 +5575,9 @@ static ssize_t slab_attr_store(struct kobject *kobj,
  		return -EIO;
  
  	err = attribute->store(s, buf, len);
@@ -7426,7 +7429,8 @@ index 6e77a8d704b1..4100ca5f8bfa 100644
 -		 */
 -		if (buffer)
 -			buf = buffer;
--		else if (root_cache->max_attr_size < ARRAY_SIZE(mbuf))
+-		else if (root_cache->max_attr_size < ARRAY_SIZE(mbuf) &&
+-			 !IS_ENABLED(CONFIG_SLUB_STATS))
 -			buf = mbuf;
 -		else {
 -			buffer = (char *) get_zeroed_page(GFP_KERNEL);
