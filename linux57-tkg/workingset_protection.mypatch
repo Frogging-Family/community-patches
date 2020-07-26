@@ -1456,3 +1456,54 @@ index 9d4e28c..b0de23d 100644
  		inactive_ratio = int_sqrt(10 * gb);
  	else
  		inactive_ratio = 1;
+
+
+##############
+### Fixups ###
+##############
+
+
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index ead2979..aaa25d3 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1338,7 +1338,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
+ 		set_page_private(pages[i], 0);
+ 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
+ 		mem_cgroup_commit_charge(pages[i], memcg, false, false);
+-		lru_cache_add_active_or_unevictable(pages[i], vma);
++		lru_cache_add_inactive_or_unevictable(pages[i], vma);
+ 		vmf->pte = pte_offset_map(&_pmd, haddr);
+ 		VM_BUG_ON(!pte_none(*vmf->pte));
+ 		set_pte_at(vma->vm_mm, haddr, vmf->pte, entry);
+@@ -1492,7 +1492,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
+ 		page_add_new_anon_rmap(new_page, vma, haddr, true);
+ 		mem_cgroup_commit_charge(new_page, memcg, false, true);
+-		lru_cache_add_active_or_unevictable(new_page, vma);
++		lru_cache_add_inactive_or_unevictable(new_page, vma);
+ 		set_pmd_at(vma->vm_mm, haddr, vmf->pmd, entry);
+ 		update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
+ 		if (!page) {
+diff --git a/mm/memory.c b/mm/memory.c
+index a79788b..7706fca 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -3397,7 +3397,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 	inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
+ 	page_add_new_anon_rmap(page, vma, vmf->address, false);
+ 	mem_cgroup_commit_charge(page, memcg, false, false);
+-	lru_cache_add_active_or_unevictable(page, vma);
++	lru_cache_add_inactive_or_unevictable(page, vma);
+ setpte:
+ 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
+ 
+@@ -3659,7 +3659,7 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct mem_cgroup *memcg,
+ 		inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
+ 		page_add_new_anon_rmap(page, vma, vmf->address, false);
+ 		mem_cgroup_commit_charge(page, memcg, false, false);
+-		lru_cache_add_active_or_unevictable(page, vma);
++		lru_cache_add_inactive_or_unevictable(page, vma);
+ 	} else {
+ 		inc_mm_counter_fast(vma->vm_mm, mm_counter_file(page));
+ 		page_add_file_rmap(page, false);
