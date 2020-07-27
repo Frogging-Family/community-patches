@@ -1,0 +1,425 @@
+From 5d574a46b9a9dd0c133d1a326b13a82a5a6f11a6 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofer@live.it>
+Date: Thu, 19 Mar 2020 17:28:30 +0100
+Subject: [PATCH] ID3DXEffectCompiler partial implementation
+
+Fix wine bug: https://bugs.winehq.org/show_bug.cgi?id=46779
+---
+ dlls/d3dx9_36/effect.c       | 131 ++++++++++++++++------
+ dlls/d3dx9_36/tests/effect.c | 207 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 305 insertions(+), 33 deletions(-)
+
+diff --git a/dlls/d3dx9_36/effect.c b/dlls/d3dx9_36/effect.c
+index 88168df1e1..5f2f369ef1 100644
+--- a/dlls/d3dx9_36/effect.c
++++ b/dlls/d3dx9_36/effect.c
+@@ -218,6 +218,8 @@ struct ID3DXEffectCompilerImpl
+ {
+     ID3DXEffectCompiler ID3DXEffectCompiler_iface;
+     LONG ref;
++    ID3DBlob* effect;
++    unsigned int flags;
+ };
+ 
+ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
+@@ -4460,6 +4462,7 @@ static ULONG WINAPI ID3DXEffectCompilerImpl_Release(ID3DXEffectCompiler *iface)
+ 
+     if (!refcount)
+     {
++        ID3DXBuffer_Release(compiler->effect);
+         heap_free(compiler);
+     }
+ 
+@@ -4905,9 +4908,26 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetLiteral(ID3DXEffectCompiler *if
+ static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileEffect(ID3DXEffectCompiler *iface, DWORD flags,
+         ID3DXBuffer **effect, ID3DXBuffer **error_msgs)
+ {
+-    FIXME("iface %p, flags %#x, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
+-
+-    return E_NOTIMPL;
++    struct ID3DXEffectCompilerImpl* compiler;
++    char* effect_text;
++    SIZE_T effect_len;
++    HRESULT hr;
++    
++    TRACE("iface %p, flags %#x, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
++    
++    if(effect == NULL)
++    {
++        TRACE("No ID3DXBuffer pointer. Returning D3DERR_INVALIDCALL\n");
++        return D3DERR_INVALIDCALL;
++    }
++    compiler = impl_from_ID3DXEffectCompiler(iface);
++  /*  if(flags & !D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY || compiler->flags  & !D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY) FIXME("Flags %#x not supported", flags | compiler->flags);  */
++    effect_text = ID3DXBuffer_GetBufferPointer(compiler->effect);
++    effect_len = ID3DXBuffer_GetBufferSize(compiler->effect);
++    hr = D3DCompile(effect_text, effect_len, NULL, NULL, NULL,  NULL, "fx_2_0", compiler->flags | flags , 0, (ID3DBlob**) effect, (ID3DBlob**)error_msgs);
++    /* Seems that the mapping between d3dcompiler and d3dx flags is almost perfect, so just put the flag in bytewise OR */
++    /*What to do for the few flags that don't have a representation in the compiler? */
++    return hr;
+ }
+ 
+ static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileShader(ID3DXEffectCompiler *iface, D3DXHANDLE function,
+@@ -6600,19 +6620,32 @@ HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *src
+     return D3DXCreateEffectEx(device, srcdata, srcdatalen, defines, include, NULL, flags, pool, effect, compilation_errors);
+ }
+ 
+-static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compiler,
+-        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
+-        UINT eflags, ID3DBlob **error_messages)
++static HRESULT d3dx9_effect_compiler_init(const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines,
++    ID3DInclude *include, UINT eflags, char* src_path, struct ID3DXEffectCompilerImpl** out_compiler,
++    ID3DBlob **error_messages)
+ {
++    struct ID3DXEffectCompilerImpl* compiler;
++    ID3DBlob* buf;
++    HRESULT hr;
++    
+     TRACE("compiler %p, data %p, data_size %lu, defines %p, include %p, eflags %#x, error_messages %p.\n",
+-            compiler, data, data_size, defines, include, eflags, error_messages);
+-
++            out_compiler, data, data_size, defines, include, eflags, error_messages);
++    if(!out_compiler) return D3DERR_INVALIDCALL;
++    compiler = heap_alloc_zero(sizeof(struct ID3DXEffectCompilerImpl));
++    if(!compiler) return E_OUTOFMEMORY;
++    
++    #if D3DX_SDK_VERSION <= 36
++        eflags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
++    #endif
++    /*Most of the flags seems to be directly mapped between d3dx and d3dcompiler*/
++    hr = D3DPreprocess(data, data_size, src_path, defines, include,  &buf , error_messages);
+     compiler->ID3DXEffectCompiler_iface.lpVtbl = &ID3DXEffectCompiler_Vtbl;
+     compiler->ref = 1;
+-
+-    FIXME("ID3DXEffectCompiler implementation is only a stub.\n");
+-
+-    return D3D_OK;
++    compiler->effect = buf;
++    compiler->flags = eflags;
++    FIXME("ID3DXEffectCompiler interface is only partially implemented.\n");
++    *out_compiler = compiler;
++    return hr;
+ }
+ 
+ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, const D3DXMACRO *defines,
+@@ -6630,16 +6663,11 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
+         return D3DERR_INVALIDCALL;
+     }
+ 
+-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+-    if (!object)
+-        return E_OUTOFMEMORY;
+-
+-    hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
+-            (ID3DInclude *)include, flags, (ID3DBlob **)parse_errors);
++    hr = d3dx9_effect_compiler_init(srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,(ID3DInclude *)include, flags,  NULL , &object,(ID3DBlob **)parse_errors);
++    
+     if (FAILED(hr))
+     {
+         WARN("Failed to initialize effect compiler\n");
+-        HeapFree(GetProcessHeap(), 0, object);
+         return hr;
+     }
+ 
+@@ -6917,24 +6945,61 @@ HRESULT WINAPI D3DXCreateEffectFromResourceA(struct IDirect3DDevice9 *device, HM
+ HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(const WCHAR *srcfile, const D3DXMACRO *defines,
+         ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+ {
+-    void *buffer;
+-    HRESULT ret;
++    struct ID3DXEffectCompilerImpl* compiler;
+     DWORD size;
+-
++    char* filename_a;
++    const void *buffer;
++    UINT buffer_size;
++    struct d3dx_include_from_file* include_from_file = NULL;
++    HRESULT ret;
++ 
+     TRACE("srcfile %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
+-            debugstr_w(srcfile), defines, include, flags, effectcompiler, parseerrors);
+-
+-    if (!srcfile)
++             debugstr_w(srcfile), defines, include, flags, effectcompiler, parseerrors);  
++     
++    if (!srcfile || !effectcompiler)
+         return D3DERR_INVALIDCALL;
+ 
+-    ret = map_view_of_file(srcfile, &buffer, &size);
+-
+-    if (FAILED(ret))
+-        return D3DXERR_INVALIDDATA;
+-
+-    ret = D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
+-    UnmapViewOfFile(buffer);
+-
++    size = WideCharToMultiByte(CP_ACP, 0,srcfile, -1 , NULL, 0,NULL,NULL);
++    filename_a = heap_alloc_zero(size * sizeof(char));
++    if(!filename_a){
++        TRACE("Not enough memory to allocate filename string \n");
++        return E_OUTOFMEMORY;
++    }
++    WideCharToMultiByte(CP_ACP, 0, srcfile, -1, filename_a, size, NULL, NULL);
++        
++    if(!include){
++        include_from_file = heap_alloc_zero(sizeof(struct d3dx_include_from_file));
++        if(!include_from_file){
++            TRACE("Not enough memory to allocate ID3DXInclude \n");
++            heap_free(filename_a);
++            return E_OUTOFMEMORY;
++        }
++        include_from_file->ID3DXInclude_iface.lpVtbl = &d3dx_include_from_file_vtbl;
++        include = &include_from_file->ID3DXInclude_iface;
++    }
++    
++    ret = ID3DXInclude_Open(include, D3DXINC_LOCAL, filename_a, NULL, &buffer, &buffer_size);
++    
++    if (FAILED(ret)){
++        TRACE("Fail to call ID3DXInclude_Open\n"); 	
++        heap_free(filename_a);
++        if(include_from_file) heap_free(include_from_file);
++        return D3DERR_INVALIDCALL; //OR INVALIDATA?????????
++    }
++    
++    ret = d3dx9_effect_compiler_init(buffer, buffer_size, (const D3D_SHADER_MACRO *)defines,
++            (ID3DInclude *)include, flags,  filename_a , &compiler,(ID3DBlob **)parseerrors);
++    
++    ID3DXInclude_Close(include, buffer);  
++    if(include_from_file) heap_free(include_from_file);
++    heap_free(filename_a);
++    if(FAILED(ret)){
++        return D3DERR_INVALIDCALL;
++    }
++    *effectcompiler = &compiler->ID3DXEffectCompiler_iface;
++ 
++    TRACE("Created ID3DXEffectCompiler %p\n", compiler);
++    
+     return ret;
+ }
+ 
+diff --git a/dlls/d3dx9_36/tests/effect.c b/dlls/d3dx9_36/tests/effect.c
+index c72049d553..33d8caccfc 100644
+--- a/dlls/d3dx9_36/tests/effect.c
++++ b/dlls/d3dx9_36/tests/effect.c
+@@ -8349,6 +8349,210 @@ static void test_effect_parameter_block(void)
+     DestroyWindow(window);
+ }
+ 
++
++
++static void test_create_effect_compiler_from_file(void)
++{
++    static const char effect1[] =
++        "float4 light;\n"
++        "float4x4 mat;\n"
++        "float4 color;\n"
++        "\n"
++        "struct vs_input\n"
++        "{\n"
++        "    float4 position : POSITION;\n"
++        "    float3 normal : NORMAL;\n"
++        "};\n"
++        "\n"
++        "struct vs_output\n"
++       "{\n"
++        "    float4 position : POSITION;\n"
++        "    float4 diffuse : COLOR;\n"
++       "};\n"
++        "\n"
++        "vs_output vs_main(const vs_input v)\n"
++        "{\n"
++        "    vs_output o;\n"
++        "    const float4 scaled_color = 0.5 * color;\n"
++        "\n"
++        "    o.position = mul(v.position, mat);\n"
++        "    o.diffuse = dot((float3)light, v.normal) * scaled_color;\n"
++        "\n"
++        "    return o;\n"
++        "}\n"
++        "\n"
++        "technique t\n"
++       "{\n"
++        "    pass p\n"
++        "    {\n"
++        "        VertexShader = compile vs_2_0 vs_main();\n"
++        "    }\n"
++        "}\n";
++    static const char include1[] =
++        "float4 light;\n"
++        "float4x4 mat;\n"
++        "float4 color;\n"
++        "\n"
++        "struct vs_input\n"
++        "{\n"
++        "    float4 position : POSITION;\n"
++        "    float3 normal : NORMAL;\n"
++        "};\n"
++        "\n"
++        "struct vs_output\n"
++        "{\n"
++        "    float4 position : POSITION;\n"
++        "    float4 diffuse : COLOR;\n"
++        "};\n";
++    static const char include1_wrong[] =
++        "#error \"wrong include\"\n";
++    static const char include2[] =
++        "#include \"include1.h\"\n"
++        "\n"
++        "vs_output vs_main(const vs_input v)\n"
++        "{\n"
++        "    vs_output o;\n"
++        "    const float4 scaled_color = 0.5 * color;\n"
++        "\n"
++        "    o.position = mul(v.position, mat);\n"
++        "    o.diffuse = dot((float3)light, v.normal) * scaled_color;\n"
++        "\n"
++        "    return o;\n"
++        "}\n";
++    static const char effect2[] =
++        "#include \"include\\include2.h\"\n"
++        "\n"
++        "technique t\n"
++        "{\n"
++        "    pass p\n"
++        "    {\n"
++        "        VertexShader = compile vs_2_0 vs_main();\n"
++        "    }\n"
++        "}\n";
++    static const WCHAR effect1_filename_w[] = {'e','f','f','e','c','t','1','.','f','x',0};
++    static const WCHAR effect2_filename_w[] = {'e','f','f','e','c','t','2','.','f','x',0};
++    WCHAR effect_path_w[MAX_PATH], filename_w[MAX_PATH];
++    char effect_path[MAX_PATH], filename[MAX_PATH];
++    unsigned int filename_size;
++    struct d3dxinclude include;
++    ID3DXBuffer *messages, *effect_blob = NULL;
++    ID3DXEffectCompiler *effect;
++    HRESULT hr;
++
++
++    if (!create_file("effect1.fx", effect1, sizeof(effect1) - 1, filename))
++    {
++        skip("Couldn't create temporary file, skipping test.\n");
++        return;
++    }
++
++    filename_size = strlen(filename);
++    filename_size -= sizeof("effect1.fx") - 1;
++    memcpy(effect_path, filename, filename_size);
++    effect_path[filename_size] = 0;
++    MultiByteToWideChar(CP_ACP, 0, effect_path, -1, effect_path_w, ARRAY_SIZE(effect_path_w));
++
++    create_directory("include");
++    create_file("effect2.fx", effect2, sizeof(effect2) - 1, NULL);
++    create_file("include\\include1.h", include1, sizeof(include1) - 1, NULL);
++    create_file("include\\include2.h", include2, sizeof(include2) - 1, NULL);
++    create_file("include1.h", include1_wrong, sizeof(include1_wrong) - 1, NULL);
++
++    lstrcpyW(filename_w, effect_path_w);
++    lstrcatW(filename_w, effect1_filename_w);
++    effect = NULL;
++    messages = NULL;
++    hr = D3DXCreateEffectCompilerFromFileW(filename_w, NULL, NULL, 0, &effect, &messages);
++    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
++    if (messages)
++    {
++        trace("D3DXCreateEffectCompilerFromFileW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++        
++    }
++    
++    hr = effect->lpVtbl->CompileEffect(effect, 0, &effect_blob, &messages);
++    todo_wine ok(hr == D3D_OK, "ID3DXEffectCompiler_CompileEffect failed got %#x  expected %#x (D3D_OK)\n", hr, D3D_OK); 
++    if(messages){
++        trace("ID3DXEffectCompiler_CompileEffect messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++    }
++    if(effect_blob){
++        ID3DXBuffer_Release(effect_blob);
++        effect_blob = NULL;
++    }
++    if (effect)
++        effect->lpVtbl->Release(effect);
++
++    lstrcpyW(filename_w, effect_path_w);
++    lstrcatW(filename_w, effect2_filename_w);
++    effect = NULL;
++    messages = NULL;
++    /* This is apparently broken on native, it ends up using the wrong include. */
++    hr = D3DXCreateEffectCompilerFromFileW(filename_w, NULL, NULL, 0, &effect, &messages);
++    todo_wine ok(hr == E_FAIL, "Unexpected error, hr %#x.\n", hr);
++    if (messages)
++    {
++        trace("D3DXCreateEffectCompilerFromFileW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++    }
++//    hr = effect->lpVtbl->CompileEffect(effect, 0, &effect_blob, &messages);
++//    todo_wine ok(hr == D3D_OK, "ID3DXEffectCompiler_CompileEffect failed got %#x  expected %#x (D3D_OK)\n", hr, D3D_OK); 
++    if(messages){
++        trace("ID3DXEffectCompiler_CompileEffect messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++    }
++    if(effect_blob){
++        ID3DXBuffer_Release(effect_blob);
++        effect_blob = NULL;
++    }
++
++    if (effect)
++        effect->lpVtbl->Release(effect);
++
++
++    lstrcpyW(filename_w, effect2_filename_w);
++    effect = NULL;
++    messages = NULL;
++    include.ID3DXInclude_iface.lpVtbl = &d3dxinclude_vtbl;
++    /* This is actually broken in native d3dx9 (manually tried multiple
++     * versions, all are affected). For reference, the message printed below
++     * is "ID3DXEffectCompiler: There were no techniques" */
++    /* Considering that the include is passed form the caller, it's possible that it's wrong? */
++    hr = D3DXCreateEffectCompilerFromFileW(filename_w, NULL, &include.ID3DXInclude_iface, 0, &effect, &messages);
++    ok(hr == D3D_OK, "D3DXInclude test failed with error %#x.\n", hr);
++    if (messages)
++    {
++        trace("D3DXCreateEffectCompilerFromFileW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++    }
++    hr = effect->lpVtbl->CompileEffect(effect, 0, &effect_blob, &messages);
++    todo_wine ok(hr == E_FAIL, "ID3DXEffectCompiler_CompileEffect failed got %#x  expected %#x (E_FAIL)\n", hr, E_FAIL); 
++    if(messages){
++        trace("ID3DXEffectCompiler_CompileEffect messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
++        ID3DXBuffer_Release(messages);
++        messages = NULL;
++    }
++    if(effect_blob &&  hr == D3D_OK){
++        ID3DXBuffer_Release(effect_blob);
++        effect_blob = NULL;
++    }
++    delete_file("effect1.fx");
++    delete_file("effect2.fx");
++    delete_file("include\\include1.h");
++    delete_file("include\\include2.h");
++    delete_file("include2.h");
++    delete_directory("include");
++
++}
++//TODO test creating compiler with effect NULL
++
++
+ START_TEST(effect)
+ {
+     IDirect3DDevice9 *device;
+@@ -8389,4 +8593,7 @@ START_TEST(effect)
+     test_create_effect_from_file();
+     test_effect_find_next_valid_technique();
+     test_effect_parameter_block();
++    
++    test_create_effect_compiler_from_file();
++
+ }
+-- 
+2.25.1
+

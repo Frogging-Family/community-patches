@@ -1,0 +1,516 @@
+From: Damjan Jovanovic <damjan.jov@gmail.com>
+Subject: [PATCH] kernel32: implement Windows NT style GMEM_MOVEABLE/LMEM_MOVEABLE memory
+Message-Id: <CAJm2B-msDoko8fSyqyqqV0D+1HBcy=Ka-qpZafPq7eTsvZeTWQ@mail.gmail.com>
+Date: Sun, 17 Nov 2019 17:47:01 +0200
+
+Tests were performed on many Windows versions. Wine's unit tests
+cannot be used on Win9x any more; mingw's binaries require
+symbols only found in newer versions of MSVCRT.DLL.
+A GCC 2.95-based mingw had to be used, with a custom test
+(available on request).
+
+On Win9x, GlobalLock()/LocalLock() return pointers aligned
+to 4 byte boundaries (never 8), as they call HeapAlloc()
+which returns pointers aligned to 8 bytes, but then use the first
+4 bytes to store the address of the HGLOBAL/HLOCAL.
+
+On WinNT, GlobalLock()/LocalLock() return pointers aligned
+to 8 byte boundaries. It is not known how
+GlobalHandle()/LocalHandle() converts the pointer back to the
+HGLOBAL/HLOCAL, but its address certainly isn't stored 4 bytes
+before the pointer.
+
+Wine initially followed the Win9x layout, but then as of Git
+commit cd0219e941505ac7026c5412ea68b54722ab234a started using
+8 bytes before the pointer returned from *Lock() to maintain
+alignment on an 8 byte boundary, which some applications
+(certainly developed and tested only on Windows NT derivatives)
+wanted, and got memory corruption without. This however isn't
+enough. wxWidgets expects to be able to pass the pointer returned
+from GlobalLock() to HeapSize(), and applications crash if that
+fails. Not only must we maintain 8 byte alignment when emulating
+Windows NT, but the pointer returned from GlobalLock() must point
+to the start of a valid heap block.
+
+In this patch we support all Windows versions correctly:
+* When emulating Win9x, use only 4 bytes behind the pointer
+  to store the address of the HGLOBAL/HLOCAL, instead of
+  the current 8.
+* When emulating WinNT, allocate only the memory we need,
+  storing the mapping from the pointer to
+  its HGLOBAL/HLOCAL in a hash table, and implement
+  GlobalHandle()/LocalHandle() by searching the hash table.
+
+Apart from improving correctness, this design also decreases
+memory usage by 4 bytes per allocation when emulating WinNT.
+
+Wine-Bug: https://bugs.winehq.org/show_bug.cgi?id=38924
+Also Fix Wrye Bash
+Signed-off-by: Damjan Jovanovic <damjan.jov@gmail.com>
+---
+ dlls/kernel32/heap.c            |  89 ++++++++--------
+ dlls/kernel32/tests/heap.c      |  10 ++
+ dlls/kernelbase/kernelbase.spec |   1 +
+ dlls/kernelbase/memory.c        | 175 +++++++++++++++++++++++++++-----
+ include/winbase.h               |  16 +++
+ 5 files changed, 219 insertions(+), 72 deletions(-)
+
+diff --git a/dlls/kernel32/heap.c b/dlls/kernel32/heap.c
+index a465ce45d7..2d655a010a 100644
+--- a/dlls/kernel32/heap.c
++++ b/dlls/kernel32/heap.c
+@@ -212,29 +212,17 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPCVOID ptr )
+  */
+ 
+ #define MAGIC_GLOBAL_USED 0x5342
+-#define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
+-#define INTERN_TO_HANDLE(i)  (&((i)->Pointer))
+-#define POINTER_TO_HANDLE(p) (*(((const HGLOBAL *)(p))-2))
++#define HANDLE_TO_INTERN(h)  ((struct local_header*)(((char *)(h))-2))
++#define INTERN_TO_HANDLE(i)  (&((i)->ptr))
++#define POINTER_TO_HANDLE(p) (*(((const HGLOBAL *)(p))-1))
+ #define ISHANDLE(h)          (((ULONG_PTR)(h)&2)!=0)
+ #define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)
+-/* align the storage needed for the HGLOBAL on an 8byte boundary thus
+- * GlobalAlloc/GlobalReAlloc'ing with GMEM_MOVEABLE of memory with
+- * size = 8*k, where k=1,2,3,... alloc's exactly the given size.
+- * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
+- * the output jpeg's > 1 MB if not */
+-#define HGLOBAL_STORAGE      (sizeof(HGLOBAL)*2)
++#define HGLOBAL_STORAGE      (sizeof(HGLOBAL))
+ 
+-#include "pshpack1.h"
+-
+-typedef struct __GLOBAL32_INTERN
++static inline BOOL is_win9x(void)
+ {
+-   WORD         Magic;
+-   LPVOID       Pointer;
+-   BYTE         Flags;
+-   BYTE         LockCount;
+-} GLOBAL32_INTERN, *PGLOBAL32_INTERN;
+-
+-#include "poppack.h"
++    return GetVersion() & 0x80000000;
++}
+ 
+ /***********************************************************************
+  *           GlobalLock   (KERNEL32.@)
+@@ -294,8 +282,8 @@ HGLOBAL WINAPI GlobalHandle(
+                  LPCVOID pmem /* [in] Pointer to global memory block */
+ ) {
+     HGLOBAL handle;
+-    PGLOBAL32_INTERN  maybe_intern;
+-    LPCVOID test;
++    struct local_header *maybe_intern;
++    const char *test;
+ 
+     if (!pmem)
+     {
+@@ -308,23 +296,33 @@ HGLOBAL WINAPI GlobalHandle(
+     {
+         handle = 0;
+ 
+-        /* note that if pmem is a pointer to a block allocated by        */
+-        /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
+-        /* will fail.                                                      */
+         if (ISPOINTER(pmem)) {
+-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, pmem )) {
+-                handle = (HGLOBAL)pmem;  /* valid fixed block */
+-                break;
++            if (is_win9x()) {
++                /* note that if pmem is a pointer to a block allocated by        */
++                /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
++                /* will fail.                                                      */
++                if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, pmem )) {
++                    handle = (HGLOBAL)pmem;  /* valid fixed block */
++                    break;
++                }
++                handle = POINTER_TO_HANDLE(pmem);
++                maybe_intern = HANDLE_TO_INTERN( handle );
++            } else {
++                maybe_intern = wine_hlocal_hashtable_find_unlocked(pmem);
++                if (maybe_intern)
++                    handle = INTERN_TO_HANDLE(maybe_intern); /* GMEM_MOVEABLE */
++                else
++                    break; /* GMEM_FIXED */
+             }
+-            handle = POINTER_TO_HANDLE(pmem);
+         } else
+             handle = (HGLOBAL)pmem;
+ 
+         /* Now test handle either passed in or retrieved from pointer */
+-        maybe_intern = HANDLE_TO_INTERN( handle );
+-        if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
+-            test = maybe_intern->Pointer;
+-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
++        if (maybe_intern->magic == MAGIC_GLOBAL_USED) {
++            test = maybe_intern->ptr;
++            if (is_win9x())
++                test -= HGLOBAL_STORAGE;
++            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, test ) && /* obj(-handle) valid arena? */
+                 HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, maybe_intern ))  /* intern valid arena? */
+                 break;  /* valid moveable block */
+         }
+@@ -377,7 +375,7 @@ HGLOBAL WINAPI GlobalReAlloc( HGLOBAL hmem, SIZE_T size, UINT flags )
+ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
+ {
+    SIZE_T               retval;
+-   PGLOBAL32_INTERN     pintern;
++   struct local_header *pintern;
+ 
+    if (!((ULONG_PTR)hmem >> 16))
+    {
+@@ -389,7 +387,7 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
+    {
+       retval=HeapSize(GetProcessHeap(), 0, hmem);
+ 
+-      if (retval == ~0ul) /* It might be a GMEM_MOVEABLE data pointer */
++      if (is_win9x() && retval == ~0ul) /* It might be a GMEM_MOVEABLE data pointer */
+       {
+           retval = HeapSize(GetProcessHeap(), 0, (char*)hmem - HGLOBAL_STORAGE);
+           if (retval != ~0ul) retval -= HGLOBAL_STORAGE;
+@@ -400,19 +398,22 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
+       RtlLockHeap(GetProcessHeap());
+       pintern=HANDLE_TO_INTERN(hmem);
+ 
+-      if(pintern->Magic==MAGIC_GLOBAL_USED)
++      if(pintern->magic==MAGIC_GLOBAL_USED)
+       {
+-         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
++         if (!pintern->ptr) /* handle case of GlobalAlloc( ??,0) */
+              retval = 0;
+          else
+          {
+-             retval = HeapSize(GetProcessHeap(), 0, (char *)pintern->Pointer - HGLOBAL_STORAGE );
+-             if (retval != ~0ul) retval -= HGLOBAL_STORAGE;
++             const char *ptr = pintern->ptr;
++             if (is_win9x())
++                 ptr -= HGLOBAL_STORAGE;
++             retval = HeapSize(GetProcessHeap(), 0, ptr );
++             if (is_win9x() && retval != ~0ul) retval -= HGLOBAL_STORAGE;
+          }
+       }
+       else
+       {
+-         WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
++         WARN("invalid handle %p (magic: 0x%04x)\n", hmem, pintern->magic);
+          SetLastError(ERROR_INVALID_HANDLE);
+          retval=0;
+       }
+@@ -475,7 +476,7 @@ VOID WINAPI GlobalUnfix(HGLOBAL hmem)
+ UINT WINAPI GlobalFlags(HGLOBAL hmem)
+ {
+    DWORD                retval;
+-   PGLOBAL32_INTERN     pintern;
++   struct local_header *pintern;
+ 
+    if(ISPOINTER(hmem))
+    {
+@@ -485,15 +486,15 @@ UINT WINAPI GlobalFlags(HGLOBAL hmem)
+    {
+       RtlLockHeap(GetProcessHeap());
+       pintern=HANDLE_TO_INTERN(hmem);
+-      if(pintern->Magic==MAGIC_GLOBAL_USED)
++      if(pintern->magic==MAGIC_GLOBAL_USED)
+       {
+-         retval=pintern->LockCount + (pintern->Flags<<8);
+-         if(pintern->Pointer==0)
++         retval=pintern->lock + (pintern->flags<<8);
++         if(pintern->ptr==0)
+             retval|= GMEM_DISCARDED;
+       }
+       else
+       {
+-         WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
++         WARN("invalid handle %p (magic: 0x%04x)\n", hmem, pintern->magic);
+          SetLastError(ERROR_INVALID_HANDLE);
+          retval = GMEM_INVALID_HANDLE;
+       }
+diff --git a/dlls/kernel32/tests/heap.c b/dlls/kernel32/tests/heap.c
+index 38fae0eede..c26e12fd92 100644
+--- a/dlls/kernel32/tests/heap.c
++++ b/dlls/kernel32/tests/heap.c
+@@ -337,6 +337,16 @@ static void test_heap(void)
+     ok( size == 1, "wrong size %lu\n", size );
+     GlobalFree( gbl );
+ 
++    /* HeapSize on memory from a global pointer */
++    gbl = GlobalAlloc(GMEM_MOVEABLE, 100);
++    ok(gbl != NULL, "returned error %d\n", GetLastError());
++    mem = GlobalLock(gbl);
++    ok(mem != NULL, "returned error %d\n", GetLastError());
++    size = HeapSize(GetProcessHeap(), 0, mem);
++    ok(size != (SIZE_T)-1 && size >= 100, "HeapSize returned %lu\n", size);
++    GlobalFree(gbl);
++
++
+     /* ####################################### */
+     /* Local*() functions */
+     gbl = LocalAlloc(LMEM_MOVEABLE, 0);
+diff --git a/dlls/kernelbase/kernelbase.spec b/dlls/kernelbase/kernelbase.spec
+index 7c5ae99a79..9546d011c7 100644
+--- a/dlls/kernelbase/kernelbase.spec
++++ b/dlls/kernelbase/kernelbase.spec
+@@ -1769,3 +1769,4 @@
+ @ stdcall lstrlenW(wstr) KERNELBASE_lstrlenW
+ # @ stub time
+ # @ stub wprintf
++@ cdecl wine_hlocal_hashtable_find_unlocked(ptr)
+diff --git a/dlls/kernelbase/memory.c b/dlls/kernelbase/memory.c
+index e7aca67c0d..7702f6ea30 100644
+--- a/dlls/kernelbase/memory.c
++++ b/dlls/kernelbase/memory.c
+@@ -385,25 +385,101 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
+  * Global/local heap functions
+  ***********************************************************************/
+ 
+-#include "pshpack1.h"
++#define MAGIC_LOCAL_USED    0x5342
++
++/* G/LMEM_MOVEABLE behaviour:
++ *
++ * Win9x: heap block is allocated on 8 byte boundary, but first 4 bytes
++ *        are used to store pointer back to struct local_header's ptr,
++ *        so the pointer returned from GlobalLock()/LocalLock()
++ *        is NEVER aligned to 8 bytes, only to 4 bytes.
++ *
++ * WinNT: heap block is allocated on 8 byte boundary, no pointer back
++ *        to struct local_header, so GlobalLock()/LocalLock()
++ *        ALWAYS return the pointer from HeapAlloc(), which is aligned
++ *        to 8 bytes.
++ *
++ * This affects applications in several ways:
++ * 1. Some applications break when alignment isn't 8 bytes
++ *    (eg. Minolta DiMAGE Image Viewer), but that means they will
++ *    also break on Win9x.
++ * 2. wxWidgets drag-and-drop with custom formats will crash if
++ *    the pointer returned from GlobalLock() can't be passed to
++ *    HeapSize(), because it expects the Windows NT layout.
++ */
++
++#define HLOCAL_STORAGE      (sizeof(HLOCAL))
+ 
+-struct local_header
++#define HLOCAL_HASHTABLE_SIZE 8192
++#define HLOCAL_HASH(ptr) (((ULONG_PTR)ptr >> 3) & 0x1FFF)
++static struct local_header *hlocal_hashtable[HLOCAL_HASHTABLE_SIZE];
++
++static inline BOOL is_win9x(void)
+ {
+-   WORD  magic;
+-   void *ptr;
+-   BYTE flags;
+-   BYTE lock;
+-};
++    return GetVersion() & 0x80000000;
++}
+ 
+-#include "poppack.h"
++static void hlocal_hashtable_add_unlocked(struct local_header *header)
++{
++    ULONG_PTR hashcode;
+ 
+-#define MAGIC_LOCAL_USED    0x5342
+-/* align the storage needed for the HLOCAL on an 8-byte boundary thus
+- * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
+- * size = 8*k, where k=1,2,3,... allocs exactly the given size.
+- * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
+- * the output jpeg's > 1 MB if not */
+-#define HLOCAL_STORAGE      (sizeof(HLOCAL) * 2)
++    hashcode = HLOCAL_HASH(header->ptr);
++    header->next = hlocal_hashtable[hashcode];
++    hlocal_hashtable[hashcode] = header;
++}
++
++static void hlocal_hashtable_add(struct local_header *header)
++{
++    RtlLockHeap( GetProcessHeap() );
++    hlocal_hashtable_add_unlocked( header );
++    RtlUnlockHeap( GetProcessHeap() );
++}
++
++struct local_header *wine_hlocal_hashtable_find_unlocked(const void *ptr)
++{
++    ULONG_PTR hashcode;
++    struct local_header *next;
++
++    hashcode = HLOCAL_HASH(ptr);
++    for (next = hlocal_hashtable[hashcode]; next; next = next->next)
++    {
++         if (next->ptr == ptr)
++             break;
++    }
++
++    return next;
++}
++
++static struct local_header *hlocal_hashtable_find(void *ptr)
++{
++    struct local_header *ret;
++
++    RtlLockHeap( GetProcessHeap() );
++
++    ret = wine_hlocal_hashtable_find_unlocked( ptr );
++
++    RtlUnlockHeap( GetProcessHeap() );
++
++    return ret;
++}
++
++static void hlocal_hashtable_remove_unlocked(struct local_header *header)
++{
++    ULONG_PTR hashcode;
++    struct local_header **prev;
++
++    hashcode = HLOCAL_HASH(header->ptr);
++    prev = &hlocal_hashtable[hashcode];
++    while (*prev)
++    {
++        if (*prev == header)
++        {
++            *prev = header->next;
++            break;
++        }
++        prev = &(*prev)->next;
++    }
++}
+ 
+ static inline struct local_header *get_header( HLOCAL hmem )
+ {
+@@ -475,13 +551,24 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
+ 
+     if (size)
+     {
+-        if (!(ptr = HeapAlloc(GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
++        SIZE_T alloc_size = size;
++        if (is_win9x())
++            alloc_size += HLOCAL_STORAGE;
++        if (!(ptr = HeapAlloc(GetProcessHeap(), heap_flags, alloc_size )))
+         {
+             HeapFree( GetProcessHeap(), 0, header );
+             return 0;
+         }
+-        *(HLOCAL *)ptr = get_handle( header );
+-        header->ptr = (char *)ptr + HLOCAL_STORAGE;
++        if (is_win9x())
++        {
++            *(HLOCAL *)ptr = get_handle( header );
++            header->ptr = (char *)ptr + HLOCAL_STORAGE;
++        }
++        else
++        {
++            header->ptr = ptr;
++            hlocal_hashtable_add(header);
++        }
+     }
+     else header->ptr = NULL;
+ 
+@@ -519,8 +606,13 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL hmem )
+                 header->magic = 0xdead;
+                 if (header->ptr)
+                 {
++                    char *ptr = header->ptr;
++                    if (is_win9x())
++                        ptr -= HLOCAL_STORAGE;
++                    else
++                        hlocal_hashtable_remove_unlocked(header);
+                     if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE,
+-                                   (char *)header->ptr - HLOCAL_STORAGE ))
++                                   ptr ))
+                         ret = hmem;
+                 }
+                 if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, header )) ret = hmem;
+@@ -641,21 +733,47 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL hmem, SIZE_T size, UINT fla
+               {
+                   if (header->ptr)
+                   {
+-                      if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags,
+-                                              (char *)header->ptr - HLOCAL_STORAGE,
+-                                              size + HLOCAL_STORAGE )))
++                      if (is_win9x())
++                      {
++                          if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags,
++                                                  (char *)header->ptr - HLOCAL_STORAGE,
++                                                  size + HLOCAL_STORAGE )))
++                          {
++                              header->ptr = (char *)ptr + HLOCAL_STORAGE;
++                              ret = hmem;
++                          }
++                      }
++                      else
+                       {
+-                          header->ptr = (char *)ptr + HLOCAL_STORAGE;
+-                          ret = hmem;
++                          if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags,
++                                                  header->ptr, size + HLOCAL_STORAGE )))
++                          {
++                              hlocal_hashtable_remove_unlocked( header );
++                              header->ptr = ptr;
++                              hlocal_hashtable_add_unlocked( header );
++                              ret = hmem;
++                          }
+                       }
+                   }
+                   else
+                   {
+-                      if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
++                      if (is_win9x())
++                      {
++                          if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
++                          {
++                              *(HLOCAL *)ptr = hmem;
++                              header->ptr = (char *)ptr + HLOCAL_STORAGE;
++                              ret = hmem;
++                          }
++                      }
++                      else
+                       {
+-                          *(HLOCAL *)ptr = hmem;
+-                          header->ptr = (char *)ptr + HLOCAL_STORAGE;
+-                          ret = hmem;
++                          if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size )))
++                          {
++                              header->ptr = ptr;
++                              hlocal_hashtable_add_unlocked( header );
++                              ret = hmem;
++                          }
+                       }
+                   }
+               }
+@@ -667,6 +785,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL hmem, SIZE_T size, UINT fla
+               {
+                   if (header->ptr)
+                   {
++                      hlocal_hashtable_remove_unlocked( header );
+                       HeapFree( GetProcessHeap(), 0, (char *)header->ptr - HLOCAL_STORAGE );
+                       header->ptr = NULL;
+                   }
+diff --git a/include/winbase.h b/include/winbase.h
+index 8b30c5a69a..0a1ad0b3c0 100644
+--- a/include/winbase.h
++++ b/include/winbase.h
+@@ -2915,6 +2915,22 @@ WINBASEAPI UINT        WINAPI _lwrite(HFILE,LPCSTR,UINT);
+ extern char * CDECL wine_get_unix_file_name( LPCWSTR dos );
+ extern WCHAR * CDECL wine_get_dos_file_name( LPCSTR str );
+ 
++#include "pshpack1.h"
++
++struct local_header
++{
++   WORD  magic;
++   void *ptr;
++   BYTE flags;
++   BYTE lock;
++   struct local_header *next;
++};
++
++#include "poppack.h"
++
++extern struct local_header *wine_hlocal_hashtable_find_unlocked(const void *ptr);
++
++
+ 
+ /* Interlocked functions */
+ 
+
