@@ -1999,14 +1999,16 @@ index e6865afa8467..95df63b0b2ce 100644
  static int io_read(struct io_kiocb *req, bool force_nonblock)
  {
  	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
-@@ -2601,10 +2717,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
+@@ -2601,12 +2717,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
  	if (!ret) {
  		ssize_t ret2;
  
 -		if (req->file->f_op->read_iter)
 -			ret2 = call_read_iter(req->file, kiocb, &iter);
--		else
+-		else if (req->file->f_op->read)
 -			ret2 = loop_rw_iter(READ, req->file, kiocb, &iter);
+-		else
+-			ret2 = -EINVAL;
 +		ret2 = io_iter_do_read(req, &iter);
  
  		/* Catch -EAGAIN return for forced non-blocking submission */
