@@ -7,6 +7,7 @@
 ### Wine/Proton-tkg-git will auto-clone this repo two dirs up from their buildscript dir (`../../community-patches`) if valid community patches are found in their .cfg file (`_community_patches=""` array).
 ### Alternatively, you can also clone this repo by hand next to the `wine-tkg-git` root dir (the one containing both `wine-tkg-git` and `proton-tkg` dirs) so the build system sees it - `git clone https://github.com/Frogging-Family/community-patches.git`.
 
+
 ## Proton patches
 - amdags.mypatch : Add amdags dll (proton patch - wine version to apply to a wine-tkg build)
 - amdags-proton.mypatch : Add amdags dll (proton patch - proton version to apply to a proton-tkg build)
@@ -14,6 +15,7 @@
 - hide-prefix-update-window.mypatch : As the name implies, will hide the prefix update dialog - https://github.com/ValveSoftware/wine/commit/6051b0612ca0436139f6e059cdaa704b7d9fa7ab - Doesn't apply to proton-tkg (already included)
 - unhide-prefix-update-window.mypatch : As the name implies, will unhide the prefix update dialog - https://github.com/ValveSoftware/wine/commit/6051b0612ca0436139f6e059cdaa704b7d9fa7ab - Applies to proton-tkg **only**
 - winex11-fs-no_above_state.mypatch : Don't set ABOVE state for FULLSCREEN windows, fixing alt-tabbing in various games. There's a reported issue with Xfce where panels can stay above games with this patch applied. Requires `_proton_fs_hack="true"` in your .cfg - https://github.com/ValveSoftware/wine/commit/a8675091927c01a0c28de349517c5010557f06a9
+
 
 ## Game-specific
 - legoisland_168726.mypatch : Add functions needed by, notably, lego island - https://bugs.winehq.org/show_bug.cgi?id=10729
@@ -25,6 +27,7 @@
 - starcitizen_voip_fix.mypatch : Fix for VOIP functionality in Star Citizen thanks to @snatella - https://github.com/snatella/wine-runner-sc - https://paste.debian.net/hidden/4907fc09/
 - 0001-powershell-add-wrapper-for-powershell-using-Powershe.patch - Patch for Waves Central from Louis Lenders (requires winetricks arial) - https://github.com/Frogging-Family/community-patches/pull/20
 
+
 ## Misc
 - rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
 - rockstarlauncher_downloads.mypatch : Hack to workaround failing downloads with rockstar launcher - https://bugs.winehq.org/show_bug.cgi?id=47843 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
@@ -35,3 +38,4 @@
 - kernel32-implement-Windows-NT-style-GMEM_MOVEABLE-LM-staging.mypatch : Allow GlobalAlloc and LocalAlloc GMEM_MOVEABLE to be used with HeapSize. Resolve crashing issues with wxWidgets drag and drop. Fix Wrye Bash (for staging build ) - https://bugs.winehq.org/show_bug.cgi?id=38924
 - shell32-Move-file-SHFileOperation-allow-from-wildchar-move.mypatch : Allow wildchar FO_MOVE to execute even if the source is only 1 file. Needed fo FX Interactive Store - https://bugs.winehq.org/show_bug.cgi?id=39269
 - ID3DXEffectCompiler-partial-implementation.mypatch : Partial implementation of ID3DXeffectCompiler interface. Avoid Oblivion Reloaded and maybe other applications needeing a native d3dx9_xx.dll to compile effects. Require native d3dcompiler_xx.dll - https://bugs.winehq.org/show_bug.cgi?id=46779
+- ntdll_Map_top-down_if_dll_characteristics_include_DYNAMIC_BASE.mypatch : Fix for SKSE64, thanks to @qsniyg - https://bugs.winehq.org/show_bug.cgi?id=44893 - https://bugs.winehq.org/show_bug.cgi?id=48641
