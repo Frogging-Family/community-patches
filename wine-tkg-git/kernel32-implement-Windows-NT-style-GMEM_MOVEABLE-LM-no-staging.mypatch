@@ -148,7 +148,7 @@ index dc1a3cd72c..8a0a20e153 100644
 +             if (is_win9x())
 +                 ptr -= HGLOBAL_STORAGE;
 +             retval = HeapSize(GetProcessHeap(), 0, ptr );
-+             if (is_win9x() && retval != ~0ul) retval -= HGLOBAL_STORAGE;
++             if (is_win9x() && retval != ~(SIZE_T)0) retval -= HGLOBAL_STORAGE;
           }
        }
        else
