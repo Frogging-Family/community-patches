@@ -1,0 +1,264 @@
+From 9d55c70c87606f9632da8bf9fdcf0f633f165f2f Mon Sep 17 00:00:00 2001
+From: Nick Terrell <terrelln@fb.com>
+Date: Tue, 31 Mar 2020 22:39:06 -0700
+Subject: [PATCH 1/9] lib: prepare zstd for preboot environment
+
+* Don't export symbols if ZSTD_PREBOOT is defined.
+* Remove a double definition of the CHECK_F macro when the zstd
+  library is amalgamated.
+* Switch ZSTD_copy8() to __builtin_memcpy(), because in the preboot
+  environment on x86 gcc can't inline `memcpy()` otherwise.
+* Limit the gcc hack in ZSTD_wildcopy() to the broken gcc version. See
+  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81388.
+
+These changes are necessary to get the build to work in the preboot
+environment, and to get reasonable performance. ZSTD_copy8() and
+ZSTD_wildcopy() are in the core of the zstd hot loop. So outlining
+these calls to memcpy(), and having an extra branch are very
+detrimental to performance.
+
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Nick Terrell <terrelln@fb.com>
+---
+ lib/zstd/decompress.c     |  2 ++
+ lib/zstd/fse_decompress.c |  9 +--------
+ lib/zstd/zstd_internal.h  | 14 ++++++++++++--
+ 3 files changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/lib/zstd/decompress.c b/lib/zstd/decompress.c
+index 269ee9a79..73ded6327 100644
+--- a/lib/zstd/decompress.c
++++ b/lib/zstd/decompress.c
+@@ -2490,6 +2490,7 @@ size_t ZSTD_decompressStream(ZSTD_DStream *zds, ZSTD_outBuffer *output, ZSTD_inB
+ 	}
+ }
+ 
++#ifndef ZSTD_PREBOOT
+ EXPORT_SYMBOL(ZSTD_DCtxWorkspaceBound);
+ EXPORT_SYMBOL(ZSTD_initDCtx);
+ EXPORT_SYMBOL(ZSTD_decompressDCtx);
+@@ -2529,3 +2530,4 @@ EXPORT_SYMBOL(ZSTD_insertBlock);
+ 
+ MODULE_LICENSE("Dual BSD/GPL");
+ MODULE_DESCRIPTION("Zstd Decompressor");
++#endif
+diff --git a/lib/xxhash.c b/lib/xxhash.c
+index aa61e2a38..b4364e011 100644
+--- a/lib/xxhash.c
++++ b/lib/xxhash.c
+@@ -80,13 +80,11 @@ void xxh32_copy_state(struct xxh32_state *dst, const struct xxh32_state *src)
+ {
+ 	memcpy(dst, src, sizeof(*dst));
+ }
+-EXPORT_SYMBOL(xxh32_copy_state);
+ 
+ void xxh64_copy_state(struct xxh64_state *dst, const struct xxh64_state *src)
+ {
+ 	memcpy(dst, src, sizeof(*dst));
+ }
+-EXPORT_SYMBOL(xxh64_copy_state);
+ 
+ /*-***************************
+  * Simple Hash Functions
+@@ -151,7 +149,6 @@ uint32_t xxh32(const void *input, const size_t len, const uint32_t seed)
+ 
+ 	return h32;
+ }
+-EXPORT_SYMBOL(xxh32);
+ 
+ static uint64_t xxh64_round(uint64_t acc, const uint64_t input)
+ {
+@@ -234,7 +231,6 @@ uint64_t xxh64(const void *input, const size_t len, const uint64_t seed)
+ 
+ 	return h64;
+ }
+-EXPORT_SYMBOL(xxh64);
+ 
+ /*-**************************************************
+  * Advanced Hash Functions
+@@ -251,7 +247,6 @@ void xxh32_reset(struct xxh32_state *statePtr, const uint32_t seed)
+ 	state.v4 = seed - PRIME32_1;
+ 	memcpy(statePtr, &state, sizeof(state));
+ }
+-EXPORT_SYMBOL(xxh32_reset);
+ 
+ void xxh64_reset(struct xxh64_state *statePtr, const uint64_t seed)
+ {
+@@ -265,7 +260,6 @@ void xxh64_reset(struct xxh64_state *statePtr, const uint64_t seed)
+ 	state.v4 = seed - PRIME64_1;
+ 	memcpy(statePtr, &state, sizeof(state));
+ }
+-EXPORT_SYMBOL(xxh64_reset);
+ 
+ int xxh32_update(struct xxh32_state *state, const void *input, const size_t len)
+ {
+@@ -334,7 +328,6 @@ int xxh32_update(struct xxh32_state *state, const void *input, const size_t len)
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL(xxh32_update);
+ 
+ uint32_t xxh32_digest(const struct xxh32_state *state)
+ {
+@@ -372,7 +365,6 @@ uint32_t xxh32_digest(const struct xxh32_state *state)
+ 
+ 	return h32;
+ }
+-EXPORT_SYMBOL(xxh32_digest);
+ 
+ int xxh64_update(struct xxh64_state *state, const void *input, const size_t len)
+ {
+@@ -439,7 +431,6 @@ int xxh64_update(struct xxh64_state *state, const void *input, const size_t len)
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL(xxh64_update);
+ 
+ uint64_t xxh64_digest(const struct xxh64_state *state)
+ {
+@@ -494,7 +485,19 @@ uint64_t xxh64_digest(const struct xxh64_state *state)
+ 
+ 	return h64;
+ }
++
++#ifndef XXH_PREBOOT
++EXPORT_SYMBOL(xxh32_copy_state);
++EXPORT_SYMBOL(xxh64_copy_state);
++EXPORT_SYMBOL(xxh32);
++EXPORT_SYMBOL(xxh64);
++EXPORT_SYMBOL(xxh32_reset);
++EXPORT_SYMBOL(xxh64_reset);
++EXPORT_SYMBOL(xxh32_update);
++EXPORT_SYMBOL(xxh32_digest);
++EXPORT_SYMBOL(xxh64_update);
+ EXPORT_SYMBOL(xxh64_digest);
+ 
+ MODULE_LICENSE("Dual BSD/GPL");
+ MODULE_DESCRIPTION("xxHash");
++#endif
+-- 
+2.27.0.rc0
+
+
+From 9bf3c117ce579a699388ad7877b06be37f9f74b0 Mon Sep 17 00:00:00 2001
+From: Nick Terrell <terrelln@fb.com>
+Date: Tue, 31 Mar 2020 22:39:09 -0700
+Subject: [PATCH 4/9] init: add support for zstd compressed kernel
+
+* Adds the zstd cmd to scripts/Makefile.lib
+* Adds the HAVE_KERNEL_ZSTD and KERNEL_ZSTD options
+
+Architecture specific support is still needed for decompression.
+
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Tested-by: Sedat Dilek <sedat.dilek@gmail.com>
+Signed-off-by: Nick Terrell <terrelln@fb.com>
+---
+ init/Kconfig         | 15 ++++++++++++++-
+ scripts/Makefile.lib | 15 +++++++++++++++
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index f24ff5a90..373b1f9ab 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -394,6 +394,21 @@ quiet_cmd_xzkern = XZKERN  $@
+ quiet_cmd_xzmisc = XZMISC  $@
+       cmd_xzmisc = cat $(real-prereqs) | xz --check=crc32 --lzma2=dict=1MiB > $@
+ 
++# ZSTD
++# ---------------------------------------------------------------------------
++# Appends the uncompressed size of the data using size_append. The .zst
++# format has the size information available at the beginning of the file too,
++# but it's in a more complex format and it's good to avoid changing the part
++# of the boot code that reads the uncompressed size.
++# Note that the bytes added by size_append will make the zstd tool think that
++# the file is corrupt. This is expected.
++
++quiet_cmd_zstd = ZSTD    $@
++cmd_zstd = (cat $(filter-out FORCE,$^) | \
++	zstd -19 && \
++        $(call size_append, $(filter-out FORCE,$^))) > $@ || \
++	(rm -f $@ ; false)
++
+ # ASM offsets
+ # ---------------------------------------------------------------------------
+ 
+-- 
+2.27.0.rc0
+
+
+From 9687fd64db136fbdb2e7805e0b6354620516597c Mon Sep 17 00:00:00 2001
+From: NihilisticPandemoniun
+ <152417+nihilisticpandemonium@users.noreply.github.com>
+Date: Thu, 19 Dec 2019 00:08:37 -0800
+Subject: [PATCH 9/9] init: add support for zstd compressed modules
+
+Signed-off-by: Alexandre Frade <admfrade@gmail.com>
+---
+ Makefile     | 7 +++++--
+ init/Kconfig | 9 ++++++---
+ 2 files changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index d25221966..f812df12f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -972,8 +972,8 @@ endif # INSTALL_MOD_STRIP
+ export mod_strip_cmd
+ 
+ # CONFIG_MODULE_COMPRESS, if defined, will cause module to be compressed
+-# after they are installed in agreement with CONFIG_MODULE_COMPRESS_GZIP
+-# or CONFIG_MODULE_COMPRESS_XZ.
++# after they are installed in agreement with CONFIG_MODULE_COMPRESS_GZIP,
++# CONFIG_MODULE_COMPRESS_XZ, or CONFIG_MODULE_COMPRESS_ZSTD.
+ 
+ mod_compress_cmd = true
+ ifdef CONFIG_MODULE_COMPRESS
+@@ -983,6 +983,9 @@ ifdef CONFIG_MODULE_COMPRESS
+   ifdef CONFIG_MODULE_COMPRESS_XZ
+     mod_compress_cmd = xz -f
+   endif # CONFIG_MODULE_COMPRESS_XZ
++  ifdef CONFIG_MODULE_COMPRESS_ZSTD
++    mod_compress_cmd = zstd -T0 -20 --ultra --rm -f
++  endif
+ endif # CONFIG_MODULE_COMPRESS
+ export mod_compress_cmd
+ 
+diff --git a/init/Kconfig b/init/Kconfig
+index b7c280818..3d3b72926 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -2142,8 +2142,8 @@ config MODULE_COMPRESS
+ 	bool "Compress modules on installation"
+ 	help
+ 
+-	  Compresses kernel modules when 'make modules_install' is run; gzip or
+-	  xz depending on "Compression algorithm" below.
++	  Compresses kernel modules when 'make modules_install' is run; gzip,
++	  xz, or zstd depending on "Compression algorithm" below.
+ 
+ 	  module-init-tools MAY support gzip, and kmod MAY support gzip and xz.
+ 
+@@ -2165,7 +2165,7 @@ choice
+ 	  This determines which sort of compression will be used during
+ 	  'make modules_install'.
+ 
+-	  GZIP (default) and XZ are supported.
++	  GZIP (default), XZ, and ZSTD are supported.
+ 
+ config MODULE_COMPRESS_GZIP
+ 	bool "GZIP"
+@@ -2173,6 +2173,9 @@ config MODULE_COMPRESS_GZIP
+ config MODULE_COMPRESS_XZ
+ 	bool "XZ"
+ 
++config MODULE_COMPRESS_ZSTD
++	bool "ZSTD"
++
+ endchoice
+ 
+ config MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
+-- 
+2.27.0.rc0 
