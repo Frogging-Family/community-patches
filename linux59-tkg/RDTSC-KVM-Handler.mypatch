@@ -1,0 +1,129 @@
+diff --git i/arch/x86/kvm/svm/svm.c w/arch/x86/kvm/svm/svm.c
+index 79b3a564f..f4d9b1409 100644
+--- i/arch/x86/kvm/svm/svm.c
++++ w/arch/x86/kvm/svm/svm.c
+@@ -1155,6 +1155,7 @@ static void init_vmcb(struct vcpu_svm *svm)
+ 	svm_set_intercept(svm, INTERCEPT_XSETBV);
+ 	svm_set_intercept(svm, INTERCEPT_RDPRU);
+ 	svm_set_intercept(svm, INTERCEPT_RSM);
++	set_intercept(svm, INTERCEPT_RDTSC);
+ 
+ 	if (!kvm_mwait_in_guest(svm->vcpu.kvm)) {
+ 		svm_set_intercept(svm, INTERCEPT_MONITOR);
+@@ -2858,6 +2859,43 @@ static int invpcid_interception(struct vcpu_svm *svm)
+ 	return kvm_handle_invpcid(vcpu, type, gva);
+ }
+ 
++static u32 print_once = 1;
++
++static int handle_rdtsc_interception(struct vcpu_svm *svm) 
++{
++    	static u64 rdtsc_fake = 0;
++	static u64 rdtsc_prev = 0;
++	u64 rdtsc_real = rdtsc();
++
++	if(print_once)
++	{
++		printk("[handle_rdtsc] fake rdtsc svm function is working\n");
++		print_once = 0;
++		rdtsc_fake = rdtsc_real;
++	}
++
++	if(rdtsc_prev != 0)
++	{
++		if(rdtsc_real > rdtsc_prev)
++		{
++			u64 diff = rdtsc_real - rdtsc_prev;
++			u64 fake_diff =  diff / 20; // if you have 3.2Ghz on your vm, change 20 to 16
++			rdtsc_fake += fake_diff;
++		}
++	}
++	if(rdtsc_fake > rdtsc_real)
++	{
++		rdtsc_fake = rdtsc_real;
++	}
++	rdtsc_prev = rdtsc_real;
++
++
++	svm->vcpu.arch.regs[VCPU_REGS_RAX] = rdtsc_fake & -1u;
++	svm->vcpu.arch.regs[VCPU_REGS_RDX] = (rdtsc_fake >> 32) & -1u;
++	
++	return skip_emulated_instruction(&svm->vcpu);
++}
++
+ static int (*const svm_exit_handlers[])(struct vcpu_svm *svm) = {
+ 	[SVM_EXIT_READ_CR0]			= cr_interception,
+ 	[SVM_EXIT_READ_CR3]			= cr_interception,
+@@ -2925,6 +2963,7 @@ static int (*const svm_exit_handlers[])(struct vcpu_svm *svm) = {
+ 	[SVM_EXIT_RSM]                          = rsm_interception,
+ 	[SVM_EXIT_AVIC_INCOMPLETE_IPI]		= avic_incomplete_ipi_interception,
+ 	[SVM_EXIT_AVIC_UNACCELERATED_ACCESS]	= avic_unaccelerated_access_interception,
++	[SVM_EXIT_RDTSC]                          = handle_rdtsc_interception,
+ };
+ 
+ static void dump_vmcb(struct kvm_vcpu *vcpu)
+diff --git i/arch/x86/kvm/vmx/vmx.c w/arch/x86/kvm/vmx/vmx.c
+index 47b8357b9..c583bdc70 100644
+--- i/arch/x86/kvm/vmx/vmx.c
++++ w/arch/x86/kvm/vmx/vmx.c
+@@ -2393,7 +2393,8 @@ static __init int setup_vmcs_config(struct vmcs_config *vmcs_conf,
+ 	      CPU_BASED_MWAIT_EXITING |
+ 	      CPU_BASED_MONITOR_EXITING |
+ 	      CPU_BASED_INVLPG_EXITING |
+-	      CPU_BASED_RDPMC_EXITING;
++	      CPU_BASED_RDPMC_EXITING |
++	      CPU_BASED_RDTSC_EXITING;
+ 
+ 	opt = CPU_BASED_TPR_SHADOW |
+ 	      CPU_BASED_USE_MSR_BITMAPS |
+@@ -5620,6 +5621,42 @@ static int handle_encls(struct kvm_vcpu *vcpu)
+ 	return 1;
+ }
+ 
++static u32 print_once = 1;
++
++static int handle_rdtsc(struct kvm_vcpu *vcpu) 
++{ 
++	static u64 rdtsc_fake = 0;
++	static u64 rdtsc_prev = 0;
++	u64 rdtsc_real = rdtsc();
++
++	if(print_once)
++	{
++		printk("[handle_rdtsc] fake rdtsc vmx function is working\n");
++		print_once = 0;
++		rdtsc_fake = rdtsc_real;
++	}
++
++	if(rdtsc_prev != 0)
++	{
++		if(rdtsc_real > rdtsc_prev)
++		{
++			u64 diff = rdtsc_real - rdtsc_prev;
++			u64 fake_diff =  diff / 16; // if you have 4.2Ghz on your vm, change 16 to 20 
++			rdtsc_fake += fake_diff;
++		}
++	}
++	if(rdtsc_fake > rdtsc_real)
++	{
++		rdtsc_fake = rdtsc_real;
++	}
++	rdtsc_prev = rdtsc_real;
++    
++	vcpu->arch.regs[VCPU_REGS_RAX] = rdtsc_fake & -1u;
++	vcpu->arch.regs[VCPU_REGS_RDX] = (rdtsc_fake >> 32) & -1u;
++    
++        return skip_emulated_instruction(vcpu);
++}
++
+ /*
+  * The exit handlers return 1 if the exit was handled fully and guest execution
+  * may resume.  Otherwise they set the kvm_run parameter to indicate what needs
+@@ -5676,6 +5713,7 @@ static int (*kvm_vmx_exit_handlers[])(struct kvm_vcpu *vcpu) = {
+ 	[EXIT_REASON_VMFUNC]		      = handle_vmx_instruction,
+ 	[EXIT_REASON_PREEMPTION_TIMER]	      = handle_preemption_timer,
+ 	[EXIT_REASON_ENCLS]		      = handle_encls,
++	[EXIT_REASON_RDTSC]                   = handle_rdtsc,
+ };
+ 
+ static const int kvm_vmx_max_exit_handlers =
