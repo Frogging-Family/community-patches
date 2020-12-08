@@ -1,12 +1,12 @@
 diff --git i/arch/x86/kvm/svm/svm.c w/arch/x86/kvm/svm/svm.c
-index 79b3a564f..f4d9b1409 100644
+index 79b3a564f..70faaa311 100644
 --- i/arch/x86/kvm/svm/svm.c
 +++ w/arch/x86/kvm/svm/svm.c
 @@ -1155,6 +1155,7 @@ static void init_vmcb(struct vcpu_svm *svm)
  	svm_set_intercept(svm, INTERCEPT_XSETBV);
  	svm_set_intercept(svm, INTERCEPT_RDPRU);
  	svm_set_intercept(svm, INTERCEPT_RSM);
-+	set_intercept(svm, INTERCEPT_RDTSC);
++	svm_set_intercept(svm, INTERCEPT_RDTSC);
  
  	if (!kvm_mwait_in_guest(svm->vcpu.kvm)) {
  		svm_set_intercept(svm, INTERCEPT_MONITOR);
