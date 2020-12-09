@@ -15,7 +15,7 @@
 - hide-prefix-update-window.mypatch : As the name implies, will hide the prefix update dialog - https://github.com/ValveSoftware/wine/commit/6051b0612ca0436139f6e059cdaa704b7d9fa7ab - Doesn't apply to proton-tkg (already included)
 - unhide-prefix-update-window.mypatch : As the name implies, will unhide the prefix update dialog - https://github.com/ValveSoftware/wine/commit/6051b0612ca0436139f6e059cdaa704b7d9fa7ab - Applies to proton-tkg **only**
 - winex11-fs-no_above_state.mypatch : Don't set ABOVE state for FULLSCREEN windows, fixing alt-tabbing in various games. There's a reported issue with Xfce where panels can stay above games with this patch applied. Requires `_proton_fs_hack="true"` in your .cfg - https://github.com/ValveSoftware/wine/commit/a8675091927c01a0c28de349517c5010557f06a9
-- winex11-fs-no_above_state-nofshack.mypatch : Same as above for `_proton_fs_hack="false"` or wine 5.20 or newer.
+- winex11-fs-no_above_state-nofshack.mypatch : Same as above for `_proton_fs_hack="false"` or wine 5.20 or newer - Thanks to ErdeFB - https://github.com/Frogging-Family/community-patches/issues/31
 
 
 ## Game-specific
