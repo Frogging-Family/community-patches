@@ -1,0 +1,17 @@
+diff --git a/include/winbase.h b/include/winbase.h
+index dc8aa081be4..16e1b06ef8c 100644
+--- a/include/winbase.h
++++ b/include/winbase.h
+@@ -1613,6 +1613,12 @@ typedef struct _WIN32_STREAM_ID {
+ } WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
+ #include <poppack.h>
+ 
++/* Fix for GCC 10 */
++#define va_start(v,l)   __builtin_va_start(v,l)
++#define va_end(v)       __builtin_va_end(v)
++#define va_arg(v,l)     __builtin_va_arg(v,l)
++#define va_copy(d,s)    __builtin_va_copy(d,s)
++typedef __builtin_va_list va_list;
+ 
+ /* GetBinaryType return values.
+  */
