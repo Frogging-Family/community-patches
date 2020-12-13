@@ -1,0 +1,1736 @@
+diff --git a/MAINTAINERS b/MAINTAINERS
+index ebe4829cdd4d8086b2096f7ad331047f83d99336..8f5bd02e41b566f760ebe0d59f63e8bf459e57cc 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -7270,7 +7270,7 @@ F:	Documentation/locking/*futex*
+ F:	include/asm-generic/futex.h
+ F:	include/linux/futex.h
+ F:	include/uapi/linux/futex.h
+-F:	kernel/futex.c
++F:	kernel/futex*
+ F:	tools/perf/bench/futex*
+ F:	tools/testing/selftests/futex/
+ 
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 0d0667a9fbd70aeb9e297342b9f855a457d45ea4..83a75ff39b1f3b703c8cc419a1427bd0c24999a8 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -445,3 +445,5 @@
+ 438	i386	pidfd_getfd		sys_pidfd_getfd
+ 439	i386	faccessat2		sys_faccessat2
+ 440	i386	process_madvise		sys_process_madvise
++441	i386	futex_wait		sys_futex_wait
++442	i386	futex_wake		sys_futex_wake
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 379819244b91d275b2c98f7ff38a59049c24b42a..6658fd63c7b8975f27ff34318a9f0f0e1581b6a0 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -362,6 +362,8 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++441	common	futex_wait		sys_futex_wait
++442	common	futex_wake		sys_futex_wake
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 37bea07c12f211dd5b26187d56db7a43d9ddfed5..b6b77cf2be9b6eb59828abeca672061c17bec43b 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -589,6 +589,13 @@ asmlinkage long sys_get_robust_list(int pid,
+ asmlinkage long sys_set_robust_list(struct robust_list_head __user *head,
+ 				    size_t len);
+ 
++/* kernel/futex2.c */
++asmlinkage long sys_futex_wait(void __user *uaddr, unsigned long val,
++			       unsigned long flags,
++			       struct __kernel_timespec __user __user *timo);
++asmlinkage long sys_futex_wake(void __user *uaddr, unsigned long nr_wake,
++			       unsigned long flags);
++
+ /* kernel/hrtimer.c */
+ asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp,
+ 			      struct __kernel_timespec __user *rmtp);
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2056318988f774931c4e0a3104144bf4a75ff52f..ae47d6a9e9d2449ed0d4f0d098e2eac8c2c98722 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -860,8 +860,14 @@ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
+ 
++#define __NR_futex_wait 441
++__SYSCALL(__NR_futex_wait, sys_futex_wait)
++
++#define __NR_futex_wake 442
++__SYSCALL(__NR_futex_wake, sys_futex_wake)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 441
++#define __NR_syscalls 443
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/include/uapi/linux/futex.h b/include/uapi/linux/futex.h
+index a89eb0accd5e2ee527be1e3e11b1117ff5bf94b4..35a5bf1cd41b08d92063bdeef62d157c0ab49b51 100644
+--- a/include/uapi/linux/futex.h
++++ b/include/uapi/linux/futex.h
+@@ -41,6 +41,46 @@
+ #define FUTEX_CMP_REQUEUE_PI_PRIVATE	(FUTEX_CMP_REQUEUE_PI | \
+ 					 FUTEX_PRIVATE_FLAG)
+ 
++/* Size argument to futex2 syscall */
++#define FUTEX_8		0
++#define FUTEX_16	1
++#define FUTEX_32	2
++
++#define FUTEX_SIZE_MASK	0x3
++
++#define FUTEX_SHARED_FLAG 8
++
++#define FUTEX_NUMA_FLAG 16
++
++/*
++ * struct futexXX_numa - struct for NUMA-aware futex operation
++ * @value: futex value
++ * @hint:  node id to operate
++ */
++
++struct futex8_numa {
++	__u8 value;
++	__u8 hint;
++};
++
++struct futex16_numa {
++	__u16 value;
++	__u16 hint;
++};
++
++struct futex32_numa {
++	__u32 value;
++	__u32 hint;
++};
++
++#define FUTEX_WAITV_MAX 128
++
++struct futex_waitv {
++	void *uaddr;
++	unsigned int val;
++	unsigned int flags;
++};
++
+ /*
+  * Support for robust futexes: the kernel cleans up held futexes at
+  * thread exit time.
+diff --git a/init/Kconfig b/init/Kconfig
+index 02d13ae27abb907972e8446387decb72c782d7df..1264687eaca897d9a8d37510d9dc062273369c45 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1522,6 +1522,13 @@ config FUTEX
+ 	  support for "fast userspace mutexes".  The resulting kernel may not
+ 	  run glibc-based applications correctly.
+ 
++config FUTEX2
++	bool "Enable futex2 support" if EXPERT
++	depends on FUTEX
++	default n
++	help
++	  Experimental support for futex2 interface.
++
+ config FUTEX_PI
+ 	bool
+ 	depends on FUTEX && RT_MUTEXES
+diff --git a/kernel/Makefile b/kernel/Makefile
+index af601b9bda0e67becdf8b3fc3b2b5440f8940384..bb7f3398672e855e357712ec8ef9daae527d40f5 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -54,6 +54,7 @@ obj-$(CONFIG_PROFILING) += profile.o
+ obj-$(CONFIG_STACKTRACE) += stacktrace.o
+ obj-y += time/
+ obj-$(CONFIG_FUTEX) += futex.o
++obj-$(CONFIG_FUTEX2) += futex2.o
+ obj-$(CONFIG_GENERIC_ISA_DMA) += dma.o
+ obj-$(CONFIG_SMP) += smp.o
+ ifneq ($(CONFIG_SMP),y)
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..107b80a466d04eab06e9d7cef3f25d84bf7b4ed4
+--- /dev/null
++++ b/kernel/futex2.c
+@@ -0,0 +1,484 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++/*
++ * futex2 system call interface by AndrÃ© Almeida <andrealmeid@collabora.com>
++ *
++ * Copyright 2020 Collabora Ltd.
++ */
++
++#include <linux/freezer.h>
++#include <linux/jhash.h>
++#include <linux/sched/wake_q.h>
++#include <linux/spinlock.h>
++#include <linux/syscalls.h>
++#include <linux/memblock.h>
++#include <uapi/linux/futex.h>
++
++/**
++ * struct futex_waiter - List entry for a waiter
++ * @key.address:  Memory address of userspace futex
++ * @key.mm:       Pointer to memory management struct of this process
++ * @key:          Stores information that uniquely identify a futex
++ * @list:	  List node struct
++ * @val:	  Expected value for this waiter
++ * @flags:        Flags
++ * @bucket:       Pointer to the bucket for this waiter
++ * @index:        Index of waiter in futexv list
++ */
++struct futex_waiter {
++	struct futex_key {
++		uintptr_t address;
++		struct mm_struct *mm;
++	} key;
++	struct list_head list;
++	unsigned int val;
++	unsigned int flags;
++	struct futex_bucket *bucket;
++	unsigned int index;
++};
++
++/**
++ * struct futex_bucket - A bucket of futex's hash table
++ * @waiters: Number of waiters in the bucket
++ * @lock:    Bucket lock
++ * @list:    List of waiters on this bucket
++ */
++struct futex_bucket {
++	atomic_t waiters;
++	spinlock_t lock;
++	struct list_head list;
++};
++
++struct futexv {
++	struct task_struct *task;
++	int hint;
++	struct futex_waiter objects[0];
++};
++
++struct futex_single_waiter {
++	struct futexv parent;
++	struct futex_waiter waiter;
++} __packed;
++
++struct futex_bucket *futex_table;
++
++/* mask for futex2 flag operations */
++#define FUTEX2_MASK (FUTEX_SIZE_MASK | FUTEX_SHARED_FLAG | \
++		     FUTEX_CLOCK_REALTIME)
++
++// mask for sys_futex_waitv
++#define FUTEXV_MASK (FUTEX_CLOCK_REALTIME)
++
++// mask for each futex in futex_waitv list
++#define FUTEXV_WAITER_MASK (FUTEX_SIZE_MASK | FUTEX_SHARED_FLAG)
++
++int futex2_hashsize;
++
++/*
++ * Reflects a new waiter being added to the waitqueue.
++ */
++static inline void bucket_inc_waiters(struct futex_bucket *bucket)
++{
++#ifdef CONFIG_SMP
++	atomic_inc(&bucket->waiters);
++	/*
++	 * Full barrier (A), see the ordering comment above.
++	 */
++	smp_mb__after_atomic();
++#endif
++}
++
++/*
++ * Reflects a waiter being removed from the waitqueue by wakeup
++ * paths.
++ */
++static inline void bucket_dec_waiters(struct futex_bucket *bucket)
++{
++#ifdef CONFIG_SMP
++	atomic_dec(&bucket->waiters);
++#endif
++}
++
++/*
++ * Get the number of waiters in a bucket
++ */
++static inline int bucket_get_waiters(struct futex_bucket *bucket)
++{
++#ifdef CONFIG_SMP
++	/*
++	 * Full barrier (B), see the ordering comment above.
++	 */
++	smp_mb();
++	return atomic_read(&bucket->waiters);
++#else
++	return 1;
++#endif
++}
++
++/**
++ * futex_get_bucket - Check if the user address is valid, prepare internal
++ *                    data and calculate the hash
++ * @uaddr:   futex user address
++ * @key:     data that uniquely identifies a futex
++ *
++ * Return: address of bucket on success, error code otherwise
++ */
++static struct futex_bucket *futex_get_bucket(void __user *uaddr,
++					     struct futex_key *key)
++{
++	uintptr_t address = (uintptr_t) uaddr;
++	u32 hash_key;
++
++	/* Checking if uaddr is valid and accessible */
++	if (unlikely(!IS_ALIGNED(address, sizeof(u32))))
++		return ERR_PTR(-EINVAL);
++	if (unlikely(!access_ok(address, sizeof(u32))))
++		return ERR_PTR(-EFAULT);
++
++	key->address = address;
++	key->mm = current->mm;
++
++	/* Generate hash key for this futex using uaddr and current->mm */
++	hash_key = jhash2((u32 *) key, sizeof(*key) / sizeof(u32), 0);
++
++	/* Since HASH_SIZE is 2^n, subtracting 1 makes a perfect bit mask */
++	return &futex_table[hash_key & (futex2_hashsize - 1)];
++}
++
++/**
++ * futex_get_user - Get the userspace value on this address
++ * @uval:  variable to store the value
++ * @uaddr: userspace address
++ *
++ * Check the comment at futex_get_user_val for more information.
++ */
++static int futex_get_user(u32 *uval, u32 *uaddr)
++{
++	int ret;
++
++	pagefault_disable();
++	ret = __get_user(*uval, uaddr);
++	pagefault_enable();
++
++	return ret;
++}
++
++/**
++ * futex_setup_time - Prepare the timeout mechanism, without starting it.
++ * @timo:    Timeout value from userspace
++ * @timeout: Pointer to hrtimer handler
++ * @flags: Flags from userspace, to decide which clockid to use
++ *
++ * Return: 0 on success, error code otherwise
++ */
++static int futex_setup_time(struct __kernel_timespec __user *timo,
++			    struct hrtimer_sleeper *timeout,
++			    unsigned int flags)
++{
++	ktime_t time;
++	struct timespec64 ts;
++	clockid_t clockid = (flags & FUTEX_CLOCK_REALTIME) ?
++			    CLOCK_REALTIME : CLOCK_MONOTONIC;
++
++	if (get_timespec64(&ts, timo))
++		return -EFAULT;
++
++	if (!timespec64_valid(&ts))
++		return -EINVAL;
++
++	time = timespec64_to_ktime(ts);
++
++	hrtimer_init_sleeper(timeout, clockid, HRTIMER_MODE_ABS);
++
++	hrtimer_set_expires(&timeout->timer, time);
++
++	return 0;
++}
++
++
++/**
++ * futex_get_user_value - Get the value from the userspace address and compares
++ *			  with the expected one. In success, leaves the function
++ *			  holding the bucket lock. Else, hold no lock.
++ * @bucket: hash bucket of this address
++ * @uaddr:  futex's userspace address
++ * @val:    expected value
++ * @multiple: is this call in the wait on multiple path
++ *
++ * Return: 0 on success, error code otherwise
++ */
++static int futex_get_user_value(struct futex_bucket *bucket, u32 __user *uaddr,
++				unsigned int val, bool multiple)
++{
++	u32 uval;
++	int ret;
++
++	/*
++	 * Get the value from user futex address.
++	 *
++	 * Since we are in a hurry, we use a spin lock and we can't sleep.
++	 * Try to get the value with page fault disabled (when enable, we might
++	 * sleep).
++	 *
++	 * If we fail, we aren't sure if the address is invalid or is just a
++	 * page fault. Then, release the lock (so we can sleep) and try to get
++	 * the value with page fault enabled. In order to trigger a page fault
++	 * handling, we just call __get_user() again.
++	 *
++	 * If get_user succeeds, this mean that the address is valid and we do
++	 * the loop again. Since we just handled the page fault, the page is
++	 * likely pinned in memory and we should be luckier this time and be
++	 * able to get the value. If we fail anyway, we will try again.
++	 *
++	 * If even with page faults enabled we get and error, this means that
++	 * the address is not valid and we return from the syscall.
++	 */
++	do {
++		spin_lock(&bucket->lock);
++
++		ret = futex_get_user(&uval, uaddr);
++
++		if (ret) {
++			spin_unlock(&bucket->lock);
++			if (multiple || __get_user(uval, uaddr))
++				return -EFAULT;
++
++		}
++	} while (ret);
++
++	if (uval != val) {
++		spin_unlock(&bucket->lock);
++		return -EWOULDBLOCK;
++	}
++
++	return 0;
++}
++
++/**
++ * futex_dequeue - Remove a futex from a queue
++ * @bucket: current bucket holding the futex
++ * @waiter:   futex to be removed
++ *
++ * Return: True if futex was removed by this function, false if another wake
++ *         thread removed this futex.
++ *
++ * This function should be used after we found that this futex was in a queue.
++ * Thus, it needs to be removed before the next step. However, someone could
++ * wake it between the time of the first check and the time to get the lock for
++ * the bucket. Check one more time if the futex is there with the bucket locked.
++ * If it's there, just remove it and return true. Else, mark the removal as
++ * false and do nothing.
++ */
++static bool futex_dequeue(struct futex_bucket *bucket, struct futex_waiter *waiter)
++{
++	bool removed = true;
++
++	spin_lock(&bucket->lock);
++	if (list_empty(&waiter->list))
++		removed = false;
++	else
++		list_del(&waiter->list);
++	spin_unlock(&bucket->lock);
++
++	if (removed)
++		bucket_dec_waiters(bucket);
++
++	return removed;
++}
++
++/**
++ * sys_futex_wait - Wait on a futex address if (*uaddr) == val
++ * @uaddr: User address of futex
++ * @val:   Expected value of futex
++ * @flags: Specify the size of futex and the clockid
++ * @timo:  Optional absolute timeout. Supports only 64bit time.
++ */
++SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
++		unsigned int, flags, struct __kernel_timespec __user *, timo)
++{
++	unsigned int size = flags & FUTEX_SIZE_MASK;
++	struct hrtimer_sleeper timeout;
++	struct futex_bucket *bucket;
++	struct futex_single_waiter wait_single;
++	struct futex_waiter *waiter;
++	int ret;
++
++	wait_single.parent.task = current;
++	wait_single.parent.hint = 0;
++	waiter = &wait_single.waiter;
++	waiter->index = 0;
++
++	if (flags & ~FUTEX2_MASK)
++		return -EINVAL;
++
++	if (size != FUTEX_32)
++		return -EINVAL;
++
++	if (timo) {
++		ret = futex_setup_time(timo, &timeout, flags);
++		if (ret)
++			return ret;
++	}
++
++	/* Get an unlocked hash bucket */
++	bucket = futex_get_bucket(uaddr, &waiter->key);
++	if (IS_ERR(bucket))
++		return PTR_ERR(bucket);
++
++	if (timo)
++		hrtimer_sleeper_start_expires(&timeout, HRTIMER_MODE_ABS);
++
++retry:
++	bucket_inc_waiters(bucket);
++
++	/* Compare the expected and current value, get the bucket lock */
++	ret = futex_get_user_value(bucket, uaddr, val, false);
++	if (ret) {
++		bucket_dec_waiters(bucket);
++		goto out;
++	}
++
++	/* Add the waiter to the hash table and sleep */
++	set_current_state(TASK_INTERRUPTIBLE);
++	list_add_tail(&waiter->list, &bucket->list);
++	spin_unlock(&bucket->lock);
++
++	/* Do not sleep if someone woke this futex or if it was timeouted */
++	if (!list_empty_careful(&waiter->list) && (!timo || timeout.task))
++		freezable_schedule();
++
++	__set_current_state(TASK_RUNNING);
++
++	/*
++	 * One of those things triggered this wake:
++	 *
++	 * * We have been removed from the bucket. futex_wake() woke us. We just
++	 *   need to return 0 to userspace.
++	 *
++	 * However, if we find ourselves in the bucket we must remove ourselves
++	 * from the bucket and ...
++	 *
++	 * * If the there's a timeout and it has expired, return -ETIMEDOUT.
++	 *
++	 * * If there is a signal pending, something wants to kill our thread.
++	 *   Return -ERESTARTSYS.
++	 *
++	 * * If there's no signal pending, it was a spurious wake (scheduler
++	 *   gave us a change to do some work, even if we don't want to). We
++	 *   need to remove ourselves from the bucket and add again, to prevent
++	 *   losing wakeups in the meantime.
++	 */
++
++	/* Normal wake */
++	if (list_empty_careful(&waiter->list))
++		goto out;
++
++	if (!futex_dequeue(bucket, waiter))
++		goto out;
++
++	/* Timeout */
++	if (timo && !timeout.task)
++		return -ETIMEDOUT;
++
++	/* Spurious wakeup */
++	if (!signal_pending(current))
++		goto retry;
++
++	/* Some signal is pending */
++	ret = -ERESTARTSYS;
++out:
++	if (timo)
++		hrtimer_cancel(&timeout.timer);
++
++	return ret;
++}
++
++static struct futexv *futex_get_parent(uintptr_t waiter, u8 index)
++{
++	uintptr_t parent = waiter - sizeof(struct futexv)
++			   - (uintptr_t) (index * sizeof(struct futex_waiter));
++
++	return (struct futexv *) parent;
++}
++
++/**
++ * sys_futex_wake - Wake a number of futexes waiting on an address
++ * @uaddr:   Address of futex to be woken up
++ * @nr_wake: Number of futexes to be woken up
++ * @flags:   TODO
++ */
++SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
++		unsigned int, flags)
++{
++	unsigned int size = flags & FUTEX_SIZE_MASK;
++	struct futex_waiter waiter, *aux, *tmp;
++	struct futex_bucket *bucket;
++	struct task_struct *task;
++	DEFINE_WAKE_Q(wake_q);
++	int ret = 0;
++
++	if (flags & ~FUTEX2_MASK)
++		return -EINVAL;
++
++	if (size != FUTEX_32)
++		return -EINVAL;
++
++	bucket = futex_get_bucket(uaddr, &waiter.key);
++	if (IS_ERR(bucket))
++		return PTR_ERR(bucket);
++
++	if (!bucket_get_waiters(bucket))
++		return 0;
++
++	spin_lock(&bucket->lock);
++	list_for_each_entry_safe(aux, tmp, &bucket->list, list) {
++		if (ret >= nr_wake)
++			break;
++
++		if (waiter.key.address == aux->key.address &&
++		    waiter.key.mm == aux->key.mm) {
++			struct futexv *parent =
++				futex_get_parent((uintptr_t) aux, aux->index);
++
++			parent->hint = 1;
++			task = parent->task;
++			get_task_struct(task);
++			list_del_init_careful(&aux->list);
++			wake_q_add_safe(&wake_q, task);
++			ret++;
++			bucket_dec_waiters(bucket);
++		}
++	}
++	spin_unlock(&bucket->lock);
++
++	wake_up_q(&wake_q);
++
++	return ret;
++}
++
++static int __init futex2_init(void)
++{
++	int i;
++	unsigned int futex_shift;
++
++#if CONFIG_BASE_SMALL
++	futex2_hashsize = 16;
++#else
++	futex2_hashsize = roundup_pow_of_two(256 * num_possible_cpus());
++#endif
++
++	futex_table = alloc_large_system_hash("futex2", sizeof(struct futex_bucket),
++					      futex2_hashsize, 0,
++					      futex2_hashsize < 256 ? HASH_SMALL : 0,
++					      &futex_shift, NULL,
++					      futex2_hashsize, futex2_hashsize);
++	futex2_hashsize = 1UL << futex_shift;
++
++	for (i = 0; i < futex2_hashsize; i++) {
++		INIT_LIST_HEAD(&futex_table[i].list);
++		spin_lock_init(&futex_table[i].lock);
++		atomic_set(&futex_table[i].waiters, 0);
++	}
++
++	return 0;
++}
++core_initcall(futex2_init);
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index f27ac94d5fa7270ba9f272be1bcba6a903149206..35ff743b17d0ec0c6e11b87346dc31a5f79cef4d 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -148,6 +148,10 @@ COND_SYSCALL_COMPAT(set_robust_list);
+ COND_SYSCALL(get_robust_list);
+ COND_SYSCALL_COMPAT(get_robust_list);
+ 
++/* kernel/futex2.c */
++COND_SYSCALL(futex_wait);
++COND_SYSCALL(futex_wake);
++
+ /* kernel/hrtimer.c */
+ 
+ /* kernel/itimer.c */
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index 2056318988f774931c4e0a3104144bf4a75ff52f..cd79f94e0ce850494c3e0ee61a5dc8e5a4c1f9c6 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -860,8 +860,15 @@ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
+ 
++#define __NR_futex_wait 441
++__SYSCALL(__NR_futex_wait, sys_futex_wait)
++
++#define __NR_futex_wake 442
++__SYSCALL(__NR_futex_wake, sys_futex_wake)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 441
++#define __NR_syscalls 443
++
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+index 379819244b91d275b2c98f7ff38a59049c24b42a..47de3bf93fe6f9791951e24bdb100e381b8b076d 100644
+--- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -362,6 +362,8 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++441	common  futex_wait              sys_futex_wait
++442	common  futex_wake              sys_futex_wake
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 83a75ff39b1f3b703c8cc419a1427bd0c24999a8..65734d5e1d3e502b95c00b11d3de2db8dafa5446 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -447,3 +447,4 @@
+ 440	i386	process_madvise		sys_process_madvise
+ 441	i386	futex_wait		sys_futex_wait
+ 442	i386	futex_wake		sys_futex_wake
++443	i386	futex_waitv		sys_futex_waitv
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 6658fd63c7b8975f27ff34318a9f0f0e1581b6a0..f30811b56683c2ed288bf8818e47a78e7ffb0eee 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -364,6 +364,7 @@
+ 440	common	process_madvise		sys_process_madvise
+ 441	common	futex_wait		sys_futex_wait
+ 442	common	futex_wake		sys_futex_wake
++443	common	futex_waitv		sys_futex_waitv
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index ae47d6a9e9d2449ed0d4f0d098e2eac8c2c98722..81a90b6972317255541d905d8f514156d95d7366 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -866,8 +866,11 @@ __SYSCALL(__NR_futex_wait, sys_futex_wait)
+ #define __NR_futex_wake 442
+ __SYSCALL(__NR_futex_wake, sys_futex_wake)
+ 
++#define __NR_futex_waitv 443
++__SYSCALL(__NR_futex_waitv, sys_futex_waitv)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 443
++#define __NR_syscalls 444
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+index 107b80a466d04eab06e9d7cef3f25d84bf7b4ed4..4b782b5ef61597894568e86de0981d7ad3c05316 100644
+--- a/kernel/futex2.c
++++ b/kernel/futex2.c
+@@ -48,14 +48,25 @@ struct futex_bucket {
+ 	struct list_head list;
+ };
+ 
++/**
++ * struct futexv - List of futexes to be waited
++ * @task:    Task to be awaken
++ * @hint:    Was someone on this list awaken?
++ * @objects: List of futexes
++ */
+ struct futexv {
+ 	struct task_struct *task;
+-	int hint;
++	bool hint;
+ 	struct futex_waiter objects[0];
+ };
+ 
++/**
++ * struct futex_single_waiter - Wrapper for a futexv of one element
++ * @futexv: TODO
++ * @waiter: TODO
++ */
+ struct futex_single_waiter {
+-	struct futexv parent;
++	struct futexv futexv;
+ 	struct futex_waiter waiter;
+ } __packed;
+ 
+@@ -65,10 +76,10 @@ struct futex_bucket *futex_table;
+ #define FUTEX2_MASK (FUTEX_SIZE_MASK | FUTEX_SHARED_FLAG | \
+ 		     FUTEX_CLOCK_REALTIME)
+ 
+-// mask for sys_futex_waitv
++/* mask for sys_futex_waitv flag */
+ #define FUTEXV_MASK (FUTEX_CLOCK_REALTIME)
+ 
+-// mask for each futex in futex_waitv list
++/* mask for each futex in futex_waitv list */
+ #define FUTEXV_WAITER_MASK (FUTEX_SIZE_MASK | FUTEX_SHARED_FLAG)
+ 
+ int futex2_hashsize;
+@@ -151,7 +162,7 @@ static struct futex_bucket *futex_get_bucket(void __user *uaddr,
+  *
+  * Check the comment at futex_get_user_val for more information.
+  */
+-static int futex_get_user(u32 *uval, u32 *uaddr)
++static int futex_get_user(u32 *uval, u32 __user *uaddr)
+ {
+ 	int ret;
+ 
+@@ -194,95 +205,227 @@ static int futex_setup_time(struct __kernel_timespec __user *timo,
+ 	return 0;
+ }
+ 
++/**
++ * futex_dequeue_multiple - Remove multiple futexes from hash table
++ * @futexv: list of waiters
++ * @nr:     number of futexes to be removed
++ *
++ * This function should be used after we found that this futex was in a queue.
++ * Thus, it needs to be removed before the next step. However, someone could
++ * wake it between the time of the first check and the time to get the lock for
++ * the bucket. Check one more time if the futex is there with the bucket locked.
++ * If it's there, just remove it and return true. Else, mark the removal as
++ * false and do nothing.
++ *
++ * Return:
++ *  * -1 if no futex was woken during the removal
++ *  * =< 0 at least one futex was found woken, index of the last one
++ */
++static int futex_dequeue_multiple(struct futexv *futexv, unsigned int nr)
++{
++	int i, ret = -1;
++
++	for (i = 0; i < nr; i++) {
++		spin_lock(&futexv->objects[i].bucket->lock);
++		if (!list_empty_careful(&futexv->objects[i].list)) {
++			list_del_init_careful(&futexv->objects[i].list);
++			bucket_dec_waiters(futexv->objects[i].bucket);
++		} else {
++			ret = i;
++		}
++		spin_unlock(&futexv->objects[i].bucket->lock);
++	}
++
++	return ret;
++}
+ 
+ /**
+- * futex_get_user_value - Get the value from the userspace address and compares
+- *			  with the expected one. In success, leaves the function
+- *			  holding the bucket lock. Else, hold no lock.
+- * @bucket: hash bucket of this address
+- * @uaddr:  futex's userspace address
+- * @val:    expected value
+- * @multiple: is this call in the wait on multiple path
++ * futex_enqueue - Check the value and enqueue a futex on a wait list
++ *
++ * @futexv:     List of futexes
++ * @nr_futexes: Number of futexes in the list
++ * @awaken:	If a futex was awaken during enqueueing, store the index here
++ *
++ * Get the value from the userspace address and compares with the expected one.
++ * In success, enqueue the futex in the correct bucket
++ *
++ * Get the value from user futex address.
++ *
++ * Since we are in a hurry, we use a spin lock and we can't sleep.
++ * Try to get the value with page fault disabled (when enable, we might
++ * sleep).
++ *
++ * If we fail, we aren't sure if the address is invalid or is just a
++ * page fault. Then, release the lock (so we can sleep) and try to get
++ * the value with page fault enabled. In order to trigger a page fault
++ * handling, we just call __get_user() again. If we sleep with enqueued
++ * futexes, we might miss a wake, so dequeue everything before sleeping.
++ *
++ * If get_user succeeds, this mean that the address is valid and we do
++ * the work again. Since we just handled the page fault, the page is
++ * likely pinned in memory and we should be luckier this time and be
++ * able to get the value. If we fail anyway, we will try again.
++ *
++ * If even with page faults enabled we get and error, this means that
++ * the address is not valid and we return from the syscall.
++ *
++ * If we got an unexpected value or need to treat a page fault and realized that
++ * a futex was awaken, we can priority this and return success.
+  *
+  * Return: 0 on success, error code otherwise
+  */
+-static int futex_get_user_value(struct futex_bucket *bucket, u32 __user *uaddr,
+-				unsigned int val, bool multiple)
++static int futex_enqueue(struct futexv *futexv, unsigned int nr_futexes,
++			 unsigned int *awaken)
+ {
+-	u32 uval;
+-	int ret;
++	int i, ret;
++	u32 uval, *uaddr, val;
++	struct futex_bucket *bucket;
+ 
+-	/*
+-	 * Get the value from user futex address.
+-	 *
+-	 * Since we are in a hurry, we use a spin lock and we can't sleep.
+-	 * Try to get the value with page fault disabled (when enable, we might
+-	 * sleep).
+-	 *
+-	 * If we fail, we aren't sure if the address is invalid or is just a
+-	 * page fault. Then, release the lock (so we can sleep) and try to get
+-	 * the value with page fault enabled. In order to trigger a page fault
+-	 * handling, we just call __get_user() again.
+-	 *
+-	 * If get_user succeeds, this mean that the address is valid and we do
+-	 * the loop again. Since we just handled the page fault, the page is
+-	 * likely pinned in memory and we should be luckier this time and be
+-	 * able to get the value. If we fail anyway, we will try again.
+-	 *
+-	 * If even with page faults enabled we get and error, this means that
+-	 * the address is not valid and we return from the syscall.
+-	 */
+-	do {
+-		spin_lock(&bucket->lock);
++retry:
++	set_current_state(TASK_INTERRUPTIBLE);
++
++	for (i = 0; i < nr_futexes; i++) {
++		uaddr = (u32 * __user) futexv->objects[i].key.address;
++		val = (u32) futexv->objects[i].val;
++		bucket = futexv->objects[i].bucket;
++
++		bucket_inc_waiters(bucket);
++	        spin_lock(&bucket->lock);
+ 
+-		ret = futex_get_user(&uval, uaddr);
++	        ret = futex_get_user(&uval, uaddr);
+ 
+-		if (ret) {
++	        if (unlikely(ret)) {
+ 			spin_unlock(&bucket->lock);
+-			if (multiple || __get_user(uval, uaddr))
++
++			bucket_dec_waiters(bucket);
++			__set_current_state(TASK_RUNNING);
++			*awaken = futex_dequeue_multiple(futexv, i);
++
++			if (__get_user(uval, uaddr))
+ 				return -EFAULT;
+ 
++			if (*awaken >= 0)
++				return 0;
++
++			goto retry;
++	        }
++
++		if (uval != val) {
++			spin_unlock(&bucket->lock);
++
++			bucket_dec_waiters(bucket);
++			__set_current_state(TASK_RUNNING);
++			*awaken = futex_dequeue_multiple(futexv, i);
++
++			if (*awaken >= 0)
++				return 0;
++
++			return -EWOULDBLOCK;
+ 		}
+-	} while (ret);
+ 
+-	if (uval != val) {
++		list_add_tail(&futexv->objects[i].list, &bucket->list);
+ 		spin_unlock(&bucket->lock);
+-		return -EWOULDBLOCK;
+ 	}
+ 
+ 	return 0;
+ }
+ 
++
++static int __futex_wait(struct futexv *futexv,
++			       unsigned int nr_futexes,
++			       struct hrtimer_sleeper *timeout)
++{
++	int ret;
++	unsigned int awaken = -1;
++
++	while (1) {
++		ret = futex_enqueue(futexv, nr_futexes, &awaken);
++
++		if (ret < 0)
++			break;
++
++		if (awaken <= 0) {
++			return awaken;
++		}
++
++
++		/* Before sleeping, check if someone was woken */
++		if (!futexv->hint && (!timeout || timeout->task))
++			freezable_schedule();
++
++		__set_current_state(TASK_RUNNING);
++
++		/*
++		 * One of those things triggered this wake:
++		 *
++		 * * We have been removed from the bucket. futex_wake() woke
++		 *   us. We just need to dequeue return 0 to userspace.
++		 *
++		 * However, if no futex was dequeued by a futex_wake():
++		 *
++		 * * If the there's a timeout and it has expired,
++		 *   return -ETIMEDOUT.
++		 *
++		 * * If there is a signal pending, something wants to kill our
++		 *   thread, return -ERESTARTSYS.
++		 *
++		 * * If there's no signal pending, it was a spurious wake
++		 *   (scheduler gave us a change to do some work, even if we
++		 *   don't want to). We need to remove ourselves from the
++		 *   bucket and add again, to prevent losing wakeups in the
++		 *   meantime.
++		 */
++
++		ret = futex_dequeue_multiple(futexv, nr_futexes);
++
++		/* Normal wake */
++		if (ret >= 0)
++			break;
++
++		if (timeout && !timeout->task)
++			return -ETIMEDOUT;
++
++		/* signal */
++		if (signal_pending(current))
++			return -ERESTARTSYS;
++
++		/* spurious wake, do everything again */
++	}
++
++	return ret;
++}
++
+ /**
+- * futex_dequeue - Remove a futex from a queue
+- * @bucket: current bucket holding the futex
+- * @waiter:   futex to be removed
++ * futex_wait - Setup the timer and wait on a list of futexes
++ * @futexv:     List of waiters
++ * @nr_futexes: Number of waiters
++ * @timo:	Timeout
++ * @timeout:	Timeout
++ * @flags:	Timeout flags
+  *
+- * Return: True if futex was removed by this function, false if another wake
+- *         thread removed this futex.
+- *
+- * This function should be used after we found that this futex was in a queue.
+- * Thus, it needs to be removed before the next step. However, someone could
+- * wake it between the time of the first check and the time to get the lock for
+- * the bucket. Check one more time if the futex is there with the bucket locked.
+- * If it's there, just remove it and return true. Else, mark the removal as
+- * false and do nothing.
++ * Return: error code, or a hint of one of the waiters
+  */
+-static bool futex_dequeue(struct futex_bucket *bucket, struct futex_waiter *waiter)
++static int futex_wait(struct futexv *futexv, unsigned int nr_futexes,
++		      struct __kernel_timespec __user *timo,
++		      struct hrtimer_sleeper *timeout, unsigned int flags)
+ {
+-	bool removed = true;
++	int ret;
+ 
+-	spin_lock(&bucket->lock);
+-	if (list_empty(&waiter->list))
+-		removed = false;
+-	else
+-		list_del(&waiter->list);
+-	spin_unlock(&bucket->lock);
++	if (timo) {
++		ret = futex_setup_time(timo, timeout, flags);
++		if (ret)
++			return ret;
+ 
+-	if (removed)
+-		bucket_dec_waiters(bucket);
++		hrtimer_sleeper_start_expires(timeout, HRTIMER_MODE_ABS);
++	}
+ 
+-	return removed;
++	ret = __futex_wait(futexv, nr_futexes, timo ? timeout : NULL);
++
++
++	if (timo)
++		hrtimer_cancel(&timeout->timer);
++
++	return ret;
+ }
+ 
+ /**
+@@ -297,15 +440,20 @@ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ {
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+ 	struct hrtimer_sleeper timeout;
+-	struct futex_bucket *bucket;
+ 	struct futex_single_waiter wait_single;
+ 	struct futex_waiter *waiter;
++	struct futexv *futexv;
+ 	int ret;
+ 
+-	wait_single.parent.task = current;
+-	wait_single.parent.hint = 0;
++	futexv = &wait_single.futexv;
++	futexv->task = current;
++	futexv->hint = false;
++
+ 	waiter = &wait_single.waiter;
+ 	waiter->index = 0;
++	waiter->val = val;
++
++	INIT_LIST_HEAD(&waiter->list);
+ 
+ 	if (flags & ~FUTEX2_MASK)
+ 		return -EINVAL;
+@@ -313,85 +461,101 @@ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 	if (size != FUTEX_32)
+ 		return -EINVAL;
+ 
+-	if (timo) {
+-		ret = futex_setup_time(timo, &timeout, flags);
+-		if (ret)
+-			return ret;
+-	}
+-
+ 	/* Get an unlocked hash bucket */
+-	bucket = futex_get_bucket(uaddr, &waiter->key);
+-	if (IS_ERR(bucket))
+-		return PTR_ERR(bucket);
++	waiter->bucket = futex_get_bucket(uaddr, &waiter->key);
++	if (IS_ERR(waiter->bucket))
++		return PTR_ERR(waiter->bucket);
+ 
+-	if (timo)
+-		hrtimer_sleeper_start_expires(&timeout, HRTIMER_MODE_ABS);
++	ret = futex_wait(futexv, 1, timo, &timeout, flags);
+ 
+-retry:
+-	bucket_inc_waiters(bucket);
++	return ret;
++}
+ 
+-	/* Compare the expected and current value, get the bucket lock */
+-	ret = futex_get_user_value(bucket, uaddr, val, false);
+-	if (ret) {
+-		bucket_dec_waiters(bucket);
+-		goto out;
+-	}
++/**
++ * futex_parse_waitv - Parse a waitv array from userspace
++ * @futexv:	list of waiters
++ * @uwaitv:     userspace list
++ * @nr_futexes: number of waiters in the list
++ *
++ * Return: Error code on failure, pointer to a prepared futexv otherwise
++ */
++static int futex_parse_waitv(struct futexv *futexv,
++			     struct futex_waitv __user *uwaitv,
++			     unsigned int nr_futexes)
++{
++	struct futex_waitv waitv;
++	unsigned int i;
++	struct futex_bucket *bucket;
+ 
+-	/* Add the waiter to the hash table and sleep */
+-	set_current_state(TASK_INTERRUPTIBLE);
+-	list_add_tail(&waiter->list, &bucket->list);
+-	spin_unlock(&bucket->lock);
++	for (i = 0; i < nr_futexes; i++) {
++		if (copy_from_user(&waitv, &uwaitv[i], sizeof(waitv)))
++			return -EFAULT;
+ 
+-	/* Do not sleep if someone woke this futex or if it was timeouted */
+-	if (!list_empty_careful(&waiter->list) && (!timo || timeout.task))
+-		freezable_schedule();
++		if ((waitv.flags & ~FUTEXV_WAITER_MASK) ||
++		    (waitv.flags & FUTEX_SIZE_MASK) != FUTEX_32)
++			return -EINVAL;
+ 
+-	__set_current_state(TASK_RUNNING);
++		bucket = futex_get_bucket(waitv.uaddr,
++				       &futexv->objects[i].key);
++		if (IS_ERR(bucket))
++			return PTR_ERR(bucket);
+ 
+-	/*
+-	 * One of those things triggered this wake:
+-	 *
+-	 * * We have been removed from the bucket. futex_wake() woke us. We just
+-	 *   need to return 0 to userspace.
+-	 *
+-	 * However, if we find ourselves in the bucket we must remove ourselves
+-	 * from the bucket and ...
+-	 *
+-	 * * If the there's a timeout and it has expired, return -ETIMEDOUT.
+-	 *
+-	 * * If there is a signal pending, something wants to kill our thread.
+-	 *   Return -ERESTARTSYS.
+-	 *
+-	 * * If there's no signal pending, it was a spurious wake (scheduler
+-	 *   gave us a change to do some work, even if we don't want to). We
+-	 *   need to remove ourselves from the bucket and add again, to prevent
+-	 *   losing wakeups in the meantime.
+-	 */
++		futexv->objects[i].bucket = bucket;
++		futexv->objects[i].val = waitv.val;
++		futexv->objects[i].flags = waitv.flags;
++		futexv->objects[i].index = i;
++		INIT_LIST_HEAD(&futexv->objects[i].list);
++	}
+ 
+-	/* Normal wake */
+-	if (list_empty_careful(&waiter->list))
+-		goto out;
++	return 0;
++}
+ 
+-	if (!futex_dequeue(bucket, waiter))
+-		goto out;
++/**
++ * sys_futex_waitv - function
++ * @waiters:    TODO
++ * @nr_futexes: TODO
++ * @flags:      TODO
++ * @timo:	TODO
++ */
++SYSCALL_DEFINE4(futex_waitv, struct futex_waitv __user *, waiters,
++		unsigned int, nr_futexes, unsigned int, flags,
++		struct __kernel_timespec __user *, timo)
++{
++	struct hrtimer_sleeper timeout;
++	struct futexv *futexv;
++	int ret;
+ 
+-	/* Timeout */
+-	if (timo && !timeout.task)
+-		return -ETIMEDOUT;
++	if (flags & ~FUTEXV_MASK)
++		return -EINVAL;
+ 
+-	/* Spurious wakeup */
+-	if (!signal_pending(current))
+-		goto retry;
++	if (!nr_futexes || nr_futexes > FUTEX_WAITV_MAX || !waiters)
++		return -EINVAL;
+ 
+-	/* Some signal is pending */
+-	ret = -ERESTARTSYS;
+-out:
+-	if (timo)
+-		hrtimer_cancel(&timeout.timer);
++	futexv = kmalloc(sizeof(struct futexv) +
++			 (sizeof(struct futex_waiter) * nr_futexes),
++			 GFP_KERNEL);
++	if (!futexv)
++		return -ENOMEM;
++
++	futexv->hint = false;
++	futexv->task = current;
++
++	ret = futex_parse_waitv(futexv, waiters, nr_futexes);
++	if (!ret)
++		ret = futex_wait(futexv, nr_futexes, timo, &timeout, flags);
++
++	kfree(futexv);
+ 
+ 	return ret;
+ }
+ 
++/**
++ * futex_get_parent - Get parent
++ * @waiter: TODO
++ * @index: TODO
++ *
++ * Return: TODO
++ */
+ static struct futexv *futex_get_parent(uintptr_t waiter, u8 index)
+ {
+ 	uintptr_t parent = waiter - sizeof(struct futexv)
+@@ -439,7 +603,7 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 			struct futexv *parent =
+ 				futex_get_parent((uintptr_t) aux, aux->index);
+ 
+-			parent->hint = 1;
++			parent->hint = true;
+ 			task = parent->task;
+ 			get_task_struct(task);
+ 			list_del_init_careful(&aux->list);
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 35ff743b17d0ec0c6e11b87346dc31a5f79cef4d..1898e7340cb747374dc7d93e4e96179b3fc4186c 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -151,6 +151,7 @@ COND_SYSCALL_COMPAT(get_robust_list);
+ /* kernel/futex2.c */
+ COND_SYSCALL(futex_wait);
+ COND_SYSCALL(futex_wake);
++COND_SYSCALL(futex_waitv);
+ 
+ /* kernel/hrtimer.c */
+ 
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index cd79f94e0ce850494c3e0ee61a5dc8e5a4c1f9c6..7de33be596a3367eaa6404a29c2a86fea0a50cc1 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -866,8 +866,11 @@ __SYSCALL(__NR_futex_wait, sys_futex_wait)
+ #define __NR_futex_wake 442
+ __SYSCALL(__NR_futex_wake, sys_futex_wake)
+ 
++#define __NR_futex_waitv 443
++__SYSCALL(__NR_futex_waitv, sys_futex_waitv)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 443
++#define __NR_syscalls 444
+ 
+ 
+ /*
+diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+index 47de3bf93fe6f9791951e24bdb100e381b8b076d..bd47f368f49a2dc475b67d07e03f51c5b53097fe 100644
+--- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -364,6 +364,7 @@
+ 440	common	process_madvise		sys_process_madvise
+ 441	common  futex_wait              sys_futex_wait
+ 442	common  futex_wake              sys_futex_wake
++443	common  futex_waitv             sys_futex_waitv
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+index 4b782b5ef61597894568e86de0981d7ad3c05316..5ddb9922dc3b9532b0c987b34c0a71d508ba4c4f 100644
+--- a/kernel/futex2.c
++++ b/kernel/futex2.c
+@@ -6,7 +6,9 @@
+  */
+ 
+ #include <linux/freezer.h>
++#include <linux/hugetlb.h>
+ #include <linux/jhash.h>
++#include <linux/pagemap.h>
+ #include <linux/sched/wake_q.h>
+ #include <linux/spinlock.h>
+ #include <linux/syscalls.h>
+@@ -15,6 +17,7 @@
+ 
+ /**
+  * struct futex_waiter - List entry for a waiter
++ * @uaddr:        Memory address of userspace futex
+  * @key.address:  Memory address of userspace futex
+  * @key.mm:       Pointer to memory management struct of this process
+  * @key:          Stores information that uniquely identify a futex
+@@ -25,9 +28,11 @@
+  * @index:        Index of waiter in futexv list
+  */
+ struct futex_waiter {
++	uintptr_t uaddr;
+ 	struct futex_key {
+ 		uintptr_t address;
+ 		struct mm_struct *mm;
++		unsigned long int offset;
+ 	} key;
+ 	struct list_head list;
+ 	unsigned int val;
+@@ -125,16 +130,116 @@ static inline int bucket_get_waiters(struct futex_bucket *bucket)
+ #endif
+ }
+ 
++static u64 get_inode_sequence_number(struct inode *inode)
++{
++	static atomic64_t i_seq;
++	u64 old;
++
++	/* Does the inode already have a sequence number? */
++	old = atomic64_read(&inode->i_sequence);
++	if (likely(old))
++		return old;
++
++	for (;;) {
++		u64 new = atomic64_add_return(1, &i_seq);
++		if (WARN_ON_ONCE(!new))
++			continue;
++
++		old = atomic64_cmpxchg_relaxed(&inode->i_sequence, 0, new);
++		if (old)
++			return old;
++		return new;
++	}
++}
++
++#define FUT_OFF_INODE    1 /* We set bit 0 if key has a reference on inode */
++#define FUT_OFF_MMSHARED 2 /* We set bit 1 if key has a reference on mm */
++
++static int futex_get_shared_key(uintptr_t address, struct mm_struct *mm,
++				struct futex_key *key)
++{
++	int err;
++	struct page *page, *tail;
++	struct address_space *mapping;
++
++again:
++	err = get_user_pages_fast(address, 1, 0, &page);
++
++	if (err < 0)
++		return err;
++	else
++		err = 0;
++
++
++	tail = page;
++	page = compound_head(page);
++	mapping = READ_ONCE(page->mapping);
++
++
++	if (unlikely(!mapping)) {
++		int shmem_swizzled;
++
++		lock_page(page);
++		shmem_swizzled = PageSwapCache(page) || page->mapping;
++		unlock_page(page);
++		put_page(page);
++
++		if (shmem_swizzled)
++			goto again;
++
++		return -EFAULT;
++	}
++
++	if (PageAnon(page)) {
++
++		key->mm = mm;
++		key->address = address;
++
++		key->offset |= FUT_OFF_MMSHARED;
++
++	} else {
++		struct inode *inode;
++
++		rcu_read_lock();
++
++		if (READ_ONCE(page->mapping) != mapping) {
++			rcu_read_unlock();
++			put_page(page);
++
++			goto again;
++		}
++
++		inode = READ_ONCE(mapping->host);
++		if (!inode) {
++			rcu_read_unlock();
++			put_page(page);
++
++			goto again;
++		}
++
++		key->address = get_inode_sequence_number(inode);
++		key->mm = (struct mm_struct *) basepage_index(tail);
++		key->offset |= FUT_OFF_INODE;
++
++		rcu_read_unlock();
++	}
++
++	put_page(page);
++	return err;
++}
++
+ /**
+  * futex_get_bucket - Check if the user address is valid, prepare internal
+  *                    data and calculate the hash
+  * @uaddr:   futex user address
+  * @key:     data that uniquely identifies a futex
++ * @shared:  is this a shared futex?
+  *
+  * Return: address of bucket on success, error code otherwise
+  */
+ static struct futex_bucket *futex_get_bucket(void __user *uaddr,
+-					     struct futex_key *key)
++					     struct futex_key *key,
++					     bool shared)
+ {
+ 	uintptr_t address = (uintptr_t) uaddr;
+ 	u32 hash_key;
+@@ -145,8 +250,15 @@ static struct futex_bucket *futex_get_bucket(void __user *uaddr,
+ 	if (unlikely(!access_ok(address, sizeof(u32))))
+ 		return ERR_PTR(-EFAULT);
+ 
+-	key->address = address;
+-	key->mm = current->mm;
++	key->offset = address % PAGE_SIZE;
++	address -= key->offset;
++
++	if (!shared) {
++		key->address = address;
++		key->mm = current->mm;
++	} else {
++		futex_get_shared_key(address, current->mm, key);
++	}
+ 
+ 	/* Generate hash key for this futex using uaddr and current->mm */
+ 	hash_key = jhash2((u32 *) key, sizeof(*key) / sizeof(u32), 0);
+@@ -275,9 +387,10 @@ static int futex_dequeue_multiple(struct futexv *futexv, unsigned int nr)
+  * Return: 0 on success, error code otherwise
+  */
+ static int futex_enqueue(struct futexv *futexv, unsigned int nr_futexes,
+-			 unsigned int *awaken)
++			 int *awaken)
+ {
+ 	int i, ret;
++	bool shared, retry = false;
+ 	u32 uval, *uaddr, val;
+ 	struct futex_bucket *bucket;
+ 
+@@ -285,8 +398,18 @@ static int futex_enqueue(struct futexv *futexv, unsigned int nr_futexes,
+ 	set_current_state(TASK_INTERRUPTIBLE);
+ 
+ 	for (i = 0; i < nr_futexes; i++) {
+-		uaddr = (u32 * __user) futexv->objects[i].key.address;
++		uaddr = (u32 * __user) futexv->objects[i].uaddr;
+ 		val = (u32) futexv->objects[i].val;
++		shared = (futexv->objects[i].flags & FUTEX_SHARED_FLAG) ? true : false;
++
++		if (shared && retry) {
++			futexv->objects[i].bucket =
++				futex_get_bucket((void *) uaddr,
++						 &futexv->objects[i].key, true);
++			if (IS_ERR(futexv->objects[i].bucket))
++				return PTR_ERR(futexv->objects[i].bucket);
++		}
++
+ 		bucket = futexv->objects[i].bucket;
+ 
+ 		bucket_inc_waiters(bucket);
+@@ -301,24 +424,32 @@ static int futex_enqueue(struct futexv *futexv, unsigned int nr_futexes,
+ 			__set_current_state(TASK_RUNNING);
+ 			*awaken = futex_dequeue_multiple(futexv, i);
+ 
++			if (shared) {
++				retry = true;
++				goto retry;
++			}
++
+ 			if (__get_user(uval, uaddr))
+ 				return -EFAULT;
+ 
+ 			if (*awaken >= 0)
+-				return 0;
++				return 1;
+ 
++			retry = true;
+ 			goto retry;
+ 	        }
+ 
+ 		if (uval != val) {
+ 			spin_unlock(&bucket->lock);
+ 
++
+ 			bucket_dec_waiters(bucket);
+ 			__set_current_state(TASK_RUNNING);
+ 			*awaken = futex_dequeue_multiple(futexv, i);
+ 
+-			if (*awaken >= 0)
+-				return 0;
++			if (*awaken >= 0) {
++				return 1;
++			}
+ 
+ 			return -EWOULDBLOCK;
+ 		}
+@@ -336,19 +467,18 @@ static int __futex_wait(struct futexv *futexv,
+ 			       struct hrtimer_sleeper *timeout)
+ {
+ 	int ret;
+-	unsigned int awaken = -1;
+ 
+-	while (1) {
+-		ret = futex_enqueue(futexv, nr_futexes, &awaken);
+ 
+-		if (ret < 0)
+-			break;
++	while (1) {
++		int awaken = -1;
+ 
+-		if (awaken <= 0) {
+-			return awaken;
++		ret = futex_enqueue(futexv, nr_futexes, &awaken);
++		if (ret) {
++			if (awaken >= 0)
++				return awaken;
++			return ret;
+ 		}
+ 
+-
+ 		/* Before sleeping, check if someone was woken */
+ 		if (!futexv->hint && (!timeout || timeout->task))
+ 			freezable_schedule();
+@@ -419,6 +549,7 @@ static int futex_wait(struct futexv *futexv, unsigned int nr_futexes,
+ 		hrtimer_sleeper_start_expires(timeout, HRTIMER_MODE_ABS);
+ 	}
+ 
++
+ 	ret = __futex_wait(futexv, nr_futexes, timo ? timeout : NULL);
+ 
+ 
+@@ -438,9 +569,10 @@ static int futex_wait(struct futexv *futexv, unsigned int nr_futexes,
+ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 		unsigned int, flags, struct __kernel_timespec __user *, timo)
+ {
++	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+-	struct hrtimer_sleeper timeout;
+ 	struct futex_single_waiter wait_single;
++	struct hrtimer_sleeper timeout;
+ 	struct futex_waiter *waiter;
+ 	struct futexv *futexv;
+ 	int ret;
+@@ -452,6 +584,7 @@ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 	waiter = &wait_single.waiter;
+ 	waiter->index = 0;
+ 	waiter->val = val;
++	waiter->uaddr = (uintptr_t) uaddr;
+ 
+ 	INIT_LIST_HEAD(&waiter->list);
+ 
+@@ -462,11 +595,14 @@ SYSCALL_DEFINE4(futex_wait, void __user *, uaddr, unsigned int, val,
+ 		return -EINVAL;
+ 
+ 	/* Get an unlocked hash bucket */
+-	waiter->bucket = futex_get_bucket(uaddr, &waiter->key);
+-	if (IS_ERR(waiter->bucket))
++	waiter->bucket = futex_get_bucket(uaddr, &waiter->key, shared);
++	if (IS_ERR(waiter->bucket)) {
+ 		return PTR_ERR(waiter->bucket);
++	}
+ 
+ 	ret = futex_wait(futexv, 1, timo, &timeout, flags);
++	if (ret > 0)
++		ret = 0;
+ 
+ 	return ret;
+ }
+@@ -486,8 +622,10 @@ static int futex_parse_waitv(struct futexv *futexv,
+ 	struct futex_waitv waitv;
+ 	unsigned int i;
+ 	struct futex_bucket *bucket;
++	bool shared;
+ 
+ 	for (i = 0; i < nr_futexes; i++) {
++
+ 		if (copy_from_user(&waitv, &uwaitv[i], sizeof(waitv)))
+ 			return -EFAULT;
+ 
+@@ -495,8 +633,10 @@ static int futex_parse_waitv(struct futexv *futexv,
+ 		    (waitv.flags & FUTEX_SIZE_MASK) != FUTEX_32)
+ 			return -EINVAL;
+ 
++		shared = (waitv.flags & FUTEX_SHARED_FLAG) ? true : false;
++
+ 		bucket = futex_get_bucket(waitv.uaddr,
+-				       &futexv->objects[i].key);
++				       &futexv->objects[i].key, shared);
+ 		if (IS_ERR(bucket))
+ 			return PTR_ERR(bucket);
+ 
+@@ -505,6 +645,7 @@ static int futex_parse_waitv(struct futexv *futexv,
+ 		futexv->objects[i].flags = waitv.flags;
+ 		futexv->objects[i].index = i;
+ 		INIT_LIST_HEAD(&futexv->objects[i].list);
++		futexv->objects[i].uaddr = (uintptr_t) waitv.uaddr;
+ 	}
+ 
+ 	return 0;
+@@ -573,6 +714,7 @@ static struct futexv *futex_get_parent(uintptr_t waiter, u8 index)
+ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 		unsigned int, flags)
+ {
++	bool shared = (flags & FUTEX_SHARED_FLAG) ? true : false;
+ 	unsigned int size = flags & FUTEX_SIZE_MASK;
+ 	struct futex_waiter waiter, *aux, *tmp;
+ 	struct futex_bucket *bucket;
+@@ -586,7 +728,7 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 	if (size != FUTEX_32)
+ 		return -EINVAL;
+ 
+-	bucket = futex_get_bucket(uaddr, &waiter.key);
++	bucket = futex_get_bucket(uaddr, &waiter.key, shared);
+ 	if (IS_ERR(bucket))
+ 		return PTR_ERR(bucket);
+ 
+@@ -599,7 +741,8 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 			break;
+ 
+ 		if (waiter.key.address == aux->key.address &&
+-		    waiter.key.mm == aux->key.mm) {
++		    waiter.key.mm == aux->key.mm &&
++		    waiter.key.offset == aux->key.offset) {
+ 			struct futexv *parent =
+ 				futex_get_parent((uintptr_t) aux, aux->index);
+ 
+diff --git a/kernel/futex2.c b/kernel/futex2.c
+index 5ddb9922dc3b9532b0c987b34c0a71d508ba4c4f..58cd8a8684566b46b674aaf4b864a7b8e7bfcb1e 100644
+--- a/kernel/futex2.c
++++ b/kernel/futex2.c
+@@ -762,6 +762,48 @@ SYSCALL_DEFINE3(futex_wake, void __user *, uaddr, unsigned int, nr_wake,
+ 	return ret;
+ }
+ 
++static ssize_t wait_show(struct kobject *kobj, struct kobj_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%u\n", __NR_futex_wait);
++
++}
++static struct kobj_attribute futex2_wait_attr = __ATTR_RO(wait);
++
++static ssize_t wake_show(struct kobject *kobj, struct kobj_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%u\n", __NR_futex_wake);
++
++}
++static struct kobj_attribute futex2_wake_attr = __ATTR_RO(wake);
++
++static ssize_t waitv_show(struct kobject *kobj, struct kobj_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%u\n", __NR_futex_waitv);
++
++}
++static struct kobj_attribute futex2_waitv_attr = __ATTR_RO(waitv);
++
++static struct attribute *futex2_sysfs_attrs[] = {
++	&futex2_wait_attr.attr,
++	&futex2_wake_attr.attr,
++	&futex2_waitv_attr.attr,
++	NULL,
++};
++
++static const struct attribute_group futex2_sysfs_attr_group = {
++	.attrs = futex2_sysfs_attrs,
++	.name = "futex2",
++};
++
++static int __init futex2_sysfs_init(void)
++{
++	return sysfs_create_group(kernel_kobj, &futex2_sysfs_attr_group);
++}
++subsys_initcall(futex2_sysfs_init);
++
+ static int __init futex2_init(void)
+ {
+ 	int i;
+ 
