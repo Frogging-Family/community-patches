@@ -1,0 +1,1306 @@
+From 9a39a927be01d89e53f04304ab99a8761e08910d Mon Sep 17 00:00:00 2001
+From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+Date: Sat, 12 Dec 2020 10:46:58 +0100
+Subject: Bluetooth: btqcomsmd: Fix a resource leak in error handling paths in
+ the probe function
+
+Some resource should be released in the error handling path of the probe
+function, as already done in the remove function.
+
+The remove function was fixed in commit 5052de8deff5 ("soc: qcom: smd:
+Transition client drivers from smd to rpmsg")
+
+Fixes: 1511cc750c3d ("Bluetooth: Introduce Qualcomm WCNSS SMD based HCI driver")
+Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btqcomsmd.c | 27 +++++++++++++++++++--------
+ 1 file changed, 19 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/bluetooth/btqcomsmd.c b/drivers/bluetooth/btqcomsmd.c
+index 98d53764871f5..2acb719e596f5 100644
+--- a/drivers/bluetooth/btqcomsmd.c
++++ b/drivers/bluetooth/btqcomsmd.c
+@@ -142,12 +142,16 @@ static int btqcomsmd_probe(struct platform_device *pdev)
+ 
+ 	btq->cmd_channel = qcom_wcnss_open_channel(wcnss, "APPS_RIVA_BT_CMD",
+ 						   btqcomsmd_cmd_callback, btq);
+-	if (IS_ERR(btq->cmd_channel))
+-		return PTR_ERR(btq->cmd_channel);
++	if (IS_ERR(btq->cmd_channel)) {
++		ret = PTR_ERR(btq->cmd_channel);
++		goto destroy_acl_channel;
++	}
+ 
+ 	hdev = hci_alloc_dev();
+-	if (!hdev)
+-		return -ENOMEM;
++	if (!hdev) {
++		ret = -ENOMEM;
++		goto destroy_cmd_channel;
++	}
+ 
+ 	hci_set_drvdata(hdev, btq);
+ 	btq->hdev = hdev;
+@@ -161,14 +165,21 @@ static int btqcomsmd_probe(struct platform_device *pdev)
+ 	hdev->set_bdaddr = qca_set_bdaddr_rome;
+ 
+ 	ret = hci_register_dev(hdev);
+-	if (ret < 0) {
+-		hci_free_dev(hdev);
+-		return ret;
+-	}
++	if (ret < 0)
++		goto hci_free_dev;
+ 
+ 	platform_set_drvdata(pdev, btq);
+ 
+ 	return 0;
++
++hci_free_dev:
++	hci_free_dev(hdev);
++destroy_cmd_channel:
++	rpmsg_destroy_ept(btq->cmd_channel);
++destroy_acl_channel:
++	rpmsg_destroy_ept(btq->acl_channel);
++
++	return ret;
+ }
+ 
+ static int btqcomsmd_remove(struct platform_device *pdev)
+-- 
+cgit 1.2.3-1.el7
+
+From 517b693351a2d04f3af1fc0e506ac7e1346094de Mon Sep 17 00:00:00 2001
+From: Trent Piepho <tpiepho@gmail.com>
+Date: Wed, 9 Dec 2020 17:20:03 -0800
+Subject: Bluetooth: btusb: Always fallback to alt 1 for WBS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When alt mode 6 is not available, fallback to the kernel <= 5.7 behavior
+of always using alt mode 1.
+
+Prior to kernel 5.8, btusb would always use alt mode 1 for WBS (Wide
+Band Speech aka mSBC aka transparent SCO).  In commit baac6276c0a9
+("Bluetooth: btusb: handle mSBC audio over USB Endpoints") this
+was changed to use alt mode 6, which is the recommended mode in the
+Bluetooth spec (Specifications of the Bluetooth System, v5.0, Vol 4.B
+§2.2.1).  However, many if not most BT USB adapters do not support alt
+mode 6.  In fact, I have been unable to find any which do.
+
+In kernel 5.8, this was changed to use alt mode 6, and if not available,
+use alt mode 0.  But mode 0 has a zero byte max packet length and can
+not possibly work.  It is just there as a zero-bandwidth dummy mode to
+work around a USB flaw that would prevent device enumeration if
+insufficient bandwidth were available for the lowest isoc mode
+supported.
+
+In effect, WBS was broken for all USB-BT adapters that do not support
+alt 6, which appears to nearly all of them.
+
+Then in commit 461f95f04f19 ("Bluetooth: btusb: USB alternate setting 1 for
+WBS") the 5.7 behavior was restored, but only for Realtek adapters.
+
+I've tested a Broadcom BRCM20702A and CSR 8510 adapter, both work with
+the 5.7 behavior and do not with the 5.8.
+
+So get rid of the Realtek specific flag and use the 5.7 behavior for all
+adapters as a fallback when alt 6 is not available.  This was the
+kernel's behavior prior to 5.8 and I can find no adapters for which it
+is not correct.  And even if there is an adapter for which this does not
+work, the current behavior would be to fall back to alt 0, which can not
+possibly work either, and so is no better.
+
+Signed-off-by: Trent Piepho <tpiepho@gmail.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btusb.c | 20 ++++++--------------
+ 1 file changed, 6 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 03b83aa912779..1b690164ab5b9 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -506,7 +506,6 @@ static const struct dmi_system_id btusb_needs_reset_resume_table[] = {
+ #define BTUSB_HW_RESET_ACTIVE	12
+ #define BTUSB_TX_WAIT_VND_EVT	13
+ #define BTUSB_WAKEUP_DISABLE	14
+-#define BTUSB_USE_ALT1_FOR_WBS	15
+ 
+ struct btusb_data {
+ 	struct hci_dev       *hdev;
+@@ -1736,15 +1735,12 @@ static void btusb_work(struct work_struct *work)
+ 				new_alts = data->sco_num;
+ 			}
+ 		} else if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP) {
+-			/* Check if Alt 6 is supported for Transparent audio */
+-			if (btusb_find_altsetting(data, 6)) {
+-				data->usb_alt6_packet_flow = true;
+-				new_alts = 6;
+-			} else if (test_bit(BTUSB_USE_ALT1_FOR_WBS, &data->flags)) {
+-				new_alts = 1;
+-			} else {
+-				bt_dev_err(hdev, "Device does not support ALT setting 6");
+-			}
++			/* Bluetooth USB spec recommends alt 6 (63 bytes), but
++			 * many adapters do not support it.  Alt 1 appears to
++			 * work for all adapters that do not have alt 6, and
++			 * which work with WBS at all.
++			 */
++			new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;
+ 		}
+ 
+ 		if (btusb_switch_alt_setting(hdev, new_alts) < 0)
+@@ -4548,10 +4544,6 @@ static int btusb_probe(struct usb_interface *intf,
+ 		 * (DEVICE_REMOTE_WAKEUP)
+ 		 */
+ 		set_bit(BTUSB_WAKEUP_DISABLE, &data->flags);
+-		if (btusb_find_altsetting(data, 1))
+-			set_bit(BTUSB_USE_ALT1_FOR_WBS, &data->flags);
+-		else
+-			bt_dev_err(hdev, "Device does not support ALT setting 1");
+ 	}
+ 
+ 	if (!reset)
+-- 
+cgit 1.2.3-1.el7
+
+From c0187b0bd3e94c48050687d87b2c3c9fbae98ae9 Mon Sep 17 00:00:00 2001
+From: Venkata Lakshmi Narayana Gubba <gubbaven@codeaurora.org>
+Date: Tue, 8 Dec 2020 17:25:29 +0530
+Subject: Bluetooth: btqca: Add support to read FW build version for WCN3991
+ BTSoC
+
+Add support to read FW build version from debugfs node.
+This info can be read from
+/sys/kernel/debug/bluetooth/hci0/firmware_info
+
+Signed-off-by: Venkata Lakshmi Narayana Gubba <gubbaven@codeaurora.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btqca.c | 54 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/bluetooth/btqca.h |  1 +
+ 2 files changed, 55 insertions(+)
+
+diff --git a/drivers/bluetooth/btqca.c b/drivers/bluetooth/btqca.c
+index f85a55add9be5..f6256a3b84cf6 100644
+--- a/drivers/bluetooth/btqca.c
++++ b/drivers/bluetooth/btqca.c
+@@ -94,6 +94,53 @@ out:
+ }
+ EXPORT_SYMBOL_GPL(qca_read_soc_version);
+ 
++static int qca_read_fw_build_info(struct hci_dev *hdev)
++{
++	struct sk_buff *skb;
++	struct edl_event_hdr *edl;
++	char cmd, build_label[QCA_FW_BUILD_VER_LEN];
++	int build_lbl_len, err = 0;
++
++	bt_dev_dbg(hdev, "QCA read fw build info");
++
++	cmd = EDL_GET_BUILD_INFO_CMD;
++	skb = __hci_cmd_sync_ev(hdev, EDL_PATCH_CMD_OPCODE, EDL_PATCH_CMD_LEN,
++				&cmd, 0, HCI_INIT_TIMEOUT);
++	if (IS_ERR(skb)) {
++		err = PTR_ERR(skb);
++		bt_dev_err(hdev, "Reading QCA fw build info failed (%d)",
++			   err);
++		return err;
++	}
++
++	edl = (struct edl_event_hdr *)(skb->data);
++	if (!edl) {
++		bt_dev_err(hdev, "QCA read fw build info with no header");
++		err = -EILSEQ;
++		goto out;
++	}
++
++	if (edl->cresp != EDL_CMD_REQ_RES_EVT ||
++	    edl->rtype != EDL_GET_BUILD_INFO_CMD) {
++		bt_dev_err(hdev, "QCA Wrong packet received %d %d", edl->cresp,
++			   edl->rtype);
++		err = -EIO;
++		goto out;
++	}
++
++	build_lbl_len = edl->data[0];
++	if (build_lbl_len <= QCA_FW_BUILD_VER_LEN - 1) {
++		memcpy(build_label, edl->data + 1, build_lbl_len);
++		*(build_label + build_lbl_len) = '\0';
++	}
++
++	hci_set_fw_info(hdev, "%s", build_label);
++
++out:
++	kfree_skb(skb);
++	return err;
++}
++
+ static int qca_send_reset(struct hci_dev *hdev)
+ {
+ 	struct sk_buff *skb;
+@@ -524,6 +571,13 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
+ 		return err;
+ 	}
+ 
++	if (soc_type == QCA_WCN3991) {
++		/* get fw build info */
++		err = qca_read_fw_build_info(hdev);
++		if (err < 0)
++			return err;
++	}
++
+ 	bt_dev_info(hdev, "QCA setup on UART is completed");
+ 
+ 	return 0;
+diff --git a/drivers/bluetooth/btqca.h b/drivers/bluetooth/btqca.h
+index e73b8f8775bd7..b19add7675a46 100644
+--- a/drivers/bluetooth/btqca.h
++++ b/drivers/bluetooth/btqca.h
+@@ -11,6 +11,7 @@
+ #define EDL_PATCH_CMD_LEN		(1)
+ #define EDL_PATCH_VER_REQ_CMD		(0x19)
+ #define EDL_PATCH_TLV_REQ_CMD		(0x1E)
++#define EDL_GET_BUILD_INFO_CMD		(0x20)
+ #define EDL_NVM_ACCESS_SET_REQ_CMD	(0x01)
+ #define MAX_SIZE_PER_TLV_SEGMENT	(243)
+ #define QCA_PRE_SHUTDOWN_CMD		(0xFC08)
+-- 
+cgit 1.2.3-1.el7
+
+From afe0b1c86458f121b085271e4f3034017a90d4a3 Mon Sep 17 00:00:00 2001
+From: Claire Chang <tientzu@chromium.org>
+Date: Mon, 14 Dec 2020 15:29:21 +0800
+Subject: Bluetooth: hci_uart: Fix a race for write_work scheduling
+
+In hci_uart_write_work, there is a loop/goto checking the value of
+HCI_UART_TX_WAKEUP. If HCI_UART_TX_WAKEUP is set again, it keeps trying
+hci_uart_dequeue; otherwise, it clears HCI_UART_SENDING and returns.
+
+In hci_uart_tx_wakeup, if HCI_UART_SENDING is already set, it sets
+HCI_UART_TX_WAKEUP, skips schedule_work and assumes the running/pending
+hci_uart_write_work worker will do hci_uart_dequeue properly.
+
+However, if the HCI_UART_SENDING check in hci_uart_tx_wakeup is done after
+the loop breaks, but before HCI_UART_SENDING is cleared in
+hci_uart_write_work, the schedule_work is skipped incorrectly.
+
+Fix this race by changing the order of HCI_UART_SENDING and
+HCI_UART_TX_WAKEUP modification.
+
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Fixes: 82f5169bf3d3 ("Bluetooth: hci_uart: add serdev driver support library")
+Signed-off-by: Claire Chang <tientzu@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/hci_ldisc.c  | 7 +++----
+ drivers/bluetooth/hci_serdev.c | 4 ++--
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/bluetooth/hci_ldisc.c b/drivers/bluetooth/hci_ldisc.c
+index f83d67eafc9f0..8be4d807d1370 100644
+--- a/drivers/bluetooth/hci_ldisc.c
++++ b/drivers/bluetooth/hci_ldisc.c
+@@ -127,10 +127,9 @@ int hci_uart_tx_wakeup(struct hci_uart *hu)
+ 	if (!test_bit(HCI_UART_PROTO_READY, &hu->flags))
+ 		goto no_schedule;
+ 
+-	if (test_and_set_bit(HCI_UART_SENDING, &hu->tx_state)) {
+-		set_bit(HCI_UART_TX_WAKEUP, &hu->tx_state);
++	set_bit(HCI_UART_TX_WAKEUP, &hu->tx_state);
++	if (test_and_set_bit(HCI_UART_SENDING, &hu->tx_state))
+ 		goto no_schedule;
+-	}
+ 
+ 	BT_DBG("");
+ 
+@@ -174,10 +173,10 @@ restart:
+ 		kfree_skb(skb);
+ 	}
+ 
++	clear_bit(HCI_UART_SENDING, &hu->tx_state);
+ 	if (test_bit(HCI_UART_TX_WAKEUP, &hu->tx_state))
+ 		goto restart;
+ 
+-	clear_bit(HCI_UART_SENDING, &hu->tx_state);
+ 	wake_up_bit(&hu->tx_state, HCI_UART_SENDING);
+ }
+ 
+diff --git a/drivers/bluetooth/hci_serdev.c b/drivers/bluetooth/hci_serdev.c
+index ef96ad06fa54e..9e03402ef1b37 100644
+--- a/drivers/bluetooth/hci_serdev.c
++++ b/drivers/bluetooth/hci_serdev.c
+@@ -83,9 +83,9 @@ static void hci_uart_write_work(struct work_struct *work)
+ 			hci_uart_tx_complete(hu, hci_skb_pkt_type(skb));
+ 			kfree_skb(skb);
+ 		}
+-	} while (test_bit(HCI_UART_TX_WAKEUP, &hu->tx_state));
+ 
+-	clear_bit(HCI_UART_SENDING, &hu->tx_state);
++		clear_bit(HCI_UART_SENDING, &hu->tx_state);
++	} while (test_bit(HCI_UART_TX_WAKEUP, &hu->tx_state));
+ }
+ 
+ /* ------- Interface to HCI layer ------ */
+-- 
+cgit 1.2.3-1.el7
+
+From 295fa2a5647b13681594bb1bcc76c74619035218 Mon Sep 17 00:00:00 2001
+From: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Date: Mon, 7 Dec 2020 16:12:54 -0800
+Subject: Bluetooth: Remove hci_req_le_suspend_config
+
+Add a missing SUSPEND_SCAN_ENABLE in passive scan, remove the separate
+function for configuring le scan during suspend and update the request
+complete function to clear both enable and disable tasks.
+
+Fixes: dce0a4be8054 ("Bluetooth: Set missing suspend task bits")
+Reviewed-by: Alain Michaud <alainm@chromium.org>
+Signed-off-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/hci_request.c | 25 ++++++++-----------------
+ 1 file changed, 8 insertions(+), 17 deletions(-)
+
+diff --git a/net/bluetooth/hci_request.c b/net/bluetooth/hci_request.c
+index 71bffd7454720..5aa7bd5030a21 100644
+--- a/net/bluetooth/hci_request.c
++++ b/net/bluetooth/hci_request.c
+@@ -1087,6 +1087,8 @@ void hci_req_add_le_passive_scan(struct hci_request *req)
+ 	if (hdev->suspended) {
+ 		window = hdev->le_scan_window_suspend;
+ 		interval = hdev->le_scan_int_suspend;
++
++		set_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks);
+ 	} else if (hci_is_le_conn_scanning(hdev)) {
+ 		window = hdev->le_scan_window_connect;
+ 		interval = hdev->le_scan_int_connect;
+@@ -1170,19 +1172,6 @@ static void hci_req_set_event_filter(struct hci_request *req)
+ 	hci_req_add(req, HCI_OP_WRITE_SCAN_ENABLE, 1, &scan);
+ }
+ 
+-static void hci_req_config_le_suspend_scan(struct hci_request *req)
+-{
+-	/* Before changing params disable scan if enabled */
+-	if (hci_dev_test_flag(req->hdev, HCI_LE_SCAN))
+-		hci_req_add_le_scan_disable(req, false);
+-
+-	/* Configure params and enable scanning */
+-	hci_req_add_le_passive_scan(req);
+-
+-	/* Block suspend notifier on response */
+-	set_bit(SUSPEND_SCAN_ENABLE, req->hdev->suspend_tasks);
+-}
+-
+ static void cancel_adv_timeout(struct hci_dev *hdev)
+ {
+ 	if (hdev->adv_instance_timeout) {
+@@ -1245,8 +1234,10 @@ static void suspend_req_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+ {
+ 	bt_dev_dbg(hdev, "Request complete opcode=0x%x, status=0x%x", opcode,
+ 		   status);
+-	if (test_and_clear_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks) ||
+-	    test_and_clear_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks)) {
++	if (test_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks) ||
++	    test_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks)) {
++		clear_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks);
++		clear_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks);
+ 		wake_up(&hdev->suspend_wait_q);
+ 	}
+ }
+@@ -1336,7 +1327,7 @@ void hci_req_prepare_suspend(struct hci_dev *hdev, enum suspended_state next)
+ 		/* Enable event filter for paired devices */
+ 		hci_req_set_event_filter(&req);
+ 		/* Enable passive scan at lower duty cycle */
+-		hci_req_config_le_suspend_scan(&req);
++		__hci_update_background_scan(&req);
+ 		/* Pause scan changes again. */
+ 		hdev->scanning_paused = true;
+ 		hci_req_run(&req, suspend_req_complete);
+@@ -1346,7 +1337,7 @@ void hci_req_prepare_suspend(struct hci_dev *hdev, enum suspended_state next)
+ 
+ 		hci_req_clear_event_filter(&req);
+ 		/* Reset passive/background scanning to normal */
+-		hci_req_config_le_suspend_scan(&req);
++		__hci_update_background_scan(&req);
+ 
+ 		/* Unpause directed advertising */
+ 		hdev->advertising_paused = false;
+-- 
+cgit 1.2.3-1.el7
+
+From 3b0d5250be30e76727284bb9e4c26b662ede7378 Mon Sep 17 00:00:00 2001
+From: Tim Jiang <tjiang@codeaurora.org>
+Date: Fri, 18 Dec 2020 18:12:11 +0800
+Subject: Bluetooth: btusb: add shutdown function for wcn6855
+
+we should send hci reset command before bt turn off, which can reset bt
+firmware status.
+
+Signed-off-by: Tim Jiang <tjiang@codeaurora.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btusb.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 1b690164ab5b9..4670a372bc3d7 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -4260,6 +4260,20 @@ static bool btusb_prevent_wake(struct hci_dev *hdev)
+ 	return !device_may_wakeup(&data->udev->dev);
+ }
+ 
++static int btusb_shutdown_qca(struct hci_dev *hdev)
++{
++	struct sk_buff *skb;
++
++	skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, NULL, HCI_INIT_TIMEOUT);
++	if (IS_ERR(skb)) {
++		bt_dev_err(hdev, "HCI reset during shutdown failed");
++		return PTR_ERR(skb);
++	}
++	kfree_skb(skb);
++
++	return 0;
++}
++
+ static int btusb_probe(struct usb_interface *intf,
+ 		       const struct usb_device_id *id)
+ {
+@@ -4519,6 +4533,7 @@ static int btusb_probe(struct usb_interface *intf,
+ 
+ 	if (id->driver_info & BTUSB_QCA_WCN6855) {
+ 		data->setup_on_usb = btusb_setup_qca;
++		hdev->shutdown = btusb_shutdown_qca;
+ 		hdev->set_bdaddr = btusb_set_bdaddr_wcn6855;
+ 		hdev->cmd_timeout = btusb_qca_cmd_timeout;
+ 		set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
+-- 
+cgit 1.2.3-1.el7
+
+From 36211f7fc1e79d83b4a0461d9d65961ca5ef8150 Mon Sep 17 00:00:00 2001
+From: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Date: Thu, 17 Dec 2020 15:04:08 -0800
+Subject: Bluetooth: Pause service discovery for suspend
+
+Just like MGMT_OP_START_DISCOVERY, we should reject
+MGMT_OP_START_SERVICE_DISCOVERY with MGMT_STATUS_BUSY when we are paused
+for suspend.
+
+Signed-off-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/mgmt.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index fa0f7a4a1d2fc..608dda5403b73 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -4798,6 +4798,14 @@ static int start_service_discovery(struct sock *sk, struct hci_dev *hdev,
+ 		goto failed;
+ 	}
+ 
++	if (hdev->discovery_paused) {
++		err = mgmt_cmd_complete(sk, hdev->id,
++					MGMT_OP_START_SERVICE_DISCOVERY,
++					MGMT_STATUS_BUSY, &cp->type,
++					sizeof(cp->type));
++		goto failed;
++	}
++
+ 	uuid_count = __le16_to_cpu(cp->uuid_count);
+ 	if (uuid_count > max_uuid_count) {
+ 		bt_dev_err(hdev, "service_discovery: too big uuid_count value %u",
+-- 
+cgit 1.2.3-1.el7
+
+From eaf19b0c47d142eedec34f7043f574fa3834c8b7 Mon Sep 17 00:00:00 2001
+From: Miao-chen Chou <mcchou@chromium.org>
+Date: Thu, 17 Dec 2020 14:53:17 -0800
+Subject: Bluetooth: btqca: Enable MSFT extension for Qualcomm WCN399x
+
+The following Qualcomm WCN399x Bluetooth controllers support the
+Microsoft vendor extension and they are using 0xFD70 for VsMsftOpCode.
+-WCN3990
+-WCN3991
+-WCN3998
+
+< HCI Command: ogf 0x3f, ocf 0x0170, plen 1
+  00
+> HCI Event: 0x0e plen 18
+  01 70 FD 00 00 1F 00 00 00 00 00 00 00 04 4D 53 46 54
+
+The following test step was performed.
+- Boot the device with WCN3991 and verify INFO print in dmesg.
+
+Signed-off-by: Miao-chen Chou <mcchou@chromium.org>
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Reviewed-by: Archie Pusaka <apusaka@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btqca.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/bluetooth/btqca.c b/drivers/bluetooth/btqca.c
+index f6256a3b84cf6..25114f0d13199 100644
+--- a/drivers/bluetooth/btqca.c
++++ b/drivers/bluetooth/btqca.c
+@@ -564,6 +564,19 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
+ 			return err;
+ 	}
+ 
++	/* WCN399x supports the Microsoft vendor extension with 0xFD70 as the
++	 * VsMsftOpCode.
++	 */
++	switch (soc_type) {
++	case QCA_WCN3990:
++	case QCA_WCN3991:
++	case QCA_WCN3998:
++		hci_set_msft_opcode(hdev, 0xFD70);
++		break;
++	default:
++		break;
++	}
++
+ 	/* Perform HCI reset */
+ 	err = qca_send_reset(hdev);
+ 	if (err < 0) {
+-- 
+cgit 1.2.3-1.el7
+
+From 7a45bcb49a39b1aad9a18eb226ad4f86bdbd2119 Mon Sep 17 00:00:00 2001
+From: Miao-chen Chou <mcchou@chromium.org>
+Date: Thu, 17 Dec 2020 14:53:19 -0800
+Subject: Bluetooth: btusb: Enable MSFT extension for Intel controllers
+
+The Intel JeffersonPeak, HarrisonPeak and CyclonePeak Bluetooth
+controllers support the Microsoft vendor extension and they are using
+0xFC1E for VsMsftOpCode.
+
+< HCI Command: Vendor (0x3f|0x001e) plen 1
+        00
+> HCI Event: Command Complete (0x0e) plen 15
+      Vendor (0x3f|0x001e) ncmd 1
+        Status: Success (0x00)
+        00 3f 00 00 00 00 00 00 00 01 50
+
+The following test step was performed.
+- Boot the test devices with HarrisonPeak and verify INFO print in
+dmesg.
+
+Signed-off-by: Miao-chen Chou <mcchou@chromium.org>
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Reviewed-by: Archie Pusaka <apusaka@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btusb.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 4670a372bc3d7..b630a1d54c02f 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -2920,7 +2920,10 @@ finish:
+ 	 * extension are using 0xFC1E for VsMsftOpCode.
+ 	 */
+ 	switch (ver.hw_variant) {
++	case 0x11:	/* JfP */
+ 	case 0x12:	/* ThP */
++	case 0x13:	/* HrP */
++	case 0x14:	/* CcP */
+ 		hci_set_msft_opcode(hdev, 0xFC1E);
+ 		break;
+ 	}
+-- 
+cgit 1.2.3-1.el7
+
+From 673fae14f24052ead45e0446d1c3c829bd2f2e64 Mon Sep 17 00:00:00 2001
+From: Miao-chen Chou <mcchou@chromium.org>
+Date: Thu, 17 Dec 2020 14:53:21 -0800
+Subject: Bluetooth: btrtl: Enable MSFT extension for RTL8822CE controller
+
+The Realtek RTL8822CE Bluetooth controller support Microsoft vendor
+extension and it uses 0xFCF0 for VsMsftOpCode.
+
+The following test step was performed.
+- Boot the test device with RTL8822CE and verify the INFO print in
+dmesg.
+
+Signed-off-by: Miao-chen Chou <mcchou@chromium.org>
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Reviewed-by: Archie Pusaka <apusaka@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btrtl.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/bluetooth/btrtl.c b/drivers/bluetooth/btrtl.c
+index a4f7cace66b06..94df4e94999d5 100644
+--- a/drivers/bluetooth/btrtl.c
++++ b/drivers/bluetooth/btrtl.c
+@@ -658,6 +658,12 @@ out_free:
+ 		}
+ 	}
+ 
++	/* RTL8822CE supports the Microsoft vendor extension and uses 0xFCF0
++	 * for VsMsftOpCode.
++	 */
++	if (lmp_subver == RTL_ROM_LMP_8822B)
++		hci_set_msft_opcode(hdev, 0xFCF0);
++
+ 	return btrtl_dev;
+ 
+ err_free:
+-- 
+cgit 1.2.3-1.el7
+
+From 9edd1de7108f9f672a329a5c69ce257cc610c509 Mon Sep 17 00:00:00 2001
+From: Jakub Pawlowski <jpawlowski@google.com>
+Date: Thu, 17 Dec 2020 12:44:22 +0100
+Subject: Bluetooth: hci_bcm: Add support for ISO packets
+
+This enables bcm driver to properly handle ISO packets.
+
+Signed-off-by: Jakub Pawlowski <jpawlowski@google.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/hci_bcm.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/bluetooth/hci_bcm.c b/drivers/bluetooth/hci_bcm.c
+index 8ea5ca8d71d6d..3764ceb6fa0d5 100644
+--- a/drivers/bluetooth/hci_bcm.c
++++ b/drivers/bluetooth/hci_bcm.c
+@@ -654,6 +654,7 @@ static const struct h4_recv_pkt bcm_recv_pkts[] = {
+ 	{ H4_RECV_ACL,      .recv = hci_recv_frame },
+ 	{ H4_RECV_SCO,      .recv = hci_recv_frame },
+ 	{ H4_RECV_EVENT,    .recv = hci_recv_frame },
++	{ H4_RECV_ISO,      .recv = hci_recv_frame },
+ 	{ BCM_RECV_LM_DIAG, .recv = hci_recv_diag  },
+ 	{ BCM_RECV_NULL,    .recv = hci_recv_diag  },
+ 	{ BCM_RECV_TYPE49,  .recv = hci_recv_diag  },
+-- 
+cgit 1.2.3-1.el7
+
+From ac40679139ac46bd22087002904edd04945d23a8 Mon Sep 17 00:00:00 2001
+From: Kiran K <kiran.k@intel.com>
+Date: Wed, 16 Dec 2020 05:10:38 +0530
+Subject: Revert "Bluetooth: btintel: Fix endianness issue for TLV version
+ information"
+
+This reverts commit a63f23c9d139377833a139b179793fea79ee198f.
+
+get_unaligned_{le16|le32|le64}(p) is meant to replace code of the form
+le16_to_cpu(get_unaligned((__le16 *)p)). There is no need to explicitly
+do leXX_to_cpu() if get_unaligned_leXX() is used.
+
+https://lwn.net/Articles/277779/
+
+Reported-by: kernel test robot <lkp@intel.com>
+Signed-off-by: Kiran K <kiran.k@intel.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btintel.c | 21 +++++++--------------
+ 1 file changed, 7 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/bluetooth/btintel.c b/drivers/bluetooth/btintel.c
+index 41ff2071d7eff..88ce5f0ffc4ba 100644
+--- a/drivers/bluetooth/btintel.c
++++ b/drivers/bluetooth/btintel.c
+@@ -437,38 +437,31 @@ int btintel_read_version_tlv(struct hci_dev *hdev, struct intel_version_tlv *ver
+ 		tlv = (struct intel_tlv *)skb->data;
+ 		switch (tlv->type) {
+ 		case INTEL_TLV_CNVI_TOP:
+-			version->cnvi_top =
+-				__le32_to_cpu(get_unaligned_le32(tlv->val));
++			version->cnvi_top = get_unaligned_le32(tlv->val);
+ 			break;
+ 		case INTEL_TLV_CNVR_TOP:
+-			version->cnvr_top =
+-				__le32_to_cpu(get_unaligned_le32(tlv->val));
++			version->cnvr_top = get_unaligned_le32(tlv->val);
+ 			break;
+ 		case INTEL_TLV_CNVI_BT:
+-			version->cnvi_bt =
+-				__le32_to_cpu(get_unaligned_le32(tlv->val));
++			version->cnvi_bt = get_unaligned_le32(tlv->val);
+ 			break;
+ 		case INTEL_TLV_CNVR_BT:
+-			version->cnvr_bt =
+-				__le32_to_cpu(get_unaligned_le32(tlv->val));
++			version->cnvr_bt = get_unaligned_le32(tlv->val);
+ 			break;
+ 		case INTEL_TLV_DEV_REV_ID:
+-			version->dev_rev_id =
+-				__le16_to_cpu(get_unaligned_le16(tlv->val));
++			version->dev_rev_id = get_unaligned_le16(tlv->val);
+ 			break;
+ 		case INTEL_TLV_IMAGE_TYPE:
+ 			version->img_type = tlv->val[0];
+ 			break;
+ 		case INTEL_TLV_TIME_STAMP:
+-			version->timestamp =
+-				__le16_to_cpu(get_unaligned_le16(tlv->val));
++			version->timestamp = get_unaligned_le16(tlv->val);
+ 			break;
+ 		case INTEL_TLV_BUILD_TYPE:
+ 			version->build_type = tlv->val[0];
+ 			break;
+ 		case INTEL_TLV_BUILD_NUM:
+-			version->build_num =
+-				__le32_to_cpu(get_unaligned_le32(tlv->val));
++			version->build_num = get_unaligned_le32(tlv->val);
+ 			break;
+ 		case INTEL_TLV_SECURE_BOOT:
+ 			version->secure_boot = tlv->val[0];
+-- 
+cgit 1.2.3-1.el7
+
+From 1ca2a39454069998918f0b24a654c613568ed505 Mon Sep 17 00:00:00 2001
+From: Jagdish Tirumala <t.jag587@gmail.com>
+Date: Tue, 15 Dec 2020 15:17:30 +0530
+Subject: Bluetooth: btmtksdio: Fixed switch and case should be at the same
+ indent
+
+Switch and case where not properly aligned
+
+Signed-off-by: Jagdish Tirumala <t.jag587@gmail.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btmtksdio.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/bluetooth/btmtksdio.c b/drivers/bluetooth/btmtksdio.c
+index 5f9f027956317..9872ef18f9fea 100644
+--- a/drivers/bluetooth/btmtksdio.c
++++ b/drivers/bluetooth/btmtksdio.c
+@@ -442,15 +442,15 @@ static int btmtksdio_rx_packet(struct btmtksdio_dev *bdev, u16 rx_size)
+ 	}
+ 
+ 	switch ((&pkts[i])->lsize) {
+-		case 1:
+-			dlen = skb->data[(&pkts[i])->loff];
+-			break;
+-		case 2:
+-			dlen = get_unaligned_le16(skb->data +
++	case 1:
++		dlen = skb->data[(&pkts[i])->loff];
++		break;
++	case 2:
++		dlen = get_unaligned_le16(skb->data +
+ 						  (&pkts[i])->loff);
+-			break;
+-		default:
+-			goto err_kfree_skb;
++		break;
++	default:
++		goto err_kfree_skb;
+ 	}
+ 
+ 	pad_size = skb->len - (&pkts[i])->hlen -  dlen;
+-- 
+cgit 1.2.3-1.el7
+
+From 89e65975fea5c25706e8cc3a89f9f97b20fc45ad Mon Sep 17 00:00:00 2001
+From: Sonny Sasaka <sonnysasaka@chromium.org>
+Date: Wed, 9 Dec 2020 13:35:14 -0800
+Subject: Bluetooth: Cancel Inquiry before Create Connection
+
+Many controllers do not allow HCI Create Connection while it is doing
+Inquiry. This patch adds Inquiry Cancel before Create Connection in this
+case to allow the controller to do Create Connection. User space will be
+aware of this Inquiry cancellation and they may issue another discovery
+request afterwards.
+
+Sample Command Disallowed response of HCI Create Connection:
+< HCI Command: Inquiry (0x01|0x0001) plen 5
+        Access code: 0x9e8b33 (General Inquiry)
+        Length: 10.24s (0x08)
+        Num responses: 0
+> HCI Event: Command Status (0x0f) plen 4
+      Inquiry (0x01|0x0001) ncmd 2
+        Status: Success (0x00)
+< HCI Command: Create Connection (0x01|0x0005) plen 13
+        Address: XX:XX:XX:XX:XX:XX
+        Packet type: 0xcc18
+        Page scan repetition mode: R2 (0x02)
+        Page scan mode: Mandatory (0x00)
+        Clock offset: 0x0000
+        Role switch: Allow slave (0x01)
+> HCI Event: Command Status (0x0f) plen 4
+      Create Connection (0x01|0x0005) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Connect Complete (0x03) plen 11
+        Status: Command Disallowed (0x0c)
+        Handle: 65535
+        Address: XX:XX:XX:XX:XX:XX
+        Link type: ACL (0x01)
+        Encryption: Disabled (0x00)
+
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Reviewed-by: Alain Michaud <alainm@chromium.org>
+Signed-off-by: Sonny Sasaka <sonnysasaka@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/hci_conn.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 4f1cd8063e720..23c0d77ea7370 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -203,6 +203,23 @@ static void hci_acl_create_connection(struct hci_conn *conn)
+ 
+ 	BT_DBG("hcon %p", conn);
+ 
++	/* Many controllers disallow HCI Create Connection while it is doing
++	 * HCI Inquiry. So we cancel the Inquiry first before issuing HCI Create
++	 * Connection. This may cause the MGMT discovering state to become false
++	 * without user space's request but it is okay since the MGMT Discovery
++	 * APIs do not promise that discovery should be done forever. Instead,
++	 * the user space monitors the status of MGMT discovering and it may
++	 * request for discovery again when this flag becomes false.
++	 */
++	if (test_bit(HCI_INQUIRY, &hdev->flags)) {
++		/* Put this connection to "pending" state so that it will be
++		 * executed after the inquiry cancel command complete event.
++		 */
++		conn->state = BT_CONNECT2;
++		hci_send_cmd(hdev, HCI_OP_INQUIRY_CANCEL, 0, NULL);
++		return;
++	}
++
+ 	conn->state = BT_CONNECT;
+ 	conn->out = true;
+ 	conn->role = HCI_ROLE_MASTER;
+-- 
+cgit 1.2.3-1.el7
+
+From d84fc2c9dceffe650d7bf5e42c2f3fc11709eb47 Mon Sep 17 00:00:00 2001
+From: Joe Perches <joe@perches.com>
+Date: Tue, 22 Dec 2020 02:31:49 -0800
+Subject: Bluetooth: btusb: Remove duplicate newlines from logging
+
+The bt_dev_<level> macros already append a newline.
+
+Signed-off-by: Joe Perches <joe@perches.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btusb.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index b630a1d54c02f..9ff920de8d260 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -1899,7 +1899,7 @@ static int btusb_setup_csr(struct hci_dev *hdev)
+ 		    le16_to_cpu(rp->lmp_subver) == 0x1012 &&
+ 		    le16_to_cpu(rp->hci_rev) == 0x0810 &&
+ 		    le16_to_cpu(rp->hci_ver) == BLUETOOTH_VER_4_0) {
+-			bt_dev_warn(hdev, "CSR: detected a fake CSR dongle using a Barrot 8041a02 chip, this chip is very buggy and may have issues\n");
++			bt_dev_warn(hdev, "CSR: detected a fake CSR dongle using a Barrot 8041a02 chip, this chip is very buggy and may have issues");
+ 
+ 			pm_runtime_allow(&data->udev->dev);
+ 
+@@ -1907,7 +1907,7 @@ static int btusb_setup_csr(struct hci_dev *hdev)
+ 			if (ret >= 0)
+ 				msleep(200);
+ 			else
+-				bt_dev_err(hdev, "Failed to suspend the device for Barrot 8041a02 receive-issue workaround\n");
++				bt_dev_err(hdev, "Failed to suspend the device for Barrot 8041a02 receive-issue workaround");
+ 
+ 			pm_runtime_forbid(&data->udev->dev);
+ 
+@@ -3724,7 +3724,7 @@ static int marvell_config_oob_wake(struct hci_dev *hdev)
+ 
+ 	skb = bt_skb_alloc(sizeof(cmd), GFP_KERNEL);
+ 	if (!skb) {
+-		bt_dev_err(hdev, "%s: No memory\n", __func__);
++		bt_dev_err(hdev, "%s: No memory", __func__);
+ 		return -ENOMEM;
+ 	}
+ 
+@@ -3733,7 +3733,7 @@ static int marvell_config_oob_wake(struct hci_dev *hdev)
+ 
+ 	ret = btusb_send_frame(hdev, skb);
+ 	if (ret) {
+-		bt_dev_err(hdev, "%s: configuration failed\n", __func__);
++		bt_dev_err(hdev, "%s: configuration failed", __func__);
+ 		kfree_skb(skb);
+ 		return ret;
+ 	}
+-- 
+cgit 1.2.3-1.el7
+
+From 05672a2c14a4ea20b7e31a1d8d847292c2b60c10 Mon Sep 17 00:00:00 2001
+From: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Date: Tue, 22 Dec 2020 10:16:27 -0800
+Subject: Bluetooth: btrtl: Enable central-peripheral role
+
+Enable the central-peripheral role on RTL8822CE. This enables creating
+connections while there is an existing connection in the slave role.
+
+This change can be confirmed in userspace via `bluetoothctl show` which
+will now show "Roles: central-peripheral".
+
+Reviewed-by: Daniel Winkler <danielwinkler@google.com>
+Signed-off-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btrtl.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/bluetooth/btrtl.c b/drivers/bluetooth/btrtl.c
+index 94df4e94999d5..1abf6a4d67273 100644
+--- a/drivers/bluetooth/btrtl.c
++++ b/drivers/bluetooth/btrtl.c
+@@ -714,13 +714,24 @@ int btrtl_setup_realtek(struct hci_dev *hdev)
+ 
+ 	ret = btrtl_download_firmware(hdev, btrtl_dev);
+ 
+-	btrtl_free(btrtl_dev);
+-
+ 	/* Enable controller to do both LE scan and BR/EDR inquiry
+ 	 * simultaneously.
+ 	 */
+ 	set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
+ 
++	/* Enable central-peripheral role (able to create new connections with
++	 * an existing connection in slave role).
++	 */
++	switch (btrtl_dev->ic_info->lmp_subver) {
++	case RTL_ROM_LMP_8822B:
++		set_bit(HCI_QUIRK_VALID_LE_STATES, &hdev->quirks);
++		break;
++	default:
++		rtl_dev_dbg(hdev, "Central-peripheral role not enabled.");
++		break;
++	}
++
++	btrtl_free(btrtl_dev);
+ 	return ret;
+ }
+ EXPORT_SYMBOL_GPL(btrtl_setup_realtek);
+-- 
+cgit 1.2.3-1.el7
+
+From a5687c644015a097304a2e47476c0ecab2065734 Mon Sep 17 00:00:00 2001
+From: Christopher William Snowhill <chris@kode54.net>
+Date: Sat, 26 Dec 2020 19:12:32 -0800
+Subject: Bluetooth: Fix initializing response id after clearing struct
+
+Looks like this was missed when patching the source to clear the structures
+throughout, causing this one instance to clear the struct after the response
+id is assigned.
+
+Fixes: eddb7732119d ("Bluetooth: A2MP: Fix not initializing all members")
+Signed-off-by: Christopher William Snowhill <chris@kode54.net>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/a2mp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/a2mp.c b/net/bluetooth/a2mp.c
+index da7fd7c8c2dc0..cc26e4c047ad0 100644
+--- a/net/bluetooth/a2mp.c
++++ b/net/bluetooth/a2mp.c
+@@ -381,9 +381,9 @@ static int a2mp_getampassoc_req(struct amp_mgr *mgr, struct sk_buff *skb,
+ 	hdev = hci_dev_get(req->id);
+ 	if (!hdev || hdev->amp_type == AMP_TYPE_BREDR || tmp) {
+ 		struct a2mp_amp_assoc_rsp rsp;
+-		rsp.id = req->id;
+ 
+ 		memset(&rsp, 0, sizeof(rsp));
++		rsp.id = req->id;
+ 
+ 		if (tmp) {
+ 			rsp.status = A2MP_STATUS_COLLISION_OCCURED;
+-- 
+cgit 1.2.3-1.el7
+
+From b649813eadbc062d8682f7a20aa025275707dd1f Mon Sep 17 00:00:00 2001
+From: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Date: Tue, 5 Jan 2021 20:58:58 -0800
+Subject: Bluetooth: btrtl: Add null check in setup
+
+btrtl_dev->ic_info is only available from the controller on cold boot
+(the lmp subversion matches the device model and this is used to look up
+the ic_info). On warm boots (firmware already loaded),
+btrtl_dev->ic_info is null.
+
+Fixes: 05672a2c14a4 (Bluetooth: btrtl: Enable central-peripheral role)
+Signed-off-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btrtl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/bluetooth/btrtl.c b/drivers/bluetooth/btrtl.c
+index 1abf6a4d67273..24f03a1f8d578 100644
+--- a/drivers/bluetooth/btrtl.c
++++ b/drivers/bluetooth/btrtl.c
+@@ -719,6 +719,9 @@ int btrtl_setup_realtek(struct hci_dev *hdev)
+ 	 */
+ 	set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
+ 
++	if (!btrtl_dev->ic_info)
++		goto done;
++
+ 	/* Enable central-peripheral role (able to create new connections with
+ 	 * an existing connection in slave role).
+ 	 */
+@@ -731,6 +734,7 @@ int btrtl_setup_realtek(struct hci_dev *hdev)
+ 		break;
+ 	}
+ 
++done:
+ 	btrtl_free(btrtl_dev);
+ 	return ret;
+ }
+-- 
+cgit 1.2.3-1.el7
+
+From ef0bb5adc1a3cdbf20c77b8ba841d2eca7c7dc5a Mon Sep 17 00:00:00 2001
+From: Ard Biesheuvel <ardb@kernel.org>
+Date: Tue, 5 Jan 2021 17:10:53 +0100
+Subject: Bluetooth: avoid u128_xor() on potentially misaligned inputs
+
+u128_xor() takes pointers to quantities that are assumed to be at least
+64-bit aligned, which is not guaranteed to be the case in the smp_c1()
+routine. So switch to crypto_xor() instead.
+
+Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/smp.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/smp.c b/net/bluetooth/smp.c
+index c659c464f7ca0..b0c1ee110eff9 100644
+--- a/net/bluetooth/smp.c
++++ b/net/bluetooth/smp.c
+@@ -25,7 +25,6 @@
+ #include <linux/crypto.h>
+ #include <crypto/aes.h>
+ #include <crypto/algapi.h>
+-#include <crypto/b128ops.h>
+ #include <crypto/hash.h>
+ #include <crypto/kpp.h>
+ 
+@@ -425,7 +424,7 @@ static int smp_c1(const u8 k[16],
+ 	SMP_DBG("p1 %16phN", p1);
+ 
+ 	/* res = r XOR p1 */
+-	u128_xor((u128 *) res, (u128 *) r, (u128 *) p1);
++	crypto_xor_cpy(res, r, p1, sizeof(p1));
+ 
+ 	/* res = e(k, res) */
+ 	err = smp_e(k, res);
+@@ -442,7 +441,7 @@ static int smp_c1(const u8 k[16],
+ 	SMP_DBG("p2 %16phN", p2);
+ 
+ 	/* res = res XOR p2 */
+-	u128_xor((u128 *) res, (u128 *) res, (u128 *) p2);
++	crypto_xor(res, p2, sizeof(p2));
+ 
+ 	/* res = e(k, res) */
+ 	err = smp_e(k, res);
+-- 
+cgit 1.2.3-1.el7
+
+From f01bb2a368809a8bbb13a51a331d044b605317a8 Mon Sep 17 00:00:00 2001
+From: Kiran K <kiran.k@intel.com>
+Date: Tue, 5 Jan 2021 08:32:29 +0530
+Subject: Bluetooth: btusb: Add support for GarfieldPeak controller
+
+VID:PID -> 8087:0033
+
+cat /sys/kernel/debug/usb/devices:
+
+T:  Bus=03 Lev=01 Prnt=01 Port=09 Cnt=03 Dev#=  3 Spd=12   MxCh= 0
+D:  Ver= 2.01 Cls=e0(wlcon) Sub=01 Prot=01 MxPS=64 #Cfgs=  1
+P:  Vendor=8087 ProdID=0033 Rev= 0.00
+C:* #Ifs= 2 Cfg#= 1 Atr=e0 MxPwr=100mA
+I:* If#= 0 Alt= 0 #EPs= 3 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=81(I) Atr=03(Int.) MxPS=  64 Ivl=1ms
+E:  Ad=02(O) Atr=02(Bulk) MxPS=  64 Ivl=0ms
+E:  Ad=82(I) Atr=02(Bulk) MxPS=  64 Ivl=0ms
+I:* If#= 1 Alt= 0 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=   0 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=   0 Ivl=1ms
+I:  If#= 1 Alt= 1 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=   9 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=   9 Ivl=1ms
+I:  If#= 1 Alt= 2 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  17 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  17 Ivl=1ms
+I:  If#= 1 Alt= 3 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  25 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  25 Ivl=1ms
+I:  If#= 1 Alt= 4 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  33 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  33 Ivl=1ms
+I:  If#= 1 Alt= 5 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  49 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  49 Ivl=1ms
+I:  If#= 1 Alt= 6 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=(none)
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  63 Ivl=1ms
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  63 Ivl=1ms
+
+Signed-off-by: Kiran K <kiran.k@intel.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btusb.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 9ff920de8d260..b14102fba6018 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -368,6 +368,8 @@ static const struct usb_device_id blacklist_table[] = {
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x8087, 0x0032), .driver_info = BTUSB_INTEL_NEWGEN |
+ 						     BTUSB_WIDEBAND_SPEECH},
++	{ USB_DEVICE(0x8087, 0x0033), .driver_info = BTUSB_INTEL_NEWGEN |
++						     BTUSB_WIDEBAND_SPEECH},
+ 	{ USB_DEVICE(0x8087, 0x07da), .driver_info = BTUSB_CSR },
+ 	{ USB_DEVICE(0x8087, 0x07dc), .driver_info = BTUSB_INTEL },
+ 	{ USB_DEVICE(0x8087, 0x0a2a), .driver_info = BTUSB_INTEL },
+-- 
+cgit 1.2.3-1.el7
+
+From f272f185d259e2d574b4868fe8fb0ee56f3c2cfa Mon Sep 17 00:00:00 2001
+From: John-Eric Kamps <johnny86@gmx.de>
+Date: Sat, 2 Jan 2021 22:41:15 +0100
+Subject: Bluetooth: hci_h5: Add support for binding RTL8723DS with device tree
+
+RTL8723DS could be handled by btrtl-driver, so add ability to bind it
+using device tree.
+
+Signed-off-by: John-Eric Kamps <johnny86@gmx.de>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/hci_h5.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/bluetooth/hci_h5.c b/drivers/bluetooth/hci_h5.c
+index 7be16a7f653bd..fb9817f97d45c 100644
+--- a/drivers/bluetooth/hci_h5.c
++++ b/drivers/bluetooth/hci_h5.c
+@@ -1022,6 +1022,8 @@ static const struct of_device_id rtl_bluetooth_of_match[] = {
+ 	  .data = (const void *)&rtl_vnd },
+ 	{ .compatible = "realtek,rtl8723bs-bt",
+ 	  .data = (const void *)&rtl_vnd },
++	{ .compatible = "realtek,rtl8723ds-bt",
++	  .data = (const void *)&rtl_vnd },
+ #endif
+ 	{ },
+ };
+-- 
+cgit 1.2.3-1.el7
+
+From 71f8e707557b9bc25dc90a59a752528d4e7c1cbf Mon Sep 17 00:00:00 2001
+From: Dinghao Liu <dinghao.liu@zju.edu.cn>
+Date: Sat, 2 Jan 2021 13:47:55 +0800
+Subject: Bluetooth: hci_qca: Fix memleak in qca_controller_memdump
+
+When __le32_to_cpu() fails, qca_memdump should be freed
+just like when vmalloc() fails.
+
+Fixes: d841502c79e3f ("Bluetooth: hci_qca: Collect controller memory dump during SSR")
+Signed-off-by: Dinghao Liu <dinghao.liu@zju.edu.cn>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/hci_qca.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 4a963682c7021..5dbcb7c42b805 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -1024,7 +1024,9 @@ static void qca_controller_memdump(struct work_struct *work)
+ 			dump_size = __le32_to_cpu(dump->dump_size);
+ 			if (!(dump_size)) {
+ 				bt_dev_err(hu->hdev, "Rx invalid memdump size");
++				kfree(qca_memdump);
+ 				kfree_skb(skb);
++				qca->qca_memdump = NULL;
+ 				mutex_unlock(&qca->hci_memdump_lock);
+ 				return;
+ 			}
+-- 
+cgit 1.2.3-1.el7
+
+From ad3a9c0ec2d2baed936cfdd05870f9d1e1f40e0e Mon Sep 17 00:00:00 2001
+From: Venkata Lakshmi Narayana Gubba <gubbaven@codeaurora.org>
+Date: Wed, 30 Dec 2020 22:47:08 +0530
+Subject: Bluetooth: hci_qca: Wait for SSR completion during suspend
+
+During SSR after memory dump collection,BT controller will be powered off,
+powered on and then FW will be downloaded.During suspend if BT controller
+is powered off due to SSR then we should wait until SSR is completed and
+then suspend.
+
+Fixes: 2be43abac5a8 ("Bluetooth: hci_qca: Wait for timeout during suspend")
+Signed-off-by: Venkata Lakshmi Narayana Gubba <gubbaven@codeaurora.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/hci_qca.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 5dbcb7c42b805..17a3859326dc7 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -50,7 +50,8 @@
+ #define IBS_HOST_TX_IDLE_TIMEOUT_MS	2000
+ #define CMD_TRANS_TIMEOUT_MS		100
+ #define MEMDUMP_TIMEOUT_MS		8000
+-#define IBS_DISABLE_SSR_TIMEOUT_MS	(MEMDUMP_TIMEOUT_MS + 1000)
++#define IBS_DISABLE_SSR_TIMEOUT_MS \
++	(MEMDUMP_TIMEOUT_MS + FW_DOWNLOAD_TIMEOUT_MS)
+ #define FW_DOWNLOAD_TIMEOUT_MS		3000
+ 
+ /* susclk rate */
+@@ -2102,7 +2103,12 @@ static int __maybe_unused qca_suspend(struct device *dev)
+ 
+ 	set_bit(QCA_SUSPENDING, &qca->flags);
+ 
+-	if (test_bit(QCA_BT_OFF, &qca->flags))
++	/* During SSR after memory dump collection, controller will be
++	 * powered off and then powered on.If controller is powered off
++	 * during SSR then we should wait until SSR is completed.
++	 */
++	if (test_bit(QCA_BT_OFF, &qca->flags) &&
++	    !test_bit(QCA_SSR_TRIGGERED, &qca->flags))
+ 		return 0;
+ 
+ 	if (test_bit(QCA_IBS_DISABLED, &qca->flags)) {
+@@ -2112,7 +2118,7 @@ static int __maybe_unused qca_suspend(struct device *dev)
+ 
+ 		/* QCA_IBS_DISABLED flag is set to true, During FW download
+ 		 * and during memory dump collection. It is reset to false,
+-		 * After FW download complete and after memory dump collections.
++		 * After FW download complete.
+ 		 */
+ 		wait_on_bit_timeout(&qca->flags, QCA_IBS_DISABLED,
+ 			    TASK_UNINTERRUPTIBLE, msecs_to_jiffies(wait_timeout));
+@@ -2124,10 +2130,6 @@ static int __maybe_unused qca_suspend(struct device *dev)
+ 		}
+ 	}
+ 
+-	/* After memory dump collection, Controller is powered off.*/
+-	if (test_bit(QCA_BT_OFF, &qca->flags))
+-		return 0;
+-
+ 	cancel_work_sync(&qca->ws_awake_device);
+ 	cancel_work_sync(&qca->ws_awake_rx);
+ 
+-- 
+cgit 1.2.3-1.el7
+
