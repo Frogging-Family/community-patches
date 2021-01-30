@@ -122,11 +122,11 @@ index 728752917..34f1846ca 100644
  /*
   * 32 bit systems traditionally used different
 diff --git a/include/uapi/linux/futex.h b/include/uapi/linux/futex.h
-index a3e760886..60f14769e 100644
+index a89eb0acc..35a5bf1cd 100644
 --- a/include/uapi/linux/futex.h
 +++ b/include/uapi/linux/futex.h
-@@ -44,6 +44,46 @@
- #define FUTEX_WAIT_MULTIPLE_PRIVATE	(FUTEX_WAIT_MULTIPLE | \
+@@ -41,6 +41,46 @@
+ #define FUTEX_CMP_REQUEUE_PI_PRIVATE	(FUTEX_CMP_REQUEUE_PI | \
  					 FUTEX_PRIVATE_FLAG)
  
 +/* Size argument to futex2 syscall */
@@ -217,7 +217,7 @@ index d66cd1014..e39846a73 100644
  	}
 diff --git a/kernel/futex2.c b/kernel/futex2.c
 new file mode 100644
-index 000000000..3b51e893d
+index 000000000..0032c0a8d
 --- /dev/null
 +++ b/kernel/futex2.c
 @@ -0,0 +1,978 @@
@@ -646,7 +646,7 @@ index 000000000..3b51e893d
 +			 int *awaken)
 +{
 +	int i, ret;
-+	bool shared, retry = false;
++	bool retry = false;
 +	u32 uval, *uaddr, val;
 +	struct futex_bucket *bucket;
 +
@@ -861,7 +861,7 @@ index 000000000..3b51e893d
 + *
 + * Return: Error code on failure, pointer to a prepared futexv otherwise
 + */
-+static int futex_parse_waitv(struct futexv *futexv,
++static int futex_parse_waitv(struct futexv_head *futexv,
 +			     struct futex_waitv __user *uwaitv,
 +			     unsigned int nr_futexes)
 +{
@@ -908,7 +908,7 @@ index 000000000..3b51e893d
 +		unsigned int, nr_futexes, unsigned int, flags,
 +		struct __kernel_timespec __user *, timo)
 +{
-+	struct futexv *futexv;
++	struct futexv_head *futexv;
 +	int ret;
 +
 +	if (flags & ~FUTEXV_MASK)
@@ -917,7 +917,7 @@ index 000000000..3b51e893d
 +	if (!nr_futexes || nr_futexes > FUTEX_WAITV_MAX || !waiters)
 +		return -EINVAL;
 +
-+	futexv = kmalloc(sizeof(struct futexv) +
++	futexv = kmalloc(sizeof(struct futexv_head) +
 +			 (sizeof(struct futex_waiter) * nr_futexes),
 +			 GFP_KERNEL);
 +	if (!futexv)
