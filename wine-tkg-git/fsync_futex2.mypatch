@@ -591,3 +591,38 @@ index 1572bc8cdb6..335548f5c20 100644
          {
              char buffer[13];
  
+From 01100cad3183ca0d42033cce275548a901fd8e6f Mon Sep 17 00:00:00 2001
+From: Kyle De'Vir <kyle.devir@mykolab.com>
+Date: Mon, 1 Feb 2021 02:24:43 +1000
+Subject: [PATCH] wine-tkg-git: when using futex2, let the user know
+
+---
+ server/fsync.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/server/fsync.c b/server/fsync.c
+index 174d837e879..3612c38226a 100644
+--- a/server/fsync.c
++++ b/server/fsync.c
+@@ -153,8 +153,16 @@ void fsync_init(void)
+         perror( "ftruncate" );
+ 
+     is_fsync_initialized = 1;
+-
+-    fprintf( stderr, "fsync: up and running.\n" );
++    
++    FILE *f_futex2_check;
++    if (( atoi( getenv( "WINEFSYNC_FUTEX2" ))) && (f_futex2_check = fopen( "/sys/kernel/futex2/wake", "r" )))
++    {
++        fprintf( stderr, "futex2: up and running.\n" );
++    }
++    else
++    {
++        fprintf( stderr, "fsync: up and running.\n" );
++    }
+ 
+     atexit( shm_cleanup );
+ }
+-- 
+2.30.0
+
