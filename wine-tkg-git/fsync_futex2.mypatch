@@ -604,21 +604,15 @@ diff --git a/server/fsync.c b/server/fsync.c
 index 174d837e879..db926fcef7c 100644
 --- a/server/fsync.c
 +++ b/server/fsync.c
-@@ -154,7 +154,16 @@ void fsync_init(void)
+@@ -154,7 +154,10 @@ void fsync_init(void)
  
      is_fsync_initialized = 1;
  
 -    fprintf( stderr, "fsync: up and running.\n" );
-+    FILE *f_futex2_check;
-+    if (( atoi( getenv( "WINEFSYNC_FUTEX2" ))) && (f_futex2_check = fopen( "/sys/kernel/futex2/wake", "r" )))
-+    {
++    if (nr_futex2_wake)
 +        fprintf( stderr, "futex2: up and running.\n" );
-+        fclose(f_futex2_check);
-+    }
 +    else
-+    {
 +        fprintf( stderr, "fsync: up and running.\n" );
-+    }
  
      atexit( shm_cleanup );
  }
