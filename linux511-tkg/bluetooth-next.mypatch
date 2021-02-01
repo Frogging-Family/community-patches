@@ -4040,3 +4040,522 @@ index a24183734bd9d..72c2f5226d673 100644
 -- 
 cgit 1.2.3-1.el7
 
+From 219991e6be7f4a31d471611e265b72f75b2d0538 Mon Sep 17 00:00:00 2001
+From: Hans de Goede <hdegoede@redhat.com>
+Date: Thu, 28 Jan 2021 17:33:12 +0100
+Subject: Bluetooth: Add new HCI_QUIRK_NO_SUSPEND_NOTIFIER quirk
+
+Some devices, e.g. the RTL8723BS bluetooth part, some USB attached devices,
+completely drop from the bus on a system-suspend. These devices will
+have their driver unbound and rebound on resume (when the dropping of
+the bus gets detected) and will show up as a new HCI after resume.
+
+These devices do not benefit from the suspend / resume handling work done
+by the hci_suspend_notifier. At best this unnecessarily adds some time to
+the suspend/resume time. But this may also actually cause problems, if the
+code doing the driver unbinding runs after the pm-notifier then the
+hci_suspend_notifier code will try to talk to a device which is now in
+an uninitialized state.
+
+This commit adds a new HCI_QUIRK_NO_SUSPEND_NOTIFIER quirk which allows
+drivers to opt-out of the hci_suspend_notifier when they know beforehand
+that their device will be fully re-initialized / reprobed on resume.
+
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ include/net/bluetooth/hci.h |  8 ++++++++
+ net/bluetooth/hci_core.c    | 18 +++++++++++-------
+ 2 files changed, 19 insertions(+), 7 deletions(-)
+
+diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
+index c1504aa3d9cfd..ba2f439bc04d3 100644
+--- a/include/net/bluetooth/hci.h
++++ b/include/net/bluetooth/hci.h
+@@ -238,6 +238,14 @@ enum {
+ 	 * during the hdev->setup vendor callback.
+ 	 */
+ 	HCI_QUIRK_BROKEN_ERR_DATA_REPORTING,
++
++	/*
++	 * When this quirk is set, then the hci_suspend_notifier is not
++	 * registered. This is intended for devices which drop completely
++	 * from the bus on system-suspend and which will show up as a new
++	 * HCI after resume.
++	 */
++	HCI_QUIRK_NO_SUSPEND_NOTIFIER,
+ };
+ 
+ /* HCI device flags */
+diff --git a/net/bluetooth/hci_core.c b/net/bluetooth/hci_core.c
+index 9ac258c4dab7f..b0d9c36acc033 100644
+--- a/net/bluetooth/hci_core.c
++++ b/net/bluetooth/hci_core.c
+@@ -3940,10 +3940,12 @@ int hci_register_dev(struct hci_dev *hdev)
+ 	hci_sock_dev_event(hdev, HCI_DEV_REG);
+ 	hci_dev_hold(hdev);
+ 
+-	hdev->suspend_notifier.notifier_call = hci_suspend_notifier;
+-	error = register_pm_notifier(&hdev->suspend_notifier);
+-	if (error)
+-		goto err_wqueue;
++	if (!test_bit(HCI_QUIRK_NO_SUSPEND_NOTIFIER, &hdev->quirks)) {
++		hdev->suspend_notifier.notifier_call = hci_suspend_notifier;
++		error = register_pm_notifier(&hdev->suspend_notifier);
++		if (error)
++			goto err_wqueue;
++	}
+ 
+ 	queue_work(hdev->req_workqueue, &hdev->power_on);
+ 
+@@ -3978,9 +3980,11 @@ void hci_unregister_dev(struct hci_dev *hdev)
+ 
+ 	cancel_work_sync(&hdev->power_on);
+ 
+-	hci_suspend_clear_tasks(hdev);
+-	unregister_pm_notifier(&hdev->suspend_notifier);
+-	cancel_work_sync(&hdev->suspend_prepare);
++	if (!test_bit(HCI_QUIRK_NO_SUSPEND_NOTIFIER, &hdev->quirks)) {
++		hci_suspend_clear_tasks(hdev);
++		unregister_pm_notifier(&hdev->suspend_notifier);
++		cancel_work_sync(&hdev->suspend_prepare);
++	}
+ 
+ 	hci_dev_do_close(hdev);
+ 
+-- 
+cgit 1.2.3-1.el7
+
+From 231ee8bd837f00bbffedbe0ebccbc7da1d1a9f02 Mon Sep 17 00:00:00 2001
+From: Jiapeng Zhong <abaci-bugfix@linux.alibaba.com>
+Date: Wed, 27 Jan 2021 14:17:33 +0800
+Subject: Bluetooth: fix coccicheck warnings debugfs
+
+Use DEFINE_DEBUGFS_ATTRIBUTE rather than DEFINE_SIMPLE_ATTRIBUTE
+for debugfs files.
+
+Reported-by: Abaci Robot<abaci@linux.alibaba.com>
+Signed-off-by: Jiapeng Zhong <abaci-bugfix@linux.alibaba.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/hci_debugfs.c | 80 ++++++++++++++++++++++-----------------------
+ 1 file changed, 40 insertions(+), 40 deletions(-)
+
+diff --git a/net/bluetooth/hci_debugfs.c b/net/bluetooth/hci_debugfs.c
+index 4626e0289a970..1a0ab58bfad09 100644
+--- a/net/bluetooth/hci_debugfs.c
++++ b/net/bluetooth/hci_debugfs.c
+@@ -237,8 +237,8 @@ static int conn_info_min_age_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(conn_info_min_age_fops, conn_info_min_age_get,
+-			conn_info_min_age_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(conn_info_min_age_fops, conn_info_min_age_get,
++			  conn_info_min_age_set, "%llu\n");
+ 
+ static int conn_info_max_age_set(void *data, u64 val)
+ {
+@@ -265,8 +265,8 @@ static int conn_info_max_age_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(conn_info_max_age_fops, conn_info_max_age_get,
+-			conn_info_max_age_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(conn_info_max_age_fops, conn_info_max_age_get,
++			  conn_info_max_age_set, "%llu\n");
+ 
+ static ssize_t use_debug_keys_read(struct file *file, char __user *user_buf,
+ 				   size_t count, loff_t *ppos)
+@@ -419,8 +419,8 @@ static int voice_setting_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(voice_setting_fops, voice_setting_get,
+-			NULL, "0x%4.4llx\n");
++DEFINE_DEBUGFS_ATTRIBUTE(voice_setting_fops, voice_setting_get,
++			  NULL, "0x%4.4llx\n");
+ 
+ static ssize_t ssp_debug_mode_read(struct file *file, char __user *user_buf,
+ 				   size_t count, loff_t *ppos)
+@@ -476,9 +476,9 @@ static int min_encrypt_key_size_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(min_encrypt_key_size_fops,
+-			min_encrypt_key_size_get,
+-			min_encrypt_key_size_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(min_encrypt_key_size_fops,
++			  min_encrypt_key_size_get,
++			  min_encrypt_key_size_set, "%llu\n");
+ 
+ static int auto_accept_delay_get(void *data, u64 *val)
+ {
+@@ -491,8 +491,8 @@ static int auto_accept_delay_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(auto_accept_delay_fops, auto_accept_delay_get,
+-			auto_accept_delay_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(auto_accept_delay_fops, auto_accept_delay_get,
++			  auto_accept_delay_set, "%llu\n");
+ 
+ static ssize_t force_bredr_smp_read(struct file *file,
+ 				    char __user *user_buf,
+@@ -558,8 +558,8 @@ static int idle_timeout_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(idle_timeout_fops, idle_timeout_get,
+-			idle_timeout_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(idle_timeout_fops, idle_timeout_get,
++			  idle_timeout_set, "%llu\n");
+ 
+ static int sniff_min_interval_set(void *data, u64 val)
+ {
+@@ -586,8 +586,8 @@ static int sniff_min_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(sniff_min_interval_fops, sniff_min_interval_get,
+-			sniff_min_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(sniff_min_interval_fops, sniff_min_interval_get,
++			  sniff_min_interval_set, "%llu\n");
+ 
+ static int sniff_max_interval_set(void *data, u64 val)
+ {
+@@ -614,8 +614,8 @@ static int sniff_max_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(sniff_max_interval_fops, sniff_max_interval_get,
+-			sniff_max_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(sniff_max_interval_fops, sniff_max_interval_get,
++			  sniff_max_interval_set, "%llu\n");
+ 
+ void hci_debugfs_create_bredr(struct hci_dev *hdev)
+ {
+@@ -706,8 +706,8 @@ static int rpa_timeout_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(rpa_timeout_fops, rpa_timeout_get,
+-			rpa_timeout_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(rpa_timeout_fops, rpa_timeout_get,
++			  rpa_timeout_set, "%llu\n");
+ 
+ static int random_address_show(struct seq_file *f, void *p)
+ {
+@@ -869,8 +869,8 @@ static int conn_min_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(conn_min_interval_fops, conn_min_interval_get,
+-			conn_min_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(conn_min_interval_fops, conn_min_interval_get,
++			  conn_min_interval_set, "%llu\n");
+ 
+ static int conn_max_interval_set(void *data, u64 val)
+ {
+@@ -897,8 +897,8 @@ static int conn_max_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(conn_max_interval_fops, conn_max_interval_get,
+-			conn_max_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(conn_max_interval_fops, conn_max_interval_get,
++			  conn_max_interval_set, "%llu\n");
+ 
+ static int conn_latency_set(void *data, u64 val)
+ {
+@@ -925,8 +925,8 @@ static int conn_latency_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(conn_latency_fops, conn_latency_get,
+-			conn_latency_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(conn_latency_fops, conn_latency_get,
++			  conn_latency_set, "%llu\n");
+ 
+ static int supervision_timeout_set(void *data, u64 val)
+ {
+@@ -953,8 +953,8 @@ static int supervision_timeout_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(supervision_timeout_fops, supervision_timeout_get,
+-			supervision_timeout_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(supervision_timeout_fops, supervision_timeout_get,
++			  supervision_timeout_set, "%llu\n");
+ 
+ static int adv_channel_map_set(void *data, u64 val)
+ {
+@@ -981,8 +981,8 @@ static int adv_channel_map_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(adv_channel_map_fops, adv_channel_map_get,
+-			adv_channel_map_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(adv_channel_map_fops, adv_channel_map_get,
++			  adv_channel_map_set, "%llu\n");
+ 
+ static int adv_min_interval_set(void *data, u64 val)
+ {
+@@ -1009,8 +1009,8 @@ static int adv_min_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(adv_min_interval_fops, adv_min_interval_get,
+-			adv_min_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(adv_min_interval_fops, adv_min_interval_get,
++			  adv_min_interval_set, "%llu\n");
+ 
+ static int adv_max_interval_set(void *data, u64 val)
+ {
+@@ -1037,8 +1037,8 @@ static int adv_max_interval_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(adv_max_interval_fops, adv_max_interval_get,
+-			adv_max_interval_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(adv_max_interval_fops, adv_max_interval_get,
++			  adv_max_interval_set, "%llu\n");
+ 
+ static int min_key_size_set(void *data, u64 val)
+ {
+@@ -1065,8 +1065,8 @@ static int min_key_size_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(min_key_size_fops, min_key_size_get,
+-			min_key_size_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(min_key_size_fops, min_key_size_get,
++			  min_key_size_set, "%llu\n");
+ 
+ static int max_key_size_set(void *data, u64 val)
+ {
+@@ -1093,8 +1093,8 @@ static int max_key_size_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(max_key_size_fops, max_key_size_get,
+-			max_key_size_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(max_key_size_fops, max_key_size_get,
++			  max_key_size_set, "%llu\n");
+ 
+ static int auth_payload_timeout_set(void *data, u64 val)
+ {
+@@ -1121,9 +1121,9 @@ static int auth_payload_timeout_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-DEFINE_SIMPLE_ATTRIBUTE(auth_payload_timeout_fops,
+-			auth_payload_timeout_get,
+-			auth_payload_timeout_set, "%llu\n");
++DEFINE_DEBUGFS_ATTRIBUTE(auth_payload_timeout_fops,
++			  auth_payload_timeout_get,
++			  auth_payload_timeout_set, "%llu\n");
+ 
+ static ssize_t force_no_mitm_read(struct file *file,
+ 				  char __user *user_buf,
+-- 
+cgit 1.2.3-1.el7
+
+From 9ab9235fe5cf7f8823c5c5c90f56d18ec59350b4 Mon Sep 17 00:00:00 2001
+From: Max Chou <max.chou@realtek.com>
+Date: Wed, 27 Jan 2021 11:01:52 +0800
+Subject: Bluetooth: btrtl: Enable WBS for the specific Realtek devices
+
+By this change, it will enable WBS supported on the specific Realtek BT
+devices, such as RTL8822C and RTL8852A.
+In the future, it's able to maintain what the Realtek devices support WBS
+here.
+
+Tested-by: Hilda Wu <hildawu@realtek.com>
+Reviewed-by: Abhishek Pandit-Subedi <abhishekpandit@chromium.org>
+Signed-off-by: Max Chou <max.chou@realtek.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btrtl.c | 30 +++++++++++++++++++++++-------
+ 1 file changed, 23 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/bluetooth/btrtl.c b/drivers/bluetooth/btrtl.c
+index 24f03a1f8d578..e7fe5fb227535 100644
+--- a/drivers/bluetooth/btrtl.c
++++ b/drivers/bluetooth/btrtl.c
+@@ -38,6 +38,19 @@
+ 	.hci_ver = (hciv), \
+ 	.hci_bus = (bus)
+ 
++enum btrtl_chip_id {
++	CHIP_ID_8723A,
++	CHIP_ID_8723B,
++	CHIP_ID_8821A,
++	CHIP_ID_8761A,
++	CHIP_ID_8822B = 8,
++	CHIP_ID_8723D,
++	CHIP_ID_8821C,
++	CHIP_ID_8822C = 13,
++	CHIP_ID_8761B,
++	CHIP_ID_8852A = 18,
++};
++
+ struct id_table {
+ 	__u16 match_flags;
+ 	__u16 lmp_subver;
+@@ -58,6 +71,7 @@ struct btrtl_device_info {
+ 	u8 *cfg_data;
+ 	int cfg_len;
+ 	bool drop_fw;
++	int project_id;
+ };
+ 
+ static const struct id_table ic_id_table[] = {
+@@ -307,8 +321,10 @@ static int rtlbt_parse_firmware(struct hci_dev *hdev,
+ 
+ 	/* Find project_id in table */
+ 	for (i = 0; i < ARRAY_SIZE(project_id_to_lmp_subver); i++) {
+-		if (project_id == project_id_to_lmp_subver[i].id)
++		if (project_id == project_id_to_lmp_subver[i].id) {
++			btrtl_dev->project_id = project_id;
+ 			break;
++		}
+ 	}
+ 
+ 	if (i >= ARRAY_SIZE(project_id_to_lmp_subver)) {
+@@ -719,22 +735,22 @@ int btrtl_setup_realtek(struct hci_dev *hdev)
+ 	 */
+ 	set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
+ 
+-	if (!btrtl_dev->ic_info)
+-		goto done;
+-
+ 	/* Enable central-peripheral role (able to create new connections with
+ 	 * an existing connection in slave role).
+ 	 */
+-	switch (btrtl_dev->ic_info->lmp_subver) {
+-	case RTL_ROM_LMP_8822B:
++	/* Enable WBS supported for the specific Realtek devices. */
++	switch (btrtl_dev->project_id) {
++	case CHIP_ID_8822C:
++	case CHIP_ID_8852A:
+ 		set_bit(HCI_QUIRK_VALID_LE_STATES, &hdev->quirks);
++		set_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED, &hdev->quirks);
+ 		break;
+ 	default:
+ 		rtl_dev_dbg(hdev, "Central-peripheral role not enabled.");
++		rtl_dev_dbg(hdev, "WBS supported not enabled.");
+ 		break;
+ 	}
+ 
+-done:
+ 	btrtl_free(btrtl_dev);
+ 	return ret;
+ }
+-- 
+cgit 1.2.3-1.el7
+
+From b8ddc3b14c7abcc19b16c74bf6c21d54c2299c09 Mon Sep 17 00:00:00 2001
+From: Tomoyuki Matsushita <xorphitus@fastmail.com>
+Date: Sat, 30 Jan 2021 00:47:27 +0900
+Subject: Bluetooth: fix indentation and alignment reported by checkpatch
+
+Signed-off-by: Tomoyuki Matsushita <xorphitus@fastmail.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/af_bluetooth.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+index 4ef6a54403aa2..1661979b6a6e8 100644
+--- a/net/bluetooth/af_bluetooth.c
++++ b/net/bluetooth/af_bluetooth.c
+@@ -72,8 +72,8 @@ void bt_sock_reclassify_lock(struct sock *sk, int proto)
+ 	BUG_ON(!sock_allow_reclassification(sk));
+ 
+ 	sock_lock_init_class_and_name(sk,
+-			bt_slock_key_strings[proto], &bt_slock_key[proto],
+-				bt_key_strings[proto], &bt_lock_key[proto]);
++				      bt_slock_key_strings[proto], &bt_slock_key[proto],
++				      bt_key_strings[proto], &bt_lock_key[proto]);
+ }
+ EXPORT_SYMBOL(bt_sock_reclassify_lock);
+ 
+@@ -451,7 +451,7 @@ static inline __poll_t bt_accept_poll(struct sock *parent)
+ }
+ 
+ __poll_t bt_sock_poll(struct file *file, struct socket *sock,
+-			  poll_table *wait)
++		      poll_table *wait)
+ {
+ 	struct sock *sk = sock->sk;
+ 	__poll_t mask = 0;
+@@ -478,8 +478,8 @@ __poll_t bt_sock_poll(struct file *file, struct socket *sock,
+ 		mask |= EPOLLHUP;
+ 
+ 	if (sk->sk_state == BT_CONNECT ||
+-			sk->sk_state == BT_CONNECT2 ||
+-			sk->sk_state == BT_CONFIG)
++	    sk->sk_state == BT_CONNECT2 ||
++	    sk->sk_state == BT_CONFIG)
+ 		return mask;
+ 
+ 	if (!test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags) && sock_writeable(sk))
+@@ -508,7 +508,7 @@ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+ 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
+ 		if (amount < 0)
+ 			amount = 0;
+-		err = put_user(amount, (int __user *) arg);
++		err = put_user(amount, (int __user *)arg);
+ 		break;
+ 
+ 	case TIOCINQ:
+@@ -519,7 +519,7 @@ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+ 		skb = skb_peek(&sk->sk_receive_queue);
+ 		amount = skb ? skb->len : 0;
+ 		release_sock(sk);
+-		err = put_user(amount, (int __user *) arg);
++		err = put_user(amount, (int __user *)arg);
+ 		break;
+ 
+ 	default:
+@@ -637,7 +637,7 @@ static int bt_seq_show(struct seq_file *seq, void *v)
+ 	struct bt_sock_list *l = PDE_DATA(file_inode(seq->file));
+ 
+ 	if (v == SEQ_START_TOKEN) {
+-		seq_puts(seq ,"sk               RefCnt Rmem   Wmem   User   Inode  Parent");
++		seq_puts(seq, "sk               RefCnt Rmem   Wmem   User   Inode  Parent");
+ 
+ 		if (l->custom_seq_show) {
+ 			seq_putc(seq, ' ');
+@@ -657,7 +657,7 @@ static int bt_seq_show(struct seq_file *seq, void *v)
+ 			   sk_wmem_alloc_get(sk),
+ 			   from_kuid(seq_user_ns(seq), sock_i_uid(sk)),
+ 			   sock_i_ino(sk),
+-			   bt->parent? sock_i_ino(bt->parent): 0LU);
++			   bt->parent ? sock_i_ino(bt->parent) : 0LU);
+ 
+ 		if (l->custom_seq_show) {
+ 			seq_putc(seq, ' ');
+@@ -678,7 +678,7 @@ static const struct seq_operations bt_seq_ops = {
+ 
+ int bt_procfs_init(struct net *net, const char *name,
+ 		   struct bt_sock_list *sk_list,
+-		   int (* seq_show)(struct seq_file *, void *))
++		   int (*seq_show)(struct seq_file *, void *))
+ {
+ 	sk_list->custom_seq_show = seq_show;
+ 
+@@ -694,7 +694,7 @@ void bt_procfs_cleanup(struct net *net, const char *name)
+ #else
+ int bt_procfs_init(struct net *net, const char *name,
+ 		   struct bt_sock_list *sk_list,
+-		   int (* seq_show)(struct seq_file *, void *))
++		   int (*seq_show)(struct seq_file *, void *))
+ {
+ 	return 0;
+ }
+-- 
+cgit 1.2.3-1.el7
+
