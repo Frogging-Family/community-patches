@@ -1,0 +1,29 @@
+From c98204ddf0b1b921fe05bd0b292be45d836cc959 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Mon, 8 Feb 2021 11:08:29 +0100
+Subject: [PATCH] Don't Skip adding public symbols. Required for FakePDB
+ generated PDB
+
+---
+ dlls/dbghelp/symbol.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/dlls/dbghelp/symbol.c b/dlls/dbghelp/symbol.c
+index 706d088aec0..950d8268cb5 100644
+--- a/dlls/dbghelp/symbol.c
++++ b/dlls/dbghelp/symbol.c
+@@ -208,9 +208,9 @@ struct symt_public* symt_new_public(struct module* module,
+ 
+     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n",
+                          debugstr_w(module->module.ModuleName), name, address);
+-    if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
++    /*if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
+         symt_find_nearest(module, address) != NULL)
+-        return NULL;
++        return NULL;*/
+     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+     {
+         sym->symt.tag      = SymTagPublicSymbol;
+-- 
+2.30.0
+

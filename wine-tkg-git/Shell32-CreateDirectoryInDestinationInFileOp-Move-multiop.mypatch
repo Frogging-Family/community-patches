@@ -1,0 +1,125 @@
+diff --git a/dlls/shell32/shlfileop.c b/dlls/shell32/shlfileop.c
+index 24f162023a5..af511820f60 100644
+--- a/dlls/shell32/shlfileop.c
++++ b/dlls/shell32/shlfileop.c
+@@ -1446,8 +1446,9 @@ static void move_to_dir(FILE_OPERATION *op, const FILE_ENTRY *feFrom, const FILE
+ /* the FO_MOVE operation */
+ static int move_files(FILE_OPERATION *op, BOOL multidest, const FILE_LIST *flFrom, const FILE_LIST *flTo)
+ {
+-    DWORD i;
++    DWORD i, maxMoves;
+     INT mismatched = 0;
++    BOOL targetIsDir = FALSE;
+     const FILE_ENTRY *entryToMove;
+     const FILE_ENTRY *fileDest;
+ 
+@@ -1468,38 +1469,41 @@ static int move_files(FILE_OPERATION *op, BOOL multidest, const FILE_LIST *flFro
+         return ERROR_CANCELLED;
+     }
+ 
+-    if (!PathFileExistsW(flTo->feFiles[0].szDirectory))
+-    {
+-        int ret = SHCreateDirectoryExW(NULL, flTo->feFiles[0].szDirectory, NULL);
+-        if (ret)
+-            return ret;
+-    }
+-
+     if (multidest)
+         mismatched = flFrom->dwNumFiles - flTo->dwNumFiles;
+ 
++    if (multidest && flFrom->dwNumFiles > flTo->dwNumFiles)
++        maxMoves = flTo->dwNumFiles;
++    else
++        maxMoves = flFrom->dwNumFiles;
++
++
+     fileDest = &flTo->feFiles[0];
+-    for (i = 0; i < flFrom->dwNumFiles; i++)
++    create_dest_dirs(fileDest->szDirectory);
++    targetIsDir = fileDest->bExists && IsAttribDir(fileDest->attributes);
++    for (i = 0; i < maxMoves; i++)
+     {
+         entryToMove = &flFrom->feFiles[i];
+ 
+-        if (!PathFileExistsW(fileDest->szDirectory))
+-            return ERROR_CANCELLED;
+-
+         if (multidest)
+         {
+-            if (i >= flTo->dwNumFiles)
+-                break;
+             fileDest = &flTo->feFiles[i];
+             if (mismatched && !fileDest->bExists)
+             {
+-                create_dest_dirs(flTo->feFiles[i].szFullPath);
+-                flTo->feFiles[i].bExists = TRUE;
+-                flTo->feFiles[i].attributes = FILE_ATTRIBUTE_DIRECTORY;
++                create_dest_dirs(fileDest->szFullPath);
++                targetIsDir = TRUE;
++            }
++            else
++            {
++                create_dest_dirs(fileDest->szDirectory);
++                targetIsDir = fileDest->bExists && IsAttribDir(fileDest->attributes);
+             }
+         }
+ 
+-        if (fileDest->bExists && IsAttribDir(fileDest->attributes))
++        if (!PathFileExistsW(fileDest->szDirectory))
++            return ERROR_CANCELLED;
++
++        if (targetIsDir)
+             move_to_dir(op, entryToMove, fileDest);
+         else
+             SHNotifyMoveFileW(op, entryToMove->szFullPath, fileDest->szFullPath);
+diff --git a/dlls/shell32/tests/shlfileop.c b/dlls/shell32/tests/shlfileop.c
+index 5c0fb6a4cf6..8b9e04e6ce1 100644
+--- a/dlls/shell32/tests/shlfileop.c
++++ b/dlls/shell32/tests/shlfileop.c
+@@ -2309,7 +2309,9 @@ static void test_move(void)
+     {
+         /* New behavior on Vista or later */
+         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+-        ok(DeleteFileA("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
++        ok(file_exists("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
++        ok(!dir_exists("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to be a file\n");
++        DeleteFileA("dir1\\dir2\\test2.txt");
+         RemoveDirectoryA("dir1\\dir2");
+         RemoveDirectoryA("dir1");
+         createTestFile("test2.txt");
+@@ -2319,7 +2321,35 @@ static void test_move(void)
+         expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
+     }
+ 
++    /* FO_MOVE should create directories with multidest */
++    shfo.pFrom = "test2.txt\0test3.txt\0";
++    shfo.pTo = "dir1\\dir2\\test2.txt\0dir1\\dir3\\dir4\\test3.txt\0";
++    retval = SHFileOperationA(&shfo);
++    if (dir_exists("dir1"))
++    {
++        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
++        ok(file_exists("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
++        ok(file_exists("dir1\\dir3\\dir4\\test3.txt"), "Expected dir1\\dir3\\dir4\\test3.txt to exist\n");
++        ok(!dir_exists("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to be a file\n");
++        ok(!dir_exists("dir1\\dir3\\dir4\\test3.txt"), "Expected dir1\\dir3\\dir4\\test3.txt to be a file\n");
++        ok(!file_exists("test2.txt"), "File test2.txt should be moved\n");
++        ok(!file_exists("test3.txt"), "File test3.txt should be moved\n");
++        DeleteFileA("dir1\\dir2\\test2.txt");
++        DeleteFileA("dir1\\dir3\\dir4\\test3.txt");
++        RemoveDirectoryA("dir1\\dir3\\dir4");
++        RemoveDirectoryA("dir1\\dir3");
++        RemoveDirectoryA("dir1\\dir2");
++        RemoveDirectoryA("dir1");
++        createTestFile("test2.txt");
++        createTestFile("test3.txt");
++    }
++    else
++    {
++        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
++    }
++
+     /* try to overwrite an existing file */
++    shfo.pFrom = "test2.txt\0";
+     shfo.pTo = "test3.txt\0";
+     retval = SHFileOperationA(&shfo);
+     if (retval == DE_OPCANCELLED)
