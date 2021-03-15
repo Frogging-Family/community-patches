@@ -1,0 +1,27 @@
+From 2cd59f0a1ae74a01ea69cf2b561f444bf107b75e Mon Sep 17 00:00:00 2001
+From: John Zourlios <john.kinigos@gmail.com>
+Date: Mon, 14 Dec 2020 23:35:37 +0200
+Subject: [PATCH] -Add SORT_DIGITSASNUMBERS flag to CompareStringsEx (Fixes FL
+ Studio 20.8 crash on startup)
+
+---
+ dlls/kernelbase/locale.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dlls/kernelbase/locale.c b/dlls/kernelbase/locale.c
+index c60b796aa48..51085f4377a 100644
+--- a/dlls/kernelbase/locale.c
++++ b/dlls/kernelbase/locale.c
+@@ -3021,7 +3021,7 @@ INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1,
+ {
+     DWORD supported_flags = NORM_IGNORECASE | NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS | SORT_STRINGSORT |
+                             NORM_IGNOREKANATYPE | NORM_IGNOREWIDTH | LOCALE_USE_CP_ACP;
+-    DWORD semistub_flags = NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE | 0x10000000;
++    DWORD semistub_flags = NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE | 0x10000000 | SORT_DIGITSASNUMBERS;
+     /* 0x10000000 is related to diacritics in Arabic, Japanese, and Hebrew */
+     INT ret;
+     static int once;
+-- 
+2.29.2
+
+ 

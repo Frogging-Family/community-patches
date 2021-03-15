@@ -42,3 +42,4 @@
 - wine-fix-gcc10.mypatch - Fix for a specific compilation error (`error: unknown type name ‘va_list’`) some people encounter for unknown reason - https://github.com/Frogging-Family/wine-tkg-git/issues/165 - Thanks to @drizzt https://gist.github.com/drizzt/364a915fc5f88b6143b913e7f494950b
 - Don-t-Skip-adding-public-symbols-Required-for-FakePDB.mypatch : Allow FakePDB  generated or LLVM generated PDBs to works with the builtin dbghelp.dll 
 - Shell32-CreateDirectoryInDestinationInFileOp-Move-multiop.mypatch : Fix Multiop fileop MOVE not creating directories in destination. Required for WryeBash Installer functionality - Thanks to @t0suj4
+- Add-SORT_DIGITSAS-UMBERS-flag-to-CompareStringsEx.mypatch : Fix for FL Studio 20.8 crash on startup - https://bugs.winehq.org/show_bug.cgi?id=50362
