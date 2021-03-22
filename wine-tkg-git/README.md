@@ -43,3 +43,4 @@
 - Don-t-Skip-adding-public-symbols-Required-for-FakePDB.mypatch : Allow FakePDB  generated or LLVM generated PDBs to works with the builtin dbghelp.dll 
 - Shell32-CreateDirectoryInDestinationInFileOp-Move-multiop.mypatch : Fix Multiop fileop MOVE not creating directories in destination. Required for WryeBash Installer functionality - Thanks to @t0suj4
 - Add-SORT_DIGITSAS-UMBERS-flag-to-CompareStringsEx.mypatch : Fix for FL Studio 20.8 crash on startup - https://bugs.winehq.org/show_bug.cgi?id=50362
+- 0001-ntdll-Use-kernel-soft-dirty-flags-for-write-watches-.mypatch : Needed for D3D12 APITracing - Needs a patched kernel (see linux-tkg)
