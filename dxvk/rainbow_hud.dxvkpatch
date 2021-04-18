@@ -1,20 +1,15 @@
-From 73790db831779ad2101441785af756169430887d Mon Sep 17 00:00:00 2001
-From: Joshua Ashton <joshua@froggi.es>
-Date: Fri, 13 Dec 2019 22:30:12 +0000
-Subject: [PATCH] =?UTF-8?q?[=F0=9F=8C=88]=20RAINBOWS!!!=20=F0=9F=8C=88?=
- =?UTF-8?q?=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88?=
- =?UTF-8?q?=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88=F0=9F=8C=88?=
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From 4b4aaab6de5c7674085f3d8235216e8239db1cb8 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Tue, 13 Apr 2021 22:10:46 +0200
+Subject: [PATCH] Josh HUD
 
 ---
  src/dxvk/hud/dxvk_hud_renderer.cpp | 46 +++++++++++++++++++++++++++++-
- src/dxvk/hud/dxvk_hud_renderer.h   |  6 ++++
- 2 files changed, 51 insertions(+), 1 deletion(-)
+ src/dxvk/hud/dxvk_hud_renderer.h   |  8 +++++-
+ 2 files changed, 52 insertions(+), 2 deletions(-)
 
 diff --git a/src/dxvk/hud/dxvk_hud_renderer.cpp b/src/dxvk/hud/dxvk_hud_renderer.cpp
-index e6f5de15f..3fcb7c559 100644
+index 1de3607b..2a94a2c0 100644
 --- a/src/dxvk/hud/dxvk_hud_renderer.cpp
 +++ b/src/dxvk/hud/dxvk_hud_renderer.cpp
 @@ -6,6 +6,8 @@
@@ -26,7 +21,7 @@ index e6f5de15f..3fcb7c559 100644
  namespace dxvk::hud {
    
    HudRenderer::HudRenderer(const Rc<DxvkDevice>& device)
-@@ -16,7 +18,8 @@ namespace dxvk::hud {
+@@ -17,7 +19,8 @@ namespace dxvk::hud {
      m_fontImage     (createFontImage(device)),
      m_fontView      (createFontView(device)),
      m_fontSampler   (createFontSampler(device)),
@@ -36,9 +31,9 @@ index e6f5de15f..3fcb7c559 100644
      this->initFontTexture(device);
      this->initCharMap();
    }
-@@ -38,6 +41,45 @@ namespace dxvk::hud {
-     m_surfaceSize = surfaceSize;
-     m_context     = context;
+@@ -39,6 +42,45 @@ namespace dxvk::hud {
+ 
+     allocVertexBufferSlice();
    }
 +
 +
@@ -82,17 +77,17 @@ index e6f5de15f..3fcb7c559 100644
    
    
    void HudRenderer::drawText(
-@@ -47,6 +89,8 @@ namespace dxvk::hud {
-     const std::string&      text) {
-     beginTextRendering();
+@@ -51,6 +93,8 @@ namespace dxvk::hud {
+     const float xscale = m_scale / std::max(float(m_surfaceSize.width),  1.0f);
+     const float yscale = m_scale / std::max(float(m_surfaceSize.height), 1.0f);
  
 +    color = generateRainbowColor(color);
 +
      uint32_t vertexCount = 6 * text.size();
  
-     auto vertexSlice = allocVertexBuffer(vertexCount * sizeof(HudTextVertex));
+     if (m_currTextVertex   + vertexCount > MaxTextVertexCount
 diff --git a/src/dxvk/hud/dxvk_hud_renderer.h b/src/dxvk/hud/dxvk_hud_renderer.h
-index 8b658c49d..ce88bfb16 100644
+index c5b8e1da..cb7cdfee 100644
 --- a/src/dxvk/hud/dxvk_hud_renderer.h
 +++ b/src/dxvk/hud/dxvk_hud_renderer.h
 @@ -2,6 +2,8 @@
@@ -104,21 +99,31 @@ index 8b658c49d..ce88bfb16 100644
  #include "dxvk_hud_font.h"
  
  namespace dxvk::hud {
-@@ -86,6 +88,8 @@ namespace dxvk::hud {
-     void beginFrame(
-       const Rc<DxvkContext>&  context,
-             VkExtent2D        surfaceSize);
-+
-+    HudColor generateRainbowColor(HudColor color);
+@@ -96,6 +98,8 @@ namespace dxvk::hud {
+             VkExtent2D        surfaceSize,
+             float             scale);
      
++    HudColor generateRainbowColor(HudColor color);
++    
      void drawText(
              float             size,
-@@ -129,6 +133,8 @@ namespace dxvk::hud {
-     uint32_t            m_currTextVertex    = 0;
+             HudPos            pos,
+@@ -148,6 +152,8 @@ namespace dxvk::hud {
      uint32_t            m_currTextInstance  = 0;
      uint32_t            m_currLineVertex    = 0;
-+
-+    dxvk::high_resolution_clock::time_point m_startTime;
  
++    dxvk::high_resolution_clock::time_point m_startTime;
++
      void allocVertexBufferSlice();
      
+     void beginTextRendering();
+@@ -179,4 +185,4 @@ namespace dxvk::hud {
+     
+   };
+   
+-}
+\ No newline at end of file
++}
+-- 
+2.31.1
+
