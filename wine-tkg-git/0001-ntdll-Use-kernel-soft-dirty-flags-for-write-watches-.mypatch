@@ -96,7 +96,7 @@ index e6af7fddc21..63f22ecf318 100644
  static struct file_view *view_block_start, *view_block_end, *next_free_view;
  static const size_t view_block_size = 0x100000;
  static void *preload_reserve_start;
-@@ -991,7 +998,7 @@ static int get_unix_prot( BYTE vprot )
+@@ -1017,7 +1017,7 @@ static int get_unix_prot( BYTE vprot )
          /* FIXME: Architecture needs implementation of signal_init_early. */
          if (vprot & VPROT_WRITECOPY) prot |= PROT_WRITE | PROT_READ;
  #endif
@@ -191,7 +191,7 @@ index e6af7fddc21..63f22ecf318 100644
      {
          if (vprot & VPROT_WRITEWATCH)
          {
-@@ -3231,14 +3275,14 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
+@@ -3435,7 +3435,7 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
      for (i = 0; i < size; i += page_size)
      {
          BYTE vprot = get_page_vprot( addr + i );
@@ -200,8 +200,7 @@ index e6af7fddc21..63f22ecf318 100644
          if (vprot & VPROT_WRITECOPY)
          {
              vprot = (vprot & ~VPROT_WRITECOPY) | VPROT_WRITE;
-             *has_write_watch = TRUE;
-         }
+@@ -3444,7 +3444,7 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
          if (!(get_unix_prot( vprot & ~VPROT_WRITEWATCH ) & PROT_WRITE))
              return STATUS_INVALID_USER_BUFFER;
      }
