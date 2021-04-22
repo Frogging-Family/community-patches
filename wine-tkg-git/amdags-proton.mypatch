@@ -1569,6 +1569,51 @@ index 00000000000..382447089bc
 +
 +    return TRUE;
 +}
+From 6c1f7e489f1cf1726e9e818e24a1d45398acf81c Mon Sep 17 00:00:00 2001
+From: Zhiyi Zhang <zzhang@codeweavers.com>
+Date: Tue, 1 Oct 2019 09:28:29 +0800
+Subject: [PATCH] amd_args_x64: Add agsGetCrossfireGPUCount stub.
+
+Signed-off-by: Zhiyi Zhang <zzhang@codeweavers.com>
+---
+ dlls/amd_ags_x64/amd_ags_x64.spec   |  2 +-
+ dlls/amd_ags_x64/amd_ags_x64_main.c | 11 +++++++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/dlls/amd_ags_x64/amd_ags_x64.spec b/dlls/amd_ags_x64/amd_ags_x64.spec
+index b4da6136a64..a302d2fc657 100644
+--- a/dlls/amd_ags_x64/amd_ags_x64.spec
++++ b/dlls/amd_ags_x64/amd_ags_x64.spec
+@@ -24,6 +24,6 @@
+ 24 stub agsDriverExtensionsDX11_SetViewBroadcastMasks
+ 25 stub agsDriverExtensionsDX12_DeInit
+ 26 stub agsDriverExtensionsDX12_Init
+-27 stub agsGetCrossfireGPUCount
++27 stdcall agsGetCrossfireGPUCount(ptr ptr)
+ 28 stdcall agsInit(ptr ptr ptr)
+ 29 stub agsSetDisplayMode
+diff --git a/dlls/amd_ags_x64/amd_ags_x64_main.c b/dlls/amd_ags_x64/amd_ags_x64_main.c
+index 382447089bc..26b39991525 100644
+--- a/dlls/amd_ags_x64/amd_ags_x64_main.c
++++ b/dlls/amd_ags_x64/amd_ags_x64_main.c
+@@ -176,6 +176,17 @@ AGSReturnCode WINAPI agsDeInit(AGSContext *context)
+     return AGS_SUCCESS;
+ }
+ 
++AGSReturnCode WINAPI agsGetCrossfireGPUCount(AGSContext *context, int *gpu_count)
++{
++    TRACE("context %p gpu_count %p stub!\n", context, gpu_count);
++
++    if (!context || !gpu_count)
++        return AGS_INVALID_ARGS;
++
++    *gpu_count = 1;
++    return AGS_SUCCESS;
++}
++
+ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
+ {
+     TRACE("%p, %u, %p.\n", instance, reason, reserved);
 From 64bebf345ed6bb4620938753f7668a85c6bf1410 Mon Sep 17 00:00:00 2001
 From: Brendan Shanks <bshanks@codeweavers.com>
 Date: Thu, 11 Jun 2020 15:39:32 -0700
@@ -3822,7 +3867,7 @@ index a302d2fc657..c571dac2184 100644
 -24 stub agsDriverExtensionsDX11_SetViewBroadcastMasks
 -25 stub agsDriverExtensionsDX12_DeInit
 -26 stub agsDriverExtensionsDX12_Init
--27 stub agsGetCrossfireGPUCount
+-27 stdcall agsGetCrossfireGPUCount(ptr ptr)
 -28 stdcall agsInit(ptr ptr ptr)
 -29 stub agsSetDisplayMode
 +@ stdcall agsDeInit(ptr)
