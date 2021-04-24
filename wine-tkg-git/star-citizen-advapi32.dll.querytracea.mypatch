@@ -1,0 +1,89 @@
+Adds a stub for QueryTraceA and StorageDeviceSeekPenaltyProperty, needed for Star Citizen 3.13
+https://bugs.winehq.org/attachment.cgi?id=69859
+https://bugs.winehq.org/show_bug.cgi?id=50992
+
+diff --git a/dlls/advapi32/advapi32.spec b/dlls/advapi32/advapi32.spec
+index d5235c6adb9..1b7a83d347a 100644
+--- a/dlls/advapi32/advapi32.spec
++++ b/dlls/advapi32/advapi32.spec
+@@ -603,7 +603,7 @@
+ @ stdcall -import QueryServiceObjectSecurity(long long ptr long ptr)
+ @ stdcall -import QueryServiceStatus(long ptr)
+ @ stdcall -import QueryServiceStatusEx (long long ptr long ptr)
+-# @ stub QueryTraceA
++@ stdcall QueryTraceA(int64 str ptr)
+ @ stdcall QueryTraceW(int64 wstr ptr)
+ # @ stub QueryUserServiceName
+ # @ stub QueryUsersOnEncryptedFile
+diff --git a/dlls/advapi32/eventlog.c b/dlls/advapi32/eventlog.c
+index c01955e22d5..22e5a3f9d59 100644
+--- a/dlls/advapi32/eventlog.c
++++ b/dlls/advapi32/eventlog.c
+@@ -673,6 +673,15 @@ ULONG WINAPI StopTraceA( TRACEHANDLE session, LPCSTR session_name, PEVENT_TRACE_
+     return ERROR_SUCCESS;
+ }
+ 
++/******************************************************************************
++ * QueryTraceA [ADVAPI32.@]
++ */
++ULONG WINAPI QueryTraceA( TRACEHANDLE handle, LPCSTR sessionname, PEVENT_TRACE_PROPERTIES properties )
++{
++    FIXME("%s %s %p: stub\n", wine_dbgstr_longlong(handle), debugstr_a(sessionname), properties);
++    return ERROR_WMI_INSTANCE_NOT_FOUND;
++}
++
+ /******************************************************************************
+  * QueryTraceW [ADVAPI32.@]
+  */
+diff --git a/dlls/mountmgr.sys/device.c b/dlls/mountmgr.sys/device.c
+index 04e8fe3c0f5..c4a87a51cf4 100644
+--- a/dlls/mountmgr.sys/device.c
++++ b/dlls/mountmgr.sys/device.c
+@@ -1894,6 +1894,19 @@ static NTSTATUS query_property( struct disk_device *device, IRP *irp )
+ 
+         break;
+     }
++    case StorageDeviceSeekPenaltyProperty:
++    {
++        DEVICE_SEEK_PENALTY_DESCRIPTOR *descriptor;
++        FIXME( "Faking StorageDeviceSeekPenaltyProperty data\n" );
++        memset( irp->AssociatedIrp.SystemBuffer, 0, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
++        descriptor = irp->AssociatedIrp.SystemBuffer;
++        descriptor->Version = sizeof(DEVICE_SEEK_PENALTY_DESCRIPTOR);
++        descriptor->Size = sizeof(DEVICE_SEEK_PENALTY_DESCRIPTOR);
++        /* Assume no penalty, SSDs are common enough */
++        descriptor->IncursSeekPenalty = FALSE;
++        status = STATUS_SUCCESS;
++        break;
++    }
+     default:
+         FIXME( "Unsupported property %#x\n", query->PropertyId );
+         status = STATUS_NOT_SUPPORTED;
+diff --git a/include/ntddstor.h b/include/ntddstor.h
+index b8c4bb73b0d..836def413fe 100644
+--- a/include/ntddstor.h
++++ b/include/ntddstor.h
+@@ -214,7 +214,8 @@ typedef enum _STORAGE_QUERY_TYPE {
+ 
+ typedef enum _STORAGE_PROPERTY_ID {
+     StorageDeviceProperty = 0,
+-    StorageAdapterProperty
++    StorageAdapterProperty = 1,
++    StorageDeviceSeekPenaltyProperty = 7,
+ } STORAGE_PROPERTY_ID, *PSTORAGE_PROPERTY_ID;
+ 
+ typedef struct _STORAGE_PROPERTY_QUERY {
+@@ -272,6 +273,12 @@ typedef struct _STORAGE_ADAPTER_DESCRIPTOR {
+     USHORT                      BusMinorVersion;
+ } STORAGE_ADAPTER_DESCRIPTOR, *PSTORAGE_ADAPTER_DESCRIPTOR;
+ 
++typedef struct _DEVICE_SEEK_PENALTY_DESCRIPTOR {
++    ULONG                       Version;
++    ULONG                       Size;
++    BOOLEAN                     IncursSeekPenalty;
++} DEVICE_SEEK_PENALTY_DESCRIPTOR, *PDEVICE_SEEK_PENALTY_DESCRIPTOR;
++
+ #ifdef __cplusplus
+ }
+ #endif
+
