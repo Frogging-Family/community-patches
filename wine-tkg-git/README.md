@@ -26,7 +26,6 @@
 - NFSWLauncherfix.mypatch : Fix for Need for Speed World's SBRW launcher - https://github.com/SoapboxRaceWorld/wine
 - gta4_gamepad_workaround.mypatch : Workaround for GTA IV gamepad issues thanks to @AlexeyProkhin - https://github.com/ValveSoftware/Proton/issues/350#issuecomment-606425633
 - 0001-powershell-add-wrapper-for-powershell-using-Powershe.mypatch - Patch for Waves Central from Louis Lenders (requires winetricks arial) - https://github.com/Frogging-Family/community-patches/pull/20
-- star-citizen-advapi32.dll.querytracea.mypatch - Patch to add ADVAPI32.DLL.QueryTraceA support, needed by StarCitizen 3.13 - https://bugs.winehq.org/show_bug.cgi?id=50992
 
 
 ## Misc
