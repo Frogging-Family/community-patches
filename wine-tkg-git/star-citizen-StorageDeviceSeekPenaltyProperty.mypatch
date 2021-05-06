@@ -1,40 +1,7 @@
-Adds a stub for QueryTraceA and StorageDeviceSeekPenaltyProperty, needed for Star Citizen 3.13
+Adds a stub for StorageDeviceSeekPenaltyProperty, needed for Star Citizen 3.13
 https://bugs.winehq.org/attachment.cgi?id=69859
 https://bugs.winehq.org/show_bug.cgi?id=50992
 
-diff --git a/dlls/advapi32/advapi32.spec b/dlls/advapi32/advapi32.spec
-index d5235c6adb9..1b7a83d347a 100644
---- a/dlls/advapi32/advapi32.spec
-+++ b/dlls/advapi32/advapi32.spec
-@@ -603,7 +603,7 @@
- @ stdcall -import QueryServiceObjectSecurity(long long ptr long ptr)
- @ stdcall -import QueryServiceStatus(long ptr)
- @ stdcall -import QueryServiceStatusEx (long long ptr long ptr)
--# @ stub QueryTraceA
-+@ stdcall QueryTraceA(int64 str ptr)
- @ stdcall QueryTraceW(int64 wstr ptr)
- # @ stub QueryUserServiceName
- # @ stub QueryUsersOnEncryptedFile
-diff --git a/dlls/advapi32/eventlog.c b/dlls/advapi32/eventlog.c
-index c01955e22d5..22e5a3f9d59 100644
---- a/dlls/advapi32/eventlog.c
-+++ b/dlls/advapi32/eventlog.c
-@@ -673,6 +673,15 @@ ULONG WINAPI StopTraceA( TRACEHANDLE session, LPCSTR session_name, PEVENT_TRACE_
-     return ERROR_SUCCESS;
- }
- 
-+/******************************************************************************
-+ * QueryTraceA [ADVAPI32.@]
-+ */
-+ULONG WINAPI QueryTraceA( TRACEHANDLE handle, LPCSTR sessionname, PEVENT_TRACE_PROPERTIES properties )
-+{
-+    FIXME("%s %s %p: stub\n", wine_dbgstr_longlong(handle), debugstr_a(sessionname), properties);
-+    return ERROR_WMI_INSTANCE_NOT_FOUND;
-+}
-+
- /******************************************************************************
-  * QueryTraceW [ADVAPI32.@]
-  */
 diff --git a/dlls/mountmgr.sys/device.c b/dlls/mountmgr.sys/device.c
 index 04e8fe3c0f5..c4a87a51cf4 100644
 --- a/dlls/mountmgr.sys/device.c
