@@ -28,6 +28,7 @@
 - 0001-powershell-add-wrapper-for-powershell-using-Powershe.mypatch - Patch for Waves Central from Louis Lenders (requires winetricks arial) - https://github.com/Frogging-Family/community-patches/pull/20
 - star-citizen-StorageDeviceSeekPenaltyProperty.mypatch - Patch to add StorageDeviceSeekPenaltyProperty support, needed by StarCitizen 3.13 - https://bugs.winehq.org/show_bug.cgi?id=50992
 - mass_effect_legendary_psapi.mypatch - Patch to allow Mass Effect Legendary edition to run - https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841587666 - Regarding other things needed for the game, see https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841761975
+- mfplat_nv12_d3d11_buffers.mypatch - Patch by Adrian | cooltyp100 (VKx) to fix Nier: Replicant videos having a green tint - Thanks!
 
 
 ## Misc
