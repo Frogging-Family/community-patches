@@ -17,6 +17,7 @@
 - winex11-fs-no_above_state.mypatch : Don't set ABOVE state for FULLSCREEN windows, fixing alt-tabbing in various games. There's a reported issue with Xfce where panels can stay above games with this patch applied. Requires `_proton_fs_hack="true"` in your .cfg - https://github.com/ValveSoftware/wine/commit/a8675091927c01a0c28de349517c5010557f06a9
 - winex11-fs-no_above_state-nofshack.mypatch : Same as above for `_proton_fs_hack="false"` or wine 5.20 or newer - Thanks to ErdeFB - https://github.com/Frogging-Family/community-patches/issues/31
 - proton_LFH.mypatch : Rémi Bernon's Low Fragmentation Heap patchset - Improves performance in various games on some platforms
+- proton_QPC.mypatch : Rémi Bernon's Qpc timer bypass patchset - Improves timing and performance in various games
 
 
 ## Game-specific
