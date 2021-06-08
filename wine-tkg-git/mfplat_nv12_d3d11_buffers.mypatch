@@ -35,7 +35,7 @@ index e04cc1a9251..27c76ef988e 100644
 +                else
 +                    lines = buffer->_2d.height;
 +
-                 MFCopyImage(buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
+                 copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
 -                        buffer->dxgi_surface.map_desc.RowPitch, buffer->_2d.width, buffer->_2d.height);
 +                        buffer->dxgi_surface.map_desc.RowPitch, buffer->_2d.width, lines);
              }
@@ -58,7 +58,7 @@ index e04cc1a9251..27c76ef988e 100644
 +        else
 +            lines = buffer->_2d.height;
 +
-         MFCopyImage(buffer->dxgi_surface.map_desc.pData, buffer->dxgi_surface.map_desc.RowPitch,
+         copy_image(buffer, buffer->dxgi_surface.map_desc.pData, buffer->dxgi_surface.map_desc.RowPitch,
 -                buffer->_2d.linear_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
 +                buffer->_2d.linear_buffer, buffer->_2d.width, buffer->_2d.width, lines);
          dxgi_surface_buffer_unmap(buffer);
