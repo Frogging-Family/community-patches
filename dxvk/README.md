@@ -1,3 +1,3 @@
 # dxvk patches
 
-- rainbow_hud.dxvkpatch - Josh's rainbow hud
+- rainbow_hud.mydxvkpatch - Josh's rainbow hud
