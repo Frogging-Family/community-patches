@@ -32,7 +32,7 @@
 - mass_effect_legendary_psapi.mypatch - Patch to allow Mass Effect Legendary edition to run - https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841587666 - Regarding other things needed for the game, see https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841761975
 - mfplat_nv12_d3d11_buffers.mypatch - Patch by Adrian | cooltyp100 (VKx) to fix Nier: Replicant videos having a green tint - Thanks!
 - roblox_fix.mypatch - Fixes an issue with VMProtect, allowing Roblox to run - Patch by Kalen Alwardt - https://bugs.winehq.org/show_bug.cgi?id=39142
-
+- roblox_mouse_fix.mypatch - Fixes the mouse cursor getting stuck in Roblox
 
 ## Misc
 - 0001-rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
