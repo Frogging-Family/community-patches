@@ -1,0 +1,12 @@
+--- a/dlls/winex11.drv/mouse.c.orig    2021-06-30 17:37:13.154440063 +0700
++++ b/dlls/winex11.drv/mouse.c    2021-06-30 18:13:27.951384696 +0700
+@@ -508,6 +508,10 @@
+     POINT pos;
+     RECT real_clip;
+
++    real_clip = get_virtual_screen_rect();
++    if (!EqualRect(clip, &real_clip))
++        reset_clipping_window();
++
+     if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
+         return TRUE;  /* don't clip in the desktop process */
