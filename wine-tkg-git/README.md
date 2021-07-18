@@ -53,5 +53,5 @@
 - Add-SORT_DIGITSAS-UMBERS-flag-to-CompareStringsEx.mypatch : Fix for FL Studio 20.8 crash on startup - https://bugs.winehq.org/show_bug.cgi?id=50362
 - 0001-ntdll-Use-kernel-soft-dirty-flags-for-write-watches-.mypatch : Needed for D3D12 APITracing - Needs a patched kernel (see linux-tkg)
 - wine_wayland_driver.mypatch : Adds experimental Wayland driver - Alexandros Frantzis - https://www.winehq.org/pipermail/wine-devel/2021-June/188412.html
-- amd_fsr_fshack.mypatch : Replaces Proton FS hack's linear filtering with AMD FidelityFX super resolution - Thanks to dadschoorse - Kinda experimental/WIP, it might not work on all games. Depends on `_proton_fs_hack="true"` - Enable with
+- amd_fsr_fshack.mypatch : Replaces Proton FS hack's linear filtering with AMD FidelityFX super resolution - Thanks to dadschoorse - Kinda experimental/WIP, it might not work on all games. Depends on `_use_staging="true"` and `_proton_fs_hack="true"` in your cfg - Enable with
 `WINE_FULLSCREEN_FSR=1` env var, and tweak sharpening amount with `WINE_FULLSCREEN_FSR_STRENGTH=5` (5 is default sharpening, lower numbers mean more sharpening, 0 is max sharpening)
