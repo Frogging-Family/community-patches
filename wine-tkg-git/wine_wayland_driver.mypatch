@@ -1,5 +1,5 @@
 diff --git a/configure b/configure
-index 3f8b89d287d..045f3f9b513 100755
+index 5e5a1e47318..ee4984f134f 100755
 --- a/configure
 +++ b/configure
 @@ -702,6 +702,12 @@ XSLT_CFLAGS
@@ -23,7 +23,7 @@ index 3f8b89d287d..045f3f9b513 100755
  with_wine_tools
  with_wine64
  enable_largefile
-@@ -1690,6 +1697,7 @@ enable_winepulse_drv
+@@ -1700,6 +1707,7 @@ enable_winepulse_drv
  enable_wineqtdecoder
  enable_wineusb_sys
  enable_winevulkan
@@ -31,20 +31,20 @@ index 3f8b89d287d..045f3f9b513 100755
  enable_winex11_drv
  enable_wing32
  enable_winhttp
-@@ -1903,6 +1911,12 @@ OBJC
- OBJCFLAGS
+@@ -1915,6 +1923,12 @@ OBJC
  OBJCPP
  XMKMF
+ CPP
 +WAYLAND_CLIENT_CFLAGS
 +WAYLAND_CLIENT_LIBS
 +WAYLAND_EGL_CFLAGS
 +WAYLAND_EGL_LIBS
 +XKBCOMMON_CFLAGS
 +XKBCOMMON_LIBS
- CPP
  XML2_CFLAGS
  XML2_LIBS
-@@ -2668,6 +2682,7 @@ Optional Packages:
+ XSLT_CFLAGS
+@@ -2680,6 +2694,7 @@ Optional Packages:
    --without-xshm          do not use XShm (shared memory extension)
    --without-xslt          do not use XSLT
    --without-xxf86vm       do not use XFree video mode extension
@@ -52,10 +52,10 @@ index 3f8b89d287d..045f3f9b513 100755
    --with-wine-tools=DIR   use Wine tools from directory DIR
    --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
    --with-x                use the X Window System
-@@ -2687,6 +2702,18 @@ Some influential environment variables:
-   OBJCFLAGS   Objective C compiler flags
+@@ -2699,6 +2714,18 @@ Some influential environment variables:
    OBJCPP      Objective C preprocessor
    XMKMF       Path to xmkmf, Makefile generator for X Window System
+   CPP         C preprocessor
 +  WAYLAND_CLIENT_CFLAGS
 +              C compiler flags for wayland-client, overriding pkg-config
 +  WAYLAND_CLIENT_LIBS
@@ -68,10 +68,10 @@ index 3f8b89d287d..045f3f9b513 100755
 +              C compiler flags for xkbcommon, overriding pkg-config
 +  XKBCOMMON_LIBS
 +              Linker flags for xkbcommon, overriding pkg-config
-   CPP         C preprocessor
    XML2_CFLAGS C compiler flags for libxml-2.0, overriding pkg-config
    XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
-@@ -4300,6 +4327,12 @@ if test "${with_xxf86vm+set}" = set; then :
+   XSLT_CFLAGS C compiler flags for libxslt, overriding pkg-config
+@@ -4312,6 +4339,12 @@ if test "${with_xxf86vm+set}" = set; then :
  fi
  
  
@@ -84,7 +84,7 @@ index 3f8b89d287d..045f3f9b513 100755
  
  # Check whether --with-wine-tools was given.
  if test "${with_wine_tools+set}" = set; then :
-@@ -12803,6 +12836,403 @@ enable_winex11_drv=${enable_winex11_drv:-no}
+@@ -12799,6 +12832,403 @@ enable_winex11_drv=${enable_winex11_drv:-no}
  fi
  fi
  
@@ -488,7 +488,7 @@ index 3f8b89d287d..045f3f9b513 100755
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
-@@ -19980,6 +20410,12 @@ X_CFLAGS = $X_CFLAGS
+@@ -19954,6 +20384,12 @@ X_CFLAGS = $X_CFLAGS
  X_PRE_LIBS = $X_PRE_LIBS
  X_LIBS = $X_LIBS
  X_EXTRA_LIBS = $X_EXTRA_LIBS
@@ -501,7 +501,7 @@ index 3f8b89d287d..045f3f9b513 100755
  PCAP_LIBS = $PCAP_LIBS
  XML2_CFLAGS = $XML2_CFLAGS
  XML2_LIBS = $XML2_LIBS
-@@ -21136,6 +21572,7 @@ wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
+@@ -21121,6 +21557,7 @@ wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
  wine_fn_config_makefile dlls/wineqtdecoder enable_wineqtdecoder
  wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
  wine_fn_config_makefile dlls/winevulkan enable_winevulkan
@@ -510,7 +510,7 @@ index 3f8b89d287d..045f3f9b513 100755
  wine_fn_config_makefile dlls/wing.dll16 enable_win16
  wine_fn_config_makefile dlls/wing32 enable_wing32
 diff --git a/configure.ac b/configure.ac
-index 7ea0d824cee..83b2b576968 100644
+index b5d3217f2a0..1ffc5499a8e 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -113,6 +113,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared
@@ -521,7 +521,7 @@ index 7ea0d824cee..83b2b576968 100644
  
  AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
  AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
-@@ -1321,6 +1322,26 @@ else
+@@ -1314,6 +1315,26 @@ else
                       [enable_winex11_drv])
  fi
  
@@ -548,7 +548,7 @@ index 7ea0d824cee..83b2b576968 100644
  dnl **** Check for OpenCL ****
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
-@@ -3797,6 +3818,7 @@ WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
+@@ -3790,6 +3811,7 @@ WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
  WINE_CONFIG_MAKEFILE(dlls/wineqtdecoder)
  WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
  WINE_CONFIG_MAKEFILE(dlls/winevulkan)
@@ -557,7 +557,7 @@ index 7ea0d824cee..83b2b576968 100644
  WINE_CONFIG_MAKEFILE(dlls/wing.dll16,enable_win16)
  WINE_CONFIG_MAKEFILE(dlls/wing32)
 diff --git a/dlls/gdi32/dibdrv/dc.c b/dlls/gdi32/dibdrv/dc.c
-index 7fd404fc2cb..7905111979c 100644
+index 274fc15454d..5d5dd09ebab 100644
 --- a/dlls/gdi32/dibdrv/dc.c
 +++ b/dlls/gdi32/dibdrv/dc.c
 @@ -771,7 +771,6 @@ struct windrv_physdev
@@ -586,6 +586,39 @@ index 7fd404fc2cb..7905111979c 100644
  }
  
  static void CDECL unlock_bits_surface( struct gdi_image_bits *bits )
+diff --git a/dlls/user32/message.c b/dlls/user32/message.c
+index 6f0f58a5f3f..5c06220ee3e 100644
+--- a/dlls/user32/message.c
++++ b/dlls/user32/message.c
+@@ -3386,6 +3386,19 @@ LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+     return ret;
+ }
+ 
++/***********************************************************************
++ *		__wine_send_internal_message_timeout  (USER32.@)
++ *
++ * Same as SendMessageTimeoutW but sends the message to a specific thread
++ * without requiring a window handle. Only works for internal Wine messages.
++ */
++LRESULT CDECL __wine_send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
++                                                    UINT msg, WPARAM wparam, LPARAM lparam,
++                                                    UINT flags, UINT timeout, PDWORD_PTR res_ptr )
++{
++    return MSG_SendInternalMessageTimeout( dest_pid, dest_tid, msg, wparam, lparam,
++                                           flags, timeout, res_ptr );
++}
+ 
+ /***********************************************************************
+  *		SendMessageTimeoutW  (USER32.@)
+diff --git a/dlls/user32/user32.spec b/dlls/user32/user32.spec
+index 8d3ac70210c..e0fdd23969d 100644
+--- a/dlls/user32/user32.spec
++++ b/dlls/user32/user32.spec
+@@ -837,3 +837,4 @@
+ #
+ @ cdecl __wine_send_input(long ptr ptr)
+ @ cdecl __wine_set_pixel_format(long long)
++@ cdecl __wine_send_internal_message_timeout(long long long long long long long ptr)
 diff --git a/dlls/winewayland.drv/Makefile.in b/dlls/winewayland.drv/Makefile.in
 new file mode 100644
 index 00000000000..6c42daa9d11
@@ -630,10 +663,10 @@ index 00000000000..6c42daa9d11
 +RC_SRCS = version.rc
 diff --git a/dlls/winewayland.drv/data_device.c b/dlls/winewayland.drv/data_device.c
 new file mode 100644
-index 00000000000..4a1ef6d5382
+index 00000000000..5fe4d8b2423
 --- /dev/null
 +++ b/dlls/winewayland.drv/data_device.c
-@@ -0,0 +1,1409 @@
+@@ -0,0 +1,1421 @@
 +/*
 + * Wayland data device (clipboard and DnD) handling
 + *
@@ -1551,6 +1584,11 @@ index 00000000000..4a1ef6d5382
 +    TRACE("wl_data_offer=%u\n",
 +          wl_data_offer ? wl_proxy_get_id((struct wl_proxy*)wl_data_offer) : 0);
 +
++    /* We may get a selection event before we have had a chance to create the
++     * clipboard window after thread init (see wayland_init_thread_data), so
++     * we need to ensure we have a valid window here. */
++    wayland_data_device_ensure_clipboard_window(wayland);
++
 +    /* Destroy any previous data offer. */
 +    data_device_destroy_clipboard_data_offer(data_device);
 +
@@ -1787,12 +1825,7 @@ index 00000000000..4a1ef6d5382
 +    return DefWindowProcW( hwnd, msg, wp, lp );
 +}
 +
-+/**********************************************************************
-+ *          wayland_data_device_init_clipboard_window
-+ *
-+ * Initializes the window which handles clipboard messages.
-+ */
-+HWND wayland_data_device_create_clipboard_window(void)
++static HWND wayland_data_device_create_clipboard_window(void)
 +{
 +    static const WCHAR clipboard_classname[] = {
 +        '_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d',
@@ -1824,6 +1857,18 @@ index 00000000000..4a1ef6d5382
 +
 +    TRACE("clipboard_hwnd=%p\n", clipboard_hwnd);
 +    return clipboard_hwnd;
++}
++
++/**********************************************************************
++ *          wayland_data_device_ensure_clipboard_window
++ *
++ * Creates (if not already created) the window which handles clipboard
++ * messages for the specified wayland instance.
++ */
++void wayland_data_device_ensure_clipboard_window(struct wayland *wayland)
++{
++    if (!wayland->clipboard_hwnd)
++        wayland->clipboard_hwnd = wayland_data_device_create_clipboard_window();
 +}
 +
 +/*********************************************************
@@ -2045,10 +2090,10 @@ index 00000000000..4a1ef6d5382
 +};
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
 new file mode 100644
-index 00000000000..8bab348f4b9
+index 00000000000..91a9f9e825d
 --- /dev/null
 +++ b/dlls/winewayland.drv/display.c
-@@ -0,0 +1,914 @@
+@@ -0,0 +1,921 @@
 +/*
 + * WAYLAND display device functions
 + *
@@ -2565,8 +2610,15 @@ index 00000000000..8bab348f4b9
 +    RegCloseKey(video_hkey);
 +    release_display_devices_init_mutex(mutex);
 +
-+    if (force_send_change ||
-+        GetCurrentThreadId() == GetWindowThreadProcessId(GetDesktopWindow(), NULL))
++    /* During thread wayland initialization we will get our initial output
++     * information and init the display devices. There is no need to send out
++     * WM_DISPLAYCHANGE in this case, since this is the initial display state.
++     * Additionally, thread initialization may occur in a context that has
++     * acquired the internal Wine user32 lock, and sending messages would lead
++     * to an internal user32 lock error. */
++    if (wayland->initialized &&
++        (force_send_change ||
++         GetCurrentThreadId() == GetWindowThreadProcessId(GetDesktopWindow(), NULL)))
 +    {
 +        /* The first valid output is the primary. */
 +        wl_list_for_each(output, &wayland->output_list, link)
@@ -5361,10 +5413,10 @@ index 00000000000..f54084bec03
 +#endif /* __WINE_WAYLANDDRV_KEYBOARD_LAYOUT_H */
 diff --git a/dlls/winewayland.drv/opengl.c b/dlls/winewayland.drv/opengl.c
 new file mode 100644
-index 00000000000..61232fc8784
+index 00000000000..931aca962a8
 --- /dev/null
 +++ b/dlls/winewayland.drv/opengl.c
-@@ -0,0 +1,1272 @@
+@@ -0,0 +1,1281 @@
 +/*
 + * Wayland OpenGL functions
 + *
@@ -5499,12 +5551,16 @@ index 00000000000..61232fc8784
 +{
 +    static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 +    struct gl_drawable *gl = heap_alloc(sizeof(*gl));
-+    struct wayland_surface *wayland_surface = wayland_surface_for_hwnd(hwnd);
++    struct wayland_surface *wayland_surface = wayland_surface_for_hwnd_lock(hwnd);
 +
 +    TRACE("hwnd=%p wayland_surface=%p\n", hwnd, wayland_surface);
 +
-+    if (wayland_surface && !wayland_surface_create_or_ref_gl(wayland_surface))
-+        return NULL;
++    if (wayland_surface)
++    {
++        BOOL ref_gl = wayland_surface_create_or_ref_gl(wayland_surface);
++        wayland_surface_for_hwnd_unlock(wayland_surface);
++        if (!ref_gl) return NULL;
++    }
 +
 +    gl->hwnd   = hwnd;
 +    gl->hdc    = hdc;
@@ -6136,13 +6192,18 @@ index 00000000000..61232fc8784
 +    {
 +        HWND hwnd = WindowFromDC(hdc);
 +        struct gl_drawable *gl_drawable = get_gl_drawable(hwnd, hdc);
++        BOOL drawing_allowed = TRUE;
 +        if (gl_drawable)
 +        {
 +            if (gl_drawable->wayland_surface)
++            {
 +                wayland_surface_ensure_mapped(gl_drawable->wayland_surface);
++                drawing_allowed =
++                    wayland_surface_is_drawing_allowed(gl_drawable->wayland_surface);
++            }
 +            release_gl_drawable(gl_drawable);
 +        }
-+        p_eglSwapBuffers(display, ctx->surface);
++        if (drawing_allowed) p_eglSwapBuffers(display, ctx->surface);
 +    }
 +
 +    return TRUE;
@@ -8417,10 +8478,10 @@ index 00000000000..2c87270e4f6
 +
 diff --git a/dlls/winewayland.drv/vulkan.c b/dlls/winewayland.drv/vulkan.c
 new file mode 100644
-index 00000000000..f4acd9d6ca8
+index 00000000000..f47d9889025
 --- /dev/null
 +++ b/dlls/winewayland.drv/vulkan.c
-@@ -0,0 +1,834 @@
+@@ -0,0 +1,844 @@
 +/* WAYLANDDRV Vulkan implementation
 + *
 + * Copyright 2017 Roderick Colenbrander
@@ -8809,15 +8870,20 @@ index 00000000000..f4acd9d6ca8
 +
 +    list_init(&wine_vk_surface->entry);
 +
-+    wayland_surface = wayland_surface_for_hwnd(create_info->hwnd);
-+    if (wayland_surface && !wayland_surface_create_or_ref_vk(wayland_surface))
++    wayland_surface = wayland_surface_for_hwnd_lock(create_info->hwnd);
++    if (wayland_surface)
 +    {
-+        ERR("Failed to allocate vulkan surface for hwnd=%p\n", create_info->hwnd);
-+
-+        /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
-+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-+        goto err;
++        BOOL ref_vk = wayland_surface_create_or_ref_vk(wayland_surface);
++        wayland_surface_for_hwnd_unlock(wayland_surface);
++        if (!ref_vk)
++        {
++            ERR("Failed to allocate vulkan surface for hwnd=%p\n", create_info->hwnd);
++            /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
++            res = VK_ERROR_OUT_OF_HOST_MEMORY;
++            goto err;
++        }
 +    }
++
 +    wine_vk_surface->wayland_surface = wayland_surface;
 +
 +    create_info_host.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
@@ -9087,16 +9153,19 @@ index 00000000000..f4acd9d6ca8
 +    uint32_t i;
 +    VkResult res = VK_SUCCESS;
 +
-+    for (i = 0; i < present_info->swapchainCount && res == VK_SUCCESS; ++i)
++    for (i = 0; i < present_info->swapchainCount; ++i)
 +    {
 +        const VkSwapchainKHR vk_swapchain = present_info->pSwapchains[i];
 +        struct wine_vk_swapchain *wine_vk_swapchain = wine_vk_swapchain_from_handle(vk_swapchain);
 +        RECT client;
 +
-+        TRACE("swapchain[%d] vk=0x%s wine=%p extent=%ux%u wayland_surface=%p\n",
-+                i, wine_dbgstr_longlong(vk_swapchain), wine_vk_swapchain,
-+                wine_vk_swapchain->extent.width, wine_vk_swapchain->extent.height,
-+                wine_vk_swapchain ? wine_vk_swapchain->wayland_surface : NULL);
++        TRACE("swapchain[%d] vk=0x%s wine=%p extent=%ux%u wayland_surface=%p "
++              "drawing_allowed=%d\n",
++               i, wine_dbgstr_longlong(vk_swapchain), wine_vk_swapchain,
++               wine_vk_swapchain->extent.width, wine_vk_swapchain->extent.height,
++               wine_vk_swapchain ? wine_vk_swapchain->wayland_surface : NULL,
++               (wine_vk_swapchain && wine_vk_swapchain->wayland_surface) ?
++                   wayland_surface_is_drawing_allowed(wine_vk_swapchain->wayland_surface) : -1);
 +
 +        if (!wine_vk_swapchain ||
 +            !__atomic_load_n(&wine_vk_swapchain->valid, __ATOMIC_SEQ_CST) ||
@@ -9105,14 +9174,15 @@ index 00000000000..f4acd9d6ca8
 +            res = VK_ERROR_SURFACE_LOST_KHR;
 +        }
 +        else if (client.right != wine_vk_swapchain->extent.width ||
-+                 client.bottom != wine_vk_swapchain->extent.height)
++                 client.bottom != wine_vk_swapchain->extent.height ||
++                 (wine_vk_swapchain->wayland_surface &&
++                  !wayland_surface_is_drawing_allowed(wine_vk_swapchain->wayland_surface)))
 +        {
 +            res = VK_ERROR_OUT_OF_DATE_KHR;
 +        }
-+        else if (wine_vk_swapchain->wayland_surface)
-+        {
++
++        if (wine_vk_swapchain->wayland_surface)
 +            wayland_surface_ensure_mapped(wine_vk_swapchain->wayland_surface);
-+        }
 +    }
 +
 +    return res;
@@ -9121,13 +9191,11 @@ index 00000000000..f4acd9d6ca8
 +static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
 +{
 +    VkResult res;
++    VkResult validation_res;
 +
 +    TRACE("%p, %p\n", queue, present_info);
 +
-+    res = validate_present_info(present_info);
-+    if (res != VK_SUCCESS)
-+        return res;
-+
++    validation_res = validate_present_info(present_info);
 +    res = pvkQueuePresentKHR(queue, present_info);
 +
 +    if (TRACE_ON(fps))
@@ -9150,6 +9218,9 @@ index 00000000000..f4acd9d6ca8
 +                start_time = time;
 +        }
 +    }
++
++    if (validation_res != VK_SUCCESS)
++        return validation_res;
 +
 +    return res;
 +}
@@ -9257,10 +9328,10 @@ index 00000000000..f4acd9d6ca8
 +#endif /* SONAME_LIBVULKAN */
 diff --git a/dlls/winewayland.drv/wayland.c b/dlls/winewayland.drv/wayland.c
 new file mode 100644
-index 00000000000..71b6e947cec
+index 00000000000..2a7747c5a38
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland.c
-@@ -0,0 +1,1644 @@
+@@ -0,0 +1,1650 @@
 +/*
 + * Wayland core handling
 + *
@@ -10506,6 +10577,7 @@ index 00000000000..71b6e947cec
 +    wayland->event_notification_pipe[0] = -1;
 +    wayland->event_notification_pipe[1] = -1;
 +
++    wayland->process_id = GetCurrentProcessId();
 +    wayland->thread_id = GetCurrentThreadId();
 +    wayland->wl_display = process_wl_display;
 +
@@ -10576,6 +10648,8 @@ index 00000000000..71b6e947cec
 +    LeaveCriticalSection(&thread_wayland_section);
 +
 +    SetRect(&wayland->cursor_clip, INT_MIN, INT_MIN, INT_MAX, INT_MAX);
++
++    wayland->initialized = TRUE;
 +
 +    return TRUE;
 +}
@@ -10892,15 +10966,18 @@ index 00000000000..71b6e947cec
 +
 +    EnterCriticalSection(&thread_wayland_section);
 +
-+    /* For each thread, send the message to a window in that thread.
-+     * It doesn't really matter which window we choose, so use the
-+     * clipboard message window which we know is always present. We
-+     * do this instead of using, e.g., PostThreadMessage, so that we
-+     * get synchronous handling of the message. */
++    /* Each thread maintains its own output mode information, so we need to
++     * notify all threads about the wine mode change. We can't guarantee that
++     * all threads will have windows to which we could potentially send the
++     * notification message to, so we use the internal send function to target
++     * the threads directly. We can't use PostThreadMessage since we require
++     * synchronous message handling. */
 +    wl_list_for_each(w, &thread_wayland_list, thread_link)
 +    {
-+        SendMessageW(w->clipboard_hwnd, WM_WAYLAND_MODE_CHANGE,
-+                     output_id, MAKELPARAM(width, height));
++        __wine_send_internal_message_timeout(w->process_id, w->thread_id,
++                                             WM_WAYLAND_MODE_CHANGE,
++                                             output_id, MAKELPARAM(width, height),
++                                             0, -1, NULL);
 +    }
 +
 +    LeaveCriticalSection(&thread_wayland_section);
@@ -11606,10 +11683,10 @@ index 00000000000..0ac5fdbfd7f
 +}
 diff --git a/dlls/winewayland.drv/wayland_surface.c b/dlls/winewayland.drv/wayland_surface.c
 new file mode 100644
-index 00000000000..a21ef3346ef
+index 00000000000..3384bb0bde8
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_surface.c
-@@ -0,0 +1,1339 @@
+@@ -0,0 +1,1450 @@
 +/*
 + * Wayland surfaces
 + *
@@ -11652,13 +11729,19 @@ index 00000000000..a21ef3346ef
 +{
 +    struct wayland_surface *surface = data;
 +    uint32_t last_serial = surface->pending.serial;
++    BOOL last_processed = surface->pending.processed;
 +
 +    TRACE("hwnd=%p serial=%u\n", surface->hwnd, serial);
 +
 +    surface->pending.serial = serial;
++    surface->pending.processed = FALSE;
 +
-+    /* If we already have a pending configure event, no need to repost */
-+    if (last_serial)
++    /* If we have an unprocessed WM_WAYLAND_CONFIGURE message, no need to
++     * repost. Note that checking only for a valid serial is not enough to
++     * guarantee that there is a pending WM_WAYLAND_CONFIGURE message: we may
++     * have processed the message but not acked the configure request due to
++     * surface size incompatibilities (see window.c:update_wayland_state()). */
++    if (last_serial && !last_processed)
 +    {
 +        TRACE("not reposting, last_serial=%u\n", last_serial);
 +        return;
@@ -11831,8 +11914,38 @@ index 00000000000..a21ef3346ef
 +    wl_list_init(&surface->output_ref_list);
 +    wl_list_init(&surface->link);
 +    wl_surface_set_user_data(surface->wl_surface, surface);
++    surface->drawing_allowed = TRUE;
 +
 +    surface->ref = 1;
++
++    return surface;
++
++err:
++    if (surface)
++        wayland_surface_destroy(surface);
++    return NULL;
++}
++
++/**********************************************************************
++ *          wayland_surface_create_plain
++ *
++ * Creates a plain, role-less wayland surface.
++ */
++struct wayland_surface *wayland_surface_create_plain(struct wayland *wayland)
++{
++    struct wayland_surface *surface;
++
++    TRACE("\n");
++
++    surface = wayland_surface_create_common(wayland);
++    if (!surface)
++        goto err;
++
++    EnterCriticalSection(&wayland->crit);
++    wl_list_insert(&wayland->surface_list, &surface->link);
++    LeaveCriticalSection(&wayland->crit);
++
++    wl_surface_commit(surface->wl_surface);
 +
 +    return surface;
 +
@@ -11947,6 +12060,10 @@ index 00000000000..a21ef3346ef
 + *
 + * Note that this doesn't configure any associated GL/VK subsurface,
 + * wayland_surface_reconfigure_glvk() needs to be called separately.
++ *
++ * This function sets up but doesn't actually apply any new configuration.
++ * The wayland_surface_reconfigure_apply() needs to be called for changes
++ * to take effect.
 + */
 +void wayland_surface_reconfigure(struct wayland_surface *surface,
 +                                 int wine_x, int wine_y,
@@ -11964,10 +12081,7 @@ index 00000000000..a21ef3346ef
 +          x, y, width, height);
 +
 +    if (surface->wl_subsurface)
-+    {
 +        wl_subsurface_set_position(surface->wl_subsurface, x, y);
-+        wl_surface_commit(surface->parent->wl_surface);
-+    }
 +
 +    /* Use a viewport, if supported, to handle display mode changes. */
 +    if (surface->wp_viewport)
@@ -12274,6 +12388,8 @@ index 00000000000..a21ef3346ef
 +                                     client_rect.right - client_rect.left,
 +                                     client_rect.bottom - client_rect.top);
 +
++    wayland_surface_reconfigure_apply(surface);
++
 +    return TRUE;
 +
 +err:
@@ -12319,6 +12435,8 @@ index 00000000000..a21ef3346ef
 +                                     client_rect.right - client_rect.left,
 +                                     client_rect.bottom - client_rect.top);
 +
++    wayland_surface_reconfigure_apply(surface);
++
 +    return TRUE;
 +}
 +
@@ -12353,6 +12471,10 @@ index 00000000000..a21ef3346ef
 + * a wayland surface.
 + *
 + * The coordinates and sizes should be given in wine's coordinate space.
++ *
++ * This function sets up but doesn't actually apply any new configuration.
++ * The wayland_surface_reconfigure_apply() needs to be called for changes
++ * to take effect.
 + */
 +void wayland_surface_reconfigure_glvk(struct wayland_surface *surface,
 +                                      int wine_x, int wine_y,
@@ -12377,25 +12499,49 @@ index 00000000000..a21ef3346ef
 +    glvk->offset_y = wine_y;
 +
 +    wl_subsurface_set_position(glvk->wl_subsurface, x, y);
++
 +    /* The EGL window size needs to be in wine coords since this affects
 +     * the effective EGL buffer size. */
 +    if (glvk->wl_egl_window)
 +        wl_egl_window_resize(glvk->wl_egl_window, wine_width, wine_height, 0, 0);
 +
-+    /* Use a viewport, if supported, to ensure GL surfaces remain inside
-+     * their parent's boundaries when resizing and also to handle display mode
-+     * changes. */
++    /* Use a viewport, if supported, to ensure GL surfaces remain inside their
++     * parent's boundaries when resizing and also to handle display mode
++     * changes. If the size is invalid use a 1x1 destination (instead of
++     * unsetting with -1x-1) since many apps don't respect a GL/VK 0x0 size
++     * which can happen, e.g., when an app is minimized. */
 +    if (glvk->wp_viewport)
 +    {
 +        if (width != 0 && height != 0)
 +            wp_viewport_set_destination(glvk->wp_viewport, width, height);
 +        else
-+            wp_viewport_set_destination(glvk->wp_viewport, -1, -1);
++            wp_viewport_set_destination(glvk->wp_viewport, 1, 1);
 +    }
 +
-+    wl_surface_commit(glvk->wl_surface);
-+
 +    wayland_surface_unref_glvk(surface);
++}
++
++/**********************************************************************
++ *          wayland_surface_reconfigure_apply
++ *
++ * Applies the configuration set by previous calls to the
++ * wayland_surface_reconfigure{_glvk}() functions.
++ */
++void wayland_surface_reconfigure_apply(struct wayland_surface *surface)
++{
++    struct wayland_surface *glvk = wayland_surface_ref_glvk(surface);
++
++    if (glvk)
++    {
++        wl_surface_commit(glvk->wl_surface);
++        wayland_surface_unref_glvk(surface);
++    }
++
++    wl_surface_commit(surface->wl_surface);
++
++    /* Commit the parent so any subsurface repositioning takes effect. */
++    if (surface->parent)
++        wl_surface_commit(surface->parent->wl_surface);
 +}
 +
 +/**********************************************************************
@@ -12634,6 +12780,8 @@ index 00000000000..a21ef3346ef
 +    {
 +        int width = surface->current.width;
 +        int height = surface->current.height;
++        int flags = surface->current.configure_flags;
++        int wine_width, wine_height;
 +        struct wayland_shm_buffer *dummy_shm_buffer;
 +
 +        /* Use a large enough width/height, so even when the target
@@ -12642,8 +12790,20 @@ index 00000000000..a21ef3346ef
 +        if (width == 0) width = 32;
 +        if (height == 0) height = 32;
 +
++        if ((flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN) &&
++            !(flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED))
++        {
++            wayland_surface_find_wine_fullscreen_fit(surface, width, height,
++                                                     &wine_width, &wine_height);
++        }
++        else
++        {
++            wayland_surface_coords_to_wine(surface, width, height,
++                                           &wine_width, &wine_height);
++        }
++
 +        dummy_shm_buffer = wayland_shm_buffer_create(surface->wayland,
-+                                                     width, height,
++                                                     wine_width, wine_height,
 +                                                     WL_SHM_FORMAT_ARGB8888);
 +        wl_buffer_add_listener(dummy_shm_buffer->wl_buffer,
 +                               &dummy_buffer_listener, dummy_shm_buffer);
@@ -12843,17 +13003,6 @@ index 00000000000..a21ef3346ef
 +    return surface;
 +}
 +
-+static BOOL wayland_surface_presented_in_output(struct wayland_surface *surface,
-+                                                struct wayland_output *output)
-+{
-+    struct wayland_output_ref *ref;
-+
-+    wl_list_for_each(ref, &surface->output_ref_list, link)
-+        if (ref->output == output) return TRUE;
-+
-+    return FALSE;
-+}
-+
 +/**********************************************************************
 + *          wayland_surface_set_main_output
 + *
@@ -12865,7 +13014,6 @@ index 00000000000..a21ef3346ef
 +{
 +    /* Don't update non-toplevels. */
 +    if (surface->parent) return;
-+    if (!wayland_surface_presented_in_output(surface, output)) return;
 +
 +    TRACE("surface=%p output->id,name=0x%x,%s => output->id=0x%x,%s\n",
 +          surface,
@@ -12949,12 +13097,52 @@ index 00000000000..a21ef3346ef
 +    TRACE("hwnd=%p (toplevel=%p) => scale=%d\n", surface->hwnd, toplevel->hwnd, scale);
 +    return scale;
 +}
++
++/**********************************************************************
++ *          wayland_surface_set_title
++ */
++void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR text)
++{
++    int utf8_count;
++    char *utf8 = NULL;
++
++    if (!surface->xdg_toplevel)
++        return;
++
++    TRACE("surface=%p hwnd=%p text='%s'\n",
++          surface, surface->hwnd, wine_dbgstr_w(text));
++
++    utf8_count = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
++    if (utf8_count && (utf8 = heap_alloc(utf8_count)) &&
++        WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, utf8_count, NULL, NULL))
++    {
++        xdg_toplevel_set_title(surface->xdg_toplevel, utf8);
++    }
++
++    if (utf8) heap_free(utf8);
++}
++
++/**********************************************************************
++ *          wayland_surface_set_drawing_allowed
++ */
++void wayland_surface_set_drawing_allowed(struct wayland_surface *surface, BOOL allowed)
++{
++    __atomic_store_n(&surface->drawing_allowed, allowed, __ATOMIC_SEQ_CST);
++}
++
++/**********************************************************************
++ *          wayland_surface_is_drawing_allowed
++ */
++BOOL wayland_surface_is_drawing_allowed(struct wayland_surface *surface)
++{
++    return __atomic_load_n(&surface->drawing_allowed, __ATOMIC_SEQ_CST);
++}
 diff --git a/dlls/winewayland.drv/waylanddrv.h b/dlls/winewayland.drv/waylanddrv.h
 new file mode 100644
-index 00000000000..d426a5c6544
+index 00000000000..db970a3edd0
 --- /dev/null
 +++ b/dlls/winewayland.drv/waylanddrv.h
-@@ -0,0 +1,436 @@
+@@ -0,0 +1,448 @@
 +/*
 + * Wayland core handling
 + *
@@ -13005,6 +13193,8 @@ index 00000000000..d426a5c6544
 +    WM_WAYLAND_MODE_CHANGE = 0x80001001,
 +    WM_WAYLAND_POINTER_CONFINEMENT_UPDATE = 0x80001002,
 +    WM_WAYLAND_SURFACE_OUTPUT_CHANGE = 0x80001003,
++    WM_WAYLAND_CLIPBOARD_WINDOW_CREATE = 0x80001004,
++    WM_WAYLAND_STATE_UPDATE = 0x80001005,
 +};
 +
 +enum wayland_configure_flags
@@ -13070,6 +13260,8 @@ index 00000000000..d426a5c6544
 +
 +struct wayland
 +{
++    BOOL initialized;
++    DWORD process_id;
 +    DWORD thread_id;
 +    struct wl_display *wl_display;
 +    struct wl_event_queue *wl_event_queue;
@@ -13151,6 +13343,7 @@ index 00000000000..d426a5c6544
 +    int height;
 +    enum wayland_configure_flags configure_flags;
 +    uint32_t serial;
++    BOOL processed;
 +};
 +
 +struct wayland_output_ref
@@ -13183,6 +13376,7 @@ index 00000000000..d426a5c6544
 +    LONG ref;
 +    struct wl_list output_ref_list;
 +    struct wayland_output *main_output;
++    BOOL drawing_allowed;
 +};
 +
 +struct wayland_shm_buffer
@@ -13274,6 +13468,7 @@ index 00000000000..d426a5c6544
 + *          Wayland surface
 + */
 +
++struct wayland_surface *wayland_surface_create_plain(struct wayland *wayland);
 +struct wayland_surface *wayland_surface_create_toplevel(struct wayland *wayland,
 +                                                        struct wayland_surface *parent);
 +struct wayland_surface *wayland_surface_create_subsurface(struct wayland *wayland,
@@ -13289,12 +13484,14 @@ index 00000000000..d426a5c6544
 +void wayland_surface_unref_glvk(struct wayland_surface *surface);
 +void wayland_surface_reconfigure_glvk(struct wayland_surface *surface, int x, int y,
 +                                      int width, int height);
++void wayland_surface_reconfigure_apply(struct wayland_surface *surface);
 +void wayland_surface_ack_configure(struct wayland_surface *surface);
 +void wayland_surface_unmap(struct wayland_surface *surface);
 +BOOL wayland_surface_configure_is_compatible(struct wayland_surface_configure *conf,
 +                                             int width, int height,
 +                                             enum wayland_configure_flags flags);
-+struct wayland_surface *wayland_surface_for_hwnd(HWND hwnd);
++struct wayland_surface *wayland_surface_for_hwnd_lock(HWND hwnd);
++void wayland_surface_for_hwnd_unlock(struct wayland_surface *surface);
 +void wayland_surface_coords_to_screen(struct wayland_surface *surface,
 +                                      double wayland_x, double wayland_y,
 +                                      int *screen_x, int *screen_y);
@@ -13322,6 +13519,9 @@ index 00000000000..d426a5c6544
 +void wayland_surface_leave_output(struct wayland_surface *surface,
 +                                  struct wayland_output *output);
 +int wayland_surface_get_buffer_scale(struct wayland_surface *surface);
++void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
++void wayland_surface_set_drawing_allowed(struct wayland_surface *surface, BOOL allowed);
++BOOL wayland_surface_is_drawing_allowed(struct wayland_surface *surface);
 +
 +/**********************************************************************
 + *          Wayland SHM buffer
@@ -13342,7 +13542,7 @@ index 00000000000..d426a5c6544
 + */
 +
 +void wayland_data_device_init(struct wayland *wayland);
-+HWND wayland_data_device_create_clipboard_window(void);
++void wayland_data_device_ensure_clipboard_window(struct wayland *wayland);
 +
 +/**********************************************************************
 + *          Keyboard helpers
@@ -13393,10 +13593,10 @@ index 00000000000..d426a5c6544
 +#endif /* __WINE_WAYLANDDRV_H */
 diff --git a/dlls/winewayland.drv/waylanddrv_main.c b/dlls/winewayland.drv/waylanddrv_main.c
 new file mode 100644
-index 00000000000..7a4c4125ec2
+index 00000000000..b4d8a75da9e
 --- /dev/null
 +++ b/dlls/winewayland.drv/waylanddrv_main.c
-@@ -0,0 +1,164 @@
+@@ -0,0 +1,169 @@
 +/*
 + * WAYLANDDRV initialization code
 + *
@@ -13425,6 +13625,8 @@ index 00000000000..7a4c4125ec2
 +#include "wine/server.h"
 +#include "wine/debug.h"
 +#include "wine/heap.h"
++
++#include "winuser.h"
 +
 +WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 +WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -13535,10 +13737,13 @@ index 00000000000..7a4c4125ec2
 +    set_queue_fd(&data->wayland);
 +    TlsSetValue(thread_data_tls_index, data);
 +
-+    /* Create the clipboard window after setting the thread tls, to avoid infinite
-+     * recursion. */
-+    data->wayland.clipboard_hwnd =
-+        wayland_data_device_create_clipboard_window();
++    /* Create the clipboard window outside of thread init. We delay window
++     * creation since the thread init function may be invoked from within the
++     * context of a user32 function which holds the internal Wine user32 lock.
++     * In such a case creating the clipboard window would cause an internal
++     * user32 lock error. */
++    PostThreadMessageA(data->wayland.thread_id,
++                       WM_WAYLAND_CLIPBOARD_WINDOW_CREATE, 0, 0);
 +
 +    return data;
 +}
@@ -13563,10 +13768,10 @@ index 00000000000..7a4c4125ec2
 +}
 diff --git a/dlls/winewayland.drv/window.c b/dlls/winewayland.drv/window.c
 new file mode 100644
-index 00000000000..84d6908afca
+index 00000000000..6150f6bebb9
 --- /dev/null
 +++ b/dlls/winewayland.drv/window.c
-@@ -0,0 +1,1833 @@
+@@ -0,0 +1,2042 @@
 +/*
 + * Window related functions
 + *
@@ -13654,6 +13859,17 @@ index 00000000000..84d6908afca
 +    BOOL           handling_wayland_configure_event;
 +    /* the configure flags for the configure event we are handling */
 +    enum wayland_configure_flags wayland_configure_event_flags;
++    /* whether this window has been deactivated by wayland after minimization */
++    BOOL deactivated_after_minimization;
++    /* whether this window is visible */
++    BOOL visible;
++    /* Save previous state to be able to decide when to recreate wayland surface */
++    HWND           old_parent;
++    RECT           old_window_rect;
++    /* Whether a first wayland surface update is needed */
++    BOOL           wayland_surface_needs_first_update;
++    /* Whether we have a pending/unprocessed WM_WAYLAND_STATE_UPDATE message */
++    BOOL           pending_state_update_message;
 +};
 +
 +static CRITICAL_SECTION win_data_section;
@@ -13726,13 +13942,21 @@ index 00000000000..84d6908afca
 +{
 +    struct wayland *wayland = thread_init_wayland();
 +    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
-+    HWND parent_hwnd = GetParent(hwnd);
++    /* GWLP_HWNDPARENT gets the owner for any kind of toplevel windows,
++     * and the parent for child windows. */
++    HWND parent_hwnd = (HWND)GetWindowLongPtrW(hwnd, GWLP_HWNDPARENT);
 +    HWND effective_parent_hwnd;
 +    MONITORINFOEXW mi;
 +    double monitor_width;
 +    double monitor_height;
 +    double window_width;
 +    double window_height;
++
++    if (parent_hwnd == GetDesktopWindow()) parent_hwnd = 0;
++
++    /* Child windows don't have an effective parent, unless they are children
++     * of the desktop (thus effectively top-level). */
++    if ((style & WS_CHILD) && parent_hwnd) return 0;
 +
 +    mi.cbSize = sizeof(mi);
 +    GetMonitorInfoW(MonitorFromRect(window_rect, MONITOR_DEFAULTTOPRIMARY),
@@ -13742,12 +13966,6 @@ index 00000000000..84d6908afca
 +    monitor_height = mi.rcMonitor.bottom - mi.rcMonitor.top;
 +    window_width = window_rect->right - window_rect->left;
 +    window_height = window_rect->bottom - window_rect->top;
-+
-+    if (parent_hwnd == GetDesktopWindow()) parent_hwnd = 0;
-+
-+    /* Child windows don't have an effective parent, unless they are children
-+     * of the desktop (thus effectively top-level). */
-+    if ((style & WS_CHILD) && parent_hwnd) return 0;
 +
 +    /* Many applications use top level, unowned (or owned by the desktop)
 +     * popup windows for menus and tooltips and depend on screen
@@ -13825,17 +14043,26 @@ index 00000000000..84d6908afca
 +}
 +
 +/***********************************************************************
-+ *           wayland_surface_for_hwnd
++ *           wayland_surface_for_hwnd_lock
 + */
-+struct wayland_surface *wayland_surface_for_hwnd(HWND hwnd)
++struct wayland_surface *wayland_surface_for_hwnd_lock(HWND hwnd)
 +{
-+    struct wayland_surface *ret;
 +    struct wayland_win_data *data = get_win_data(hwnd);
 +
-+    ret = !data ? NULL : data->wayland_surface;
++    if (data && data->wayland_surface)
++        return data->wayland_surface;
++
 +    release_win_data(data);
 +
-+    return ret;
++    return NULL;
++}
++
++/***********************************************************************
++ *           wayland_surface_for_hwnd_unlock
++ */
++void wayland_surface_for_hwnd_unlock(struct wayland_surface *surface)
++{
++    if (surface) LeaveCriticalSection(&win_data_section);
 +}
 +
 +/* Window surface support */
@@ -13856,6 +14083,7 @@ index 00000000000..84d6908afca
 +    void                 *bits;
 +    CRITICAL_SECTION      crit;
 +    BITMAPINFO            info;   /* variable size, must be last */
++    BOOL                  last_flush_missing_wayland;
 +};
 +
 +static struct wayland_window_surface *get_wayland_window_surface(struct window_surface *surface)
@@ -13960,6 +14188,18 @@ index 00000000000..84d6908afca
 +          wine_dbgstr_rect(&surface->header.rect), wine_dbgstr_rect(&surface->bounds));
 +
 +    needs_flush = IntersectRect(&damage_rect, &surface->header.rect, &surface->bounds);
++
++    if (needs_flush &&
++        (!surface->wayland_surface || !surface->wayland_buffer_queue ||
++         !wayland_surface_is_drawing_allowed(surface->wayland_surface)))
++    {
++        TRACE("missing wayland surface=%p buffer_queue=%p or drawing disallowed, returning\n",
++              surface->wayland_surface, surface->wayland_buffer_queue);
++        surface->last_flush_missing_wayland = TRUE;
++        goto done;
++    }
++    surface->last_flush_missing_wayland = FALSE;
++
 +    reset_bounds(&surface->bounds);
 +    if (!needs_flush) goto done;
 +
@@ -14136,6 +14376,27 @@ index 00000000000..84d6908afca
 +}
 +
 +/***********************************************************************
++ *           wayland_window_surface_preferred_format
++ */
++static int wayland_window_surface_get_preferred_format(struct wayland_window_surface *wws)
++{
++    int format;
++    HRGN window_region = CreateRectRgn(0, 0, 0, 0);
++
++    /* If the surface has whole or src alpha use ARGB buffers. Also use ARGB to
++     * implement window regions (areas out of the region are transparent). */
++    if ((window_region && GetWindowRgn(wws->hwnd, window_region) != ERROR) ||
++        wws->src_alpha || wws->alpha != 255)
++        format = WL_SHM_FORMAT_ARGB8888;
++    else
++        format = WL_SHM_FORMAT_XRGB8888;
++
++    if (window_region) DeleteObject(window_region);
++
++    return format;
++}
++
++/***********************************************************************
 + *           update_wayland_buffer_queue
 + */
 +static void update_wayland_buffer_queue(struct wayland_window_surface *surface)
@@ -14143,29 +14404,18 @@ index 00000000000..84d6908afca
 +    int width;
 +    int height;
 +    int format;
-+    HRGN window_region;
 +
 +    if (!surface->wayland_buffer_queue) return;
-+    if (!(window_region = CreateRectRgn(0, 0, 0, 0))) return;
 +
 +    width = surface->wayland_buffer_queue->width;
 +    height = surface->wayland_buffer_queue->height;
++    format = wayland_window_surface_get_preferred_format(surface);
 +
 +    wayland_buffer_queue_destroy(surface->wayland_buffer_queue);
-+
-+    /* If the surface has whole or src alpha use ARGB buffers. Also use ARGB to
-+     * implement window regions (areas out of the region are transparent). */
-+    if (GetWindowRgn(surface->hwnd, window_region) != ERROR ||
-+        surface->src_alpha || surface->alpha != 255)
-+        format = WL_SHM_FORMAT_ARGB8888;
-+    else
-+        format = WL_SHM_FORMAT_XRGB8888;
 +
 +    surface->wayland_buffer_queue =
 +        wayland_buffer_queue_create(surface->wayland_surface->wayland,
 +                                    width, height, format);
-+
-+    DeleteObject(window_region);
 +}
 +
 +/***********************************************************************
@@ -14254,12 +14504,6 @@ index 00000000000..84d6908afca
 +    surface->header.rect  = *rect;
 +    surface->header.ref   = 1;
 +    surface->hwnd         = hwnd;
-+    surface->wayland_surface = wayland_surface_for_hwnd(hwnd);
-+    surface->wayland_buffer_queue =
-+        surface->wayland_surface ?
-+        wayland_buffer_queue_create(surface->wayland_surface->wayland, width, height,
-+                (src_alpha || alpha != 255) ? WL_SHM_FORMAT_ARGB8888 : WL_SHM_FORMAT_XRGB8888) :
-+        NULL;
 +    surface->alpha        = alpha;
 +    surface->src_alpha    = src_alpha;
 +    set_color_key(surface, color_key);
@@ -14393,11 +14637,9 @@ index 00000000000..84d6908afca
 + *
 + * Create a data window structure for an existing window.
 + */
-+static struct wayland_win_data *create_win_data(HWND hwnd, const RECT *window_rect,
-+                                                const RECT *client_rect)
++static struct wayland_win_data *create_win_data(HWND hwnd)
 +{
 +    struct wayland_win_data *data;
-+    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
 +    HWND parent;
 +
 +    /* Don't create win_data for desktop or HWND_MESSAGE windows. */
@@ -14408,58 +14650,43 @@ index 00000000000..84d6908afca
 +        return NULL;
 +
 +    data->hwnd = hwnd;
-+    data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
-+    data->window_rect = *window_rect;
-+    data->client_rect = *client_rect;
-+
-+    /* Only create wayland surfaces for toplevel windows. Let Wine core handle
-+     * the drawing of other windows in their corresponding top level window
-+     * surface. */
-+    if (!data->parent)
-+    {
-+        struct wayland *wayland = thread_init_wayland();
-+        HWND effective_parent_hwnd = get_effective_parent(hwnd, window_rect);
-+        struct wayland_surface *parent_surface = NULL;
-+
-+        if (effective_parent_hwnd)
-+            parent_surface = wayland_surface_for_hwnd(effective_parent_hwnd);
-+
-+        data->effective_parent = effective_parent_hwnd;
-+
-+        /* Use wayland subsurfaces for owned win32 windows that are transient (i.e., don't have
-+         * a titlebar). Otherwise make them wayland toplevels. */
-+        if ((style & WS_CAPTION) != WS_CAPTION && parent_surface)
-+            data->wayland_surface = wayland_surface_create_subsurface(wayland, parent_surface);
-+        else
-+            data->wayland_surface = wayland_surface_create_toplevel(wayland, parent_surface);
-+
-+        data->wayland_surface->hwnd = hwnd;
-+    }
++    data->wayland_surface_needs_first_update = TRUE;
 +
 +    EnterCriticalSection(&win_data_section);
 +    win_data_context[context_idx(hwnd)] = data;
 +
-+    TRACE("hwnd=%p wayland_surface=%p\n", data->hwnd, data->wayland_surface);
++    TRACE("hwnd=%p\n", data->hwnd);
 +
 +    return data;
 +}
 +
-+/***********************************************************************
-+ *           recreate_win_data
-+ *
-+ * Rereate a data window structure for an existing window, maintaining
-+ * any related GL state.
-+ */
-+static struct wayland_win_data *recreate_win_data(struct wayland_win_data *data,
-+                                                  HWND hwnd, const RECT *window_rect,
-+                                                  const RECT *client_rect)
++static BOOL win_data_wayland_surface_needs_update(struct wayland_win_data *data)
 +{
-+    TRACE("hwnd=%p\n", hwnd);
-+    wayland_invalidate_vulkan_objects(hwnd);
-+    free_win_data(data);
-+    data = create_win_data(hwnd, window_rect, client_rect);
-+    wayland_update_gl_drawable(hwnd, data->wayland_surface);
-+    return data;
++    if (data->wayland_surface_needs_first_update)
++        return TRUE;
++
++    /* Change of parentage (either actual or effective) requires recreating the
++     * whole win_data to ensure we have a properly owned wayland surface. We
++     * check for change of effective parent only if the window moved in any
++     * way. */
++    if ((!EqualRect(&data->window_rect, &data->old_window_rect) &&
++         data->effective_parent != get_effective_parent(data->hwnd, &data->window_rect)) ||
++        data->parent != data->old_parent)
++    {
++        return TRUE;
++    }
++
++    /* If this is currently or potentially a toplevel surface, and its
++     * visibility state has changed, recreate win_data so that we only have
++     * xdg_toplevels for visible windows. */
++    if (data->wayland_surface && !data->wayland_surface->wl_subsurface)
++    {
++        BOOL visible = data->wayland_surface->xdg_toplevel != NULL;
++        if (data->visible != visible)
++            return TRUE;
++    }
++
++    return FALSE;
 +}
 +
 +/***********************************************************************
@@ -14474,29 +14701,23 @@ index 00000000000..84d6908afca
 +    DWORD flags;
 +    COLORREF key;
 +    BYTE alpha;
-+    BOOL layered = GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_LAYERED;
++    BOOL exstyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
++    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
 +    HWND parent = GetAncestor(hwnd, GA_PARENT);
 +
-+    TRACE("win %p window %s client %s visible %s style %08x flags %08x layered %d after %p\n",
++    TRACE("win %p window %s client %s visible %s style %08x ex %08x flags %08x after %p\n",
 +           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-+           wine_dbgstr_rect(visible_rect),
-+           GetWindowLongW(hwnd, GWL_STYLE), swp_flags , layered, insert_after);
++           wine_dbgstr_rect(visible_rect), style, exstyle,
++           swp_flags, insert_after);
 +
-+    if (!data && !(data = create_win_data(hwnd, window_rect, client_rect))) return TRUE;
++    if (!data && !(data = create_win_data(hwnd))) return TRUE;
 +
-+    if (parent == GetDesktopWindow()) parent = 0;
-+
-+    /* Change of parentage (either actual or effective) requires recreating the
-+     * whole win_data to ensure we have a properly owned wayland surface. We
-+     * check for change of effective parent only if the window moved in any way. */
-+    if ((!EqualRect(&data->window_rect, window_rect) &&
-+         data->effective_parent != get_effective_parent(hwnd, window_rect)) ||
-+        data->parent != parent)
-+    {
-+        EnterCriticalSection(&win_data_section);
-+        data = recreate_win_data(data, hwnd, window_rect, client_rect);
-+        LeaveCriticalSection(&win_data_section);
-+    }
++    data->old_parent = data->parent;
++    data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
++    data->old_window_rect = data->window_rect;
++    data->window_rect = *window_rect;
++    data->client_rect = *client_rect;
++    data->visible = (style & WS_VISIBLE) == WS_VISIBLE || (swp_flags & SWP_SHOWWINDOW);
 +
 +    *visible_rect = *window_rect;
 +
@@ -14505,7 +14726,7 @@ index 00000000000..84d6908afca
 +    *surface = NULL;  /* indicate that we want to draw directly to the window */
 +
 +    /* If we don't want a dedicated surface for this window... */
-+    if (!data->wayland_surface) goto done;
++    if (data->parent) goto done;
 +
 +    if (swp_flags & SWP_HIDEWINDOW) goto done;
 +    surface_rect = *window_rect;
@@ -14526,7 +14747,7 @@ index 00000000000..84d6908afca
 +    if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)) goto done;
 +
 +    key = alpha = flags = 0;
-+    if (!layered || !GetLayeredWindowAttributes(hwnd, &key, &alpha, &flags)) flags = 0;
++    if (!(exstyle & WS_EX_LAYERED) || !GetLayeredWindowAttributes(hwnd, &key, &alpha, &flags)) flags = 0;
 +    if (!(flags & LWA_ALPHA)) alpha = 255;
 +    if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
 +
@@ -14538,8 +14759,89 @@ index 00000000000..84d6908afca
 +    return TRUE;
 +}
 +
-+static void update_wayland_state(struct wayland_win_data *data, DWORD style,
-+                                 const RECT *old_window_rect)
++static void win_data_update_window_surface(struct wayland_win_data *data)
++{
++    struct wayland_window_surface *wws;
++
++    data->surface->funcs->lock(data->surface);
++
++    wws = get_wayland_window_surface(data->surface);
++    wws->wayland_surface = data->wayland_surface;
++
++    if (!wws->wayland_buffer_queue && data->wayland_surface)
++    {
++        wws->wayland_buffer_queue =
++            wayland_buffer_queue_create(data->wayland_surface->wayland,
++                    wws->info.bmiHeader.biWidth, -wws->info.bmiHeader.biHeight,
++                    wayland_window_surface_get_preferred_format(wws));
++    }
++
++    data->surface->funcs->unlock(data->surface);
++}
++
++static void win_data_update_wayland_surface(struct wayland_win_data *data)
++{
++    struct wayland *wayland;
++    HWND effective_parent_hwnd;
++    struct wayland_surface *parent_surface;
++    DWORD style;
++
++    TRACE("hwnd=%p\n", data->hwnd);
++
++    data->wayland_surface_needs_first_update = FALSE;
++
++    wayland = thread_init_wayland();
++
++    wayland_invalidate_vulkan_objects(data->hwnd);
++
++    if (data->wayland_surface)
++    {
++        wayland_surface_unref(data->wayland_surface);
++        data->wayland_surface = NULL;
++    }
++
++    /* Only create wayland surfaces for toplevel windows. Let Wine core handle
++     * the drawing of other windows in their corresponding top level window
++     * surface. */
++    if (data->parent) goto out;
++
++    effective_parent_hwnd = get_effective_parent(data->hwnd, &data->window_rect);
++    parent_surface = NULL;
++
++    if (effective_parent_hwnd)
++    {
++        parent_surface = wayland_surface_for_hwnd_lock(effective_parent_hwnd);
++        wayland_surface_for_hwnd_unlock(parent_surface);
++    }
++
++    data->effective_parent = effective_parent_hwnd;
++    style = GetWindowLongW(data->hwnd, GWL_STYLE);
++
++    /* Use wayland subsurfaces for owned win32 windows that are transient (i.e., don't have
++     * a titlebar). Otherwise, if the window is visible make it wayland toplevel. Finally,
++     * if the window is not visible create a plain (without a role) surface to avoid
++     * polluting the compositor with empty xdg_toplevels. */
++    if ((style & WS_CAPTION) != WS_CAPTION && parent_surface)
++        data->wayland_surface = wayland_surface_create_subsurface(wayland, parent_surface);
++    else if (data->visible)
++        data->wayland_surface = wayland_surface_create_toplevel(wayland, parent_surface);
++    else
++        data->wayland_surface = wayland_surface_create_plain(wayland);
++
++    data->wayland_surface->hwnd = data->hwnd;
++
++    if (data->wayland_surface && data->wayland_surface->xdg_toplevel)
++    {
++        WCHAR text[1024];
++        if (!InternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text))) text[0] = 0;
++        wayland_surface_set_title(data->wayland_surface, text);
++    }
++
++out:
++    wayland_update_gl_drawable(data->hwnd, data->wayland_surface);
++}
++
++static void win_data_update_wayland_surface_state(struct wayland_win_data *data)
 +{
 +    RECT offset_rect = {0};
 +    MONITORINFOEXW mi;
@@ -14548,9 +14850,9 @@ index 00000000000..84d6908afca
 +    int monitor_width;
 +    int monitor_height;
 +    struct wayland_win_data *parent_data;
-+    BOOL wait_for_configure = FALSE;
 +    enum wayland_configure_flags conf_flags = 0;
 +    struct wayland_output *output;
++    DWORD style = GetWindowLongW(data->hwnd, GWL_STYLE);
 +
 +    mi.cbSize = sizeof(mi);
 +    GetMonitorInfoW(MonitorFromWindow(data->hwnd, MONITOR_DEFAULTTOPRIMARY), (MONITORINFO *)&mi);
@@ -14562,10 +14864,12 @@ index 00000000000..84d6908afca
 +          data->hwnd, width, height, monitor_width, monitor_height,
 +          data->maximized, data->fullscreen, data->handling_wayland_configure_event);
 +
++    wayland_surface_set_main_output(data->wayland_surface, output);
++
 +    if (!(style & WS_VISIBLE))
 +    {
++        wayland_surface_set_drawing_allowed(data->wayland_surface, TRUE);
 +        wayland_surface_unmap(data->wayland_surface);
-+        wayland_surface_set_main_output(data->wayland_surface, NULL);
 +        return;
 +    }
 +
@@ -14598,30 +14902,21 @@ index 00000000000..84d6908afca
 +    if (data->maximized && !(conf_flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED))
 +    {
 +        if (!data->handling_wayland_configure_event)
-+        {
 +            xdg_toplevel_unset_maximized(data->wayland_surface->xdg_toplevel);
-+            wait_for_configure = TRUE;
-+        }
 +        data->maximized = FALSE;
 +    }
 +
 +    if (data->fullscreen && !(conf_flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN))
 +    {
 +        if (!data->handling_wayland_configure_event)
-+        {
 +            xdg_toplevel_unset_fullscreen(data->wayland_surface->xdg_toplevel);
-+            wait_for_configure = TRUE;
-+        }
 +        data->fullscreen = FALSE;
 +    }
 +
 +    if (!data->maximized && (conf_flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED))
 +    {
 +        if (!data->handling_wayland_configure_event)
-+        {
 +            xdg_toplevel_set_maximized(data->wayland_surface->xdg_toplevel);
-+            wait_for_configure = TRUE;
-+        }
 +        data->maximized = TRUE;
 +    }
 +
@@ -14633,31 +14928,73 @@ index 00000000000..84d6908afca
 +        {
 +            xdg_toplevel_set_fullscreen(data->wayland_surface->xdg_toplevel,
 +                                        output ? output->wl_output : NULL);
-+            wait_for_configure = TRUE;
 +        }
 +        data->fullscreen = TRUE;
 +    }
 +
-+    if (!(conf_flags & (WAYLAND_CONFIGURE_FLAG_FULLSCREEN|WAYLAND_CONFIGURE_FLAG_MAXIMIZED)))
++    if (!(conf_flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN) &&
++        !(conf_flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED) &&
++        !(style & WS_MINIMIZE))
++    {
 +        data->restore_rect = data->window_rect;
++        TRACE("setting hwnd=%p restore_rect=%s\n",
++              data->hwnd, wine_dbgstr_rect(&data->restore_rect));
++    }
 +
 +    TRACE("hwnd=%p current state maximized=%d fullscreen=%d\n",
 +          data->hwnd, data->maximized, data->fullscreen);
 +
-+    /* If have just requested a state change, wayland hasn't yet replied with a
-+     * configure for the new state (and thus we haven't acked it), so all
-+     * current maximize/fullscreen limitations still apply. To avoid wayland
-+     * compositors erroring out on us, don't reconfigure the surfaces yet. We
-+     * will reconfigure them when we get the configure event. */
-+    if (wait_for_configure)
++    if (data->wayland_surface->xdg_toplevel)
 +    {
-+        /* Reset any pending configure serial to avoid handling events older than
-+         * the ones we expect to get from the new state. */
-+        data->wayland_surface->pending.serial = 0;
-+        wl_display_flush(data->wayland_surface->wayland->wl_display);
-+        TRACE("hwnd=%p waiting for configure for state maximized=%d fullscreen=%d\n",
-+              data->hwnd, data->maximized, data->fullscreen);
-+        return;
++        int wayland_width, wayland_height;
++        BOOL compat_with_current = FALSE;
++        BOOL compat_with_pending = FALSE;
++
++        wayland_surface_coords_rounded_from_wine(data->wayland_surface, width, height,
++                                                 &wayland_width, &wayland_height);
++
++        if (data->wayland_surface->current.serial &&
++            wayland_surface_configure_is_compatible(&data->wayland_surface->current,
++                                                    wayland_width, wayland_height,
++                                                    conf_flags))
++        {
++            compat_with_current = TRUE;
++        }
++
++        if (data->wayland_surface->pending.serial &&
++            wayland_surface_configure_is_compatible(&data->wayland_surface->pending,
++                                                    wayland_width, wayland_height,
++                                                    conf_flags))
++        {
++            compat_with_pending = TRUE;
++        }
++
++        TRACE("current conf serial=%d size=%dx%d flags=%#x\n compat=%d\n",
++              data->wayland_surface->current.serial,
++              data->wayland_surface->current.width,
++              data->wayland_surface->current.height,
++              data->wayland_surface->current.configure_flags,
++              compat_with_current);
++        TRACE("pending conf serial=%d size=%dx%d flags=%#x compat=%d\n",
++              data->wayland_surface->pending.serial,
++              data->wayland_surface->pending.width,
++              data->wayland_surface->pending.height,
++              data->wayland_surface->pending.configure_flags,
++              compat_with_pending);
++
++        /* Only update the wayland surface state to match the window
++         * configuration if the surface can accept the new config, in order to
++         * avoid causing a protocol error. */
++        if (!compat_with_pending && !compat_with_current)
++        {
++            TRACE("hwnd=%p window state not compatible with current or "
++                  "pending wayland surface configuration\n", data->hwnd);
++            wayland_surface_set_drawing_allowed(data->wayland_surface, FALSE);
++            return;
++        }
++
++        if (compat_with_pending)
++            wayland_surface_ack_configure(data->wayland_surface);
 +    }
 +
 +    /* We manage some top level, popup window with subsurfaces (see create_win_data),
@@ -14690,31 +15027,34 @@ index 00000000000..84d6908afca
 +                                     data->client_rect.right - data->client_rect.left,
 +                                     data->client_rect.bottom - data->client_rect.top);
 +
-+    TRACE("conf->serial=%d conf->size=%dx%d conf->flags=%#x\n",
-+          data->wayland_surface->pending.serial,
-+          data->wayland_surface->pending.width,
-+          data->wayland_surface->pending.height,
-+          data->wayland_surface->pending.configure_flags);
-+
-+    /* If we have a pending configure event, and it is compatible with the new state,
-+     * ack the event. */
-+    if (data->wayland_surface->pending.serial)
-+    {
-+        int wayland_width, wayland_height;
-+        wayland_surface_coords_rounded_from_wine(data->wayland_surface, width, height,
-+                                                 &wayland_width, &wayland_height);
-+        if (wayland_surface_configure_is_compatible(&data->wayland_surface->pending,
-+                                                    wayland_width, wayland_height,
-+                                                    conf_flags))
-+        {
-+            wayland_surface_ack_configure(data->wayland_surface);
-+        }
-+    }
++    wayland_surface_reconfigure_apply(data->wayland_surface);
 +
 +    wayland_surface_update_pointer_confinement(data->wayland_surface);
-+    wayland_surface_set_main_output(data->wayland_surface, output);
++
++    wayland_surface_set_drawing_allowed(data->wayland_surface, TRUE);
 +
 +    release_win_data(parent_data);
++}
++
++static void update_wayland_state(struct wayland_win_data *data)
++{
++    if (win_data_wayland_surface_needs_update(data))
++        win_data_update_wayland_surface(data);
++
++    if (data->surface)
++        win_data_update_window_surface(data);
++
++    if (data->wayland_surface)
++        win_data_update_wayland_surface_state(data);
++
++    if (data->surface)
++    {
++        struct wayland_window_surface *wws = get_wayland_window_surface(data->surface);
++        /* If the last flush was not performed due to not having a wayland surface or
++         * buffer queue, flush now. */
++        if (wws->last_flush_missing_wayland)
++            data->surface->funcs->flush(data->surface);
++    }
 +}
 +
 +/***********************************************************************
@@ -14726,20 +15066,13 @@ index 00000000000..84d6908afca
 +                                    struct window_surface *surface)
 +{
 +    struct wayland_win_data *data;
-+    DWORD new_style = GetWindowLongW(hwnd, GWL_STYLE);
-+    RECT old_window_rect;
 +
 +    if (!(data = get_win_data(hwnd))) return;
 +
 +    TRACE("hwnd %p window %s client %s visible %s style %08x effective_parent %p after %p flags %08x\n",
 +          hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-+          wine_dbgstr_rect(visible_rect), new_style, data->effective_parent,
-+          insert_after, swp_flags);
-+
-+    old_window_rect = data->window_rect;
-+
-+    data->window_rect = *window_rect;
-+    data->client_rect = *client_rect;
++          wine_dbgstr_rect(visible_rect), GetWindowLongW(hwnd, GWL_STYLE),
++          data->effective_parent, insert_after, swp_flags);
 +
 +    if (surface) window_surface_add_ref(surface);
 +    if (data->surface) window_surface_release(data->surface);
@@ -14747,35 +15080,19 @@ index 00000000000..84d6908afca
 +
 +    /* TODO: Try to handle z-order */
 +
-+    if (data->wayland_surface)
++    /* In some cases, notably when the app calls UpdateLayeredWindow, position
++     * and size changes may be emitted from a thread other than the window
++     * thread. Since in the current implementation updating the wayland state
++     * needs to happen in the context of the window thread to avoid racy
++     * interactions, post a message to update the state in the right thread. */
++    if (GetCurrentThreadId() == GetWindowThreadProcessId(hwnd, NULL))
 +    {
-+        BOOL was_fullscreen;
-+        BOOL is_fullscreen;
-+
-+        was_fullscreen = data->wayland_surface->current.configure_flags &
-+                         WAYLAND_CONFIGURE_FLAG_FULLSCREEN;
-+
-+        update_wayland_state(data, new_style, &old_window_rect);
-+
-+        is_fullscreen = data->wayland_surface->current.configure_flags &
-+                        WAYLAND_CONFIGURE_FLAG_FULLSCREEN;
-+
-+        /* If the wayland surface state changed to fullscreen, or the size
-+         * changed while being fullscreen, we need to commit a valid buffer for
-+         * the change to take effect, even if the contents didn't change.  This
-+         * typically happens when the surface is redrawn due to the state or
-+         * size change, but there are some scenarios when this invalidation
-+         * doesn't take place (e.g. with Vulkan windows). Manually invalidate
-+         * the whole surface to ensure we will commit a new buffer eventually. */
-+        if (surface && is_fullscreen &&
-+            (!was_fullscreen || !EqualRect(&old_window_rect, window_rect)))
-+        {
-+            struct wayland_window_surface *wws = get_wayland_window_surface(surface);
-+            TRACE("hwnd=%p wayland fullscreen state change, invalidating surface\n", hwnd);
-+            surface->funcs->lock(surface);
-+            *surface->funcs->get_bounds(surface) = wws->header.rect;
-+            surface->funcs->unlock(surface);
-+        }
++        update_wayland_state(data);
++    }
++    else if (!data->pending_state_update_message)
++    {
++        PostMessageW(hwnd, WM_WAYLAND_STATE_UPDATE, 0, 0);
++        data->pending_state_update_message = TRUE;
 +    }
 +
 +    release_win_data(data);
@@ -14786,6 +15103,8 @@ index 00000000000..84d6908afca
 + */
 +UINT CDECL WAYLAND_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
 +{
++    struct wayland_surface *wsurface;
++
 +    TRACE("hwnd=%p cmd=%d\n", hwnd, cmd);
 +
 +    if (IsRectEmpty(rect)) return swp;
@@ -14796,6 +15115,11 @@ index 00000000000..84d6908afca
 +        OffsetRect(rect, -32000 - rect->left, -32000 - rect->top);
 +        swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
 +    }
++
++    if ((wsurface = wayland_surface_for_hwnd_lock(hwnd)) && wsurface->xdg_toplevel)
++        xdg_toplevel_set_minimized(wsurface->xdg_toplevel);
++
++    wayland_surface_for_hwnd_unlock(wsurface);
 +
 +    return swp;
 +}
@@ -14922,6 +15246,21 @@ index 00000000000..84d6908afca
 +    release_win_data(data);
 +}
 +
++/*****************************************************************
++ *		WAYLAND_SetWindowText
++ */
++void CDECL WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text)
++{
++    struct wayland_surface *wsurface = wayland_surface_for_hwnd_lock(hwnd);
++
++    TRACE("hwnd=%p text=%s\n", hwnd, wine_dbgstr_w(text));
++
++    if (wsurface && wsurface->xdg_toplevel)
++        wayland_surface_set_title(wsurface, text);
++
++    wayland_surface_for_hwnd_unlock(wsurface);
++}
++
 +/***********************************************************************
 + *           WAYLAND_SetWindowRgn
 + */
@@ -15014,18 +15353,6 @@ index 00000000000..84d6908afca
 +        release_win_data(data);
 +        return 0;
 +    }
-+    else if (command == SC_MAXIMIZE)
-+    {
-+        xdg_toplevel_set_maximized(data->wayland_surface->xdg_toplevel);
-+        release_win_data(data);
-+        return 0;
-+    }
-+    else if (command == SC_RESTORE)
-+    {
-+        xdg_toplevel_unset_maximized(data->wayland_surface->xdg_toplevel);
-+        release_win_data(data);
-+        return 0;
-+    }
 +
 +done:
 +    release_win_data(data);
@@ -15071,6 +15398,7 @@ index 00000000000..84d6908afca
 +        data->surface = create_surface(data->hwnd, &rect, 255, color_key, TRUE);
 +        if (surface) window_surface_release(surface);
 +        surface = data->surface;
++        win_data_update_window_surface(data);
 +    }
 +    else
 +    {
@@ -15134,12 +15462,22 @@ index 00000000000..84d6908afca
 +    int width, height, wine_width, wine_height;
 +    BOOL needs_move_to_origin;
 +    int origin_x, origin_y;
++    UINT swp_flags;
++    BOOL needs_restore = FALSE;
++    BOOL needs_enter_size_move = FALSE;
++    BOOL needs_exit_size_move = FALSE;
 +
 +    if (!(data = get_win_data(hwnd))) return 0;
++    if (!data->wayland_surface || !data->wayland_surface->xdg_toplevel)
++    {
++        TRACE("no suitable wayland surface, returning\n");
++        release_win_data(data);
++        return 0;
++    }
 +
 +    wsurface = data->wayland_surface;
 +
-+    TRACE("serial=%d size=%dx%d flags=%#x\n restore_rect=%s",
++    TRACE("serial=%d size=%dx%d flags=%#x restore_rect=%s\n",
 +          wsurface->pending.serial, wsurface->pending.width,
 +          wsurface->pending.height, wsurface->pending.configure_flags,
 +          wine_dbgstr_rect(&data->restore_rect));
@@ -15151,7 +15489,38 @@ index 00000000000..84d6908afca
 +        return 0;
 +    }
 +
-+    data->handling_wayland_configure_event = TRUE;
++    if (IsIconic(hwnd) &&
++        !(wsurface->pending.configure_flags & WAYLAND_CONFIGURE_FLAG_ACTIVATED))
++    {
++        data->deactivated_after_minimization = TRUE;
++    }
++
++    /* Restore a minimized window if it is activated. We only do this after we
++     * have seen a deactivation event for the surface or if the flags indicate
++     * an explicit non-minimized state, to ensure we don't restore prematurely,
++     * e.g., while minimization is still in progress. */
++    if (IsIconic(hwnd) &&
++        (wsurface->pending.configure_flags & WAYLAND_CONFIGURE_FLAG_ACTIVATED) &&
++        (data->deactivated_after_minimization ||
++         (wsurface->pending.configure_flags &
++          (WAYLAND_CONFIGURE_FLAG_MAXIMIZED|WAYLAND_CONFIGURE_FLAG_FULLSCREEN))))
++    {
++        needs_restore = TRUE;
++        data->deactivated_after_minimization = FALSE;
++        /* If allowed, ignore the restoration size provided by wayland, since
++         * it may cause wayland_win_data.restore_rect to be set and mess up our
++         * own tracking.
++         */
++        if (!(wsurface->pending.configure_flags &
++              (WAYLAND_CONFIGURE_FLAG_MAXIMIZED|WAYLAND_CONFIGURE_FLAG_FULLSCREEN)))
++        {
++            wsurface->pending.width = 0;
++            wsurface->pending.height = 0;
++        }
++    }
++
++    wsurface->pending.processed = TRUE;
++
 +    data->wayland_configure_event_flags = wsurface->pending.configure_flags;
 +
 +    width = wsurface->pending.width;
@@ -15163,7 +15532,8 @@ index 00000000000..84d6908afca
 +    if (width == 0)
 +    {
 +        int ignore;
-+        width = data->restore_rect.right - data->restore_rect.left;
++        if (!IsIconic(hwnd) || needs_restore)
++            width = data->restore_rect.right - data->restore_rect.left;
 +        if (width == 0)
 +            width = data->window_rect.right - data->window_rect.left;
 +        wayland_surface_coords_rounded_from_wine(wsurface, width, 0,
@@ -15173,7 +15543,8 @@ index 00000000000..84d6908afca
 +    if (height == 0)
 +    {
 +        int ignore;
-+        height = data->restore_rect.bottom - data->restore_rect.top;
++        if (!IsIconic(hwnd) || needs_restore)
++            height = data->restore_rect.bottom - data->restore_rect.top;
 +        if (height == 0)
 +            height = data->window_rect.bottom - data->window_rect.top;
 +        wayland_surface_coords_rounded_from_wine(wsurface, 0, height,
@@ -15181,12 +15552,17 @@ index 00000000000..84d6908afca
 +        wsurface->pending.height = height;
 +    }
 +
-+    if (flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN)
++    if ((flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN) &&
++        !(flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED))
++    {
 +        wayland_surface_find_wine_fullscreen_fit(wsurface, width, height,
 +                                                 &wine_width, &wine_height);
++    }
 +    else
++    {
 +        wayland_surface_coords_to_wine(wsurface, width, height,
 +                                       &wine_width, &wine_height);
++    }
 +
 +    TRACE("hwnd=%p effective_size=%dx%d wine_size=%dx%d\n",
 +          data->hwnd, width, height, wine_width, wine_height);
@@ -15194,13 +15570,13 @@ index 00000000000..84d6908afca
 +    if ((flags & WAYLAND_CONFIGURE_FLAG_RESIZING) && !data->resizing)
 +    {
 +        data->resizing = TRUE;
-+        SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
++        needs_enter_size_move = TRUE;
 +    }
 +
 +    if (!(flags & WAYLAND_CONFIGURE_FLAG_RESIZING) && data->resizing)
 +    {
 +        data->resizing = FALSE;
-+        SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
++        needs_exit_size_move = TRUE;
 +    }
 +
 +    /* Parts of the window that are outside the win32 display are not
@@ -15227,49 +15603,66 @@ index 00000000000..84d6908afca
 +
 +    release_win_data(data);
 +
++    if (needs_restore)
++    {
++        ShowOwnedPopups(hwnd, TRUE);
++        ShowWindow(hwnd, SW_RESTORE);
++    }
++
++    if (needs_enter_size_move)
++        SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
++
++    if (needs_exit_size_move)
++        SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
++
++    if ((data = get_win_data(hwnd)))
++    {
++        data->handling_wayland_configure_event = TRUE;
++        release_win_data(data);
++    }
++
 +    if (flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED)
 +        SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) | WS_MAXIMIZE);
 +    else
 +        SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) & ~WS_MAXIMIZE);
 +
-+    if (wine_width > 0 && wine_height > 0)
-+    {
-+        UINT swp_flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER |
-+                         SWP_FRAMECHANGED | SWP_NOMOVE;
-+        if (needs_move_to_origin) swp_flags &= ~SWP_NOMOVE;
-+        /* When we are maximized or fullscreen, wayland is particular about the
-+         * surface size it accepts, so don't allow the app to change it. */
-+        if (flags & (WAYLAND_CONFIGURE_FLAG_MAXIMIZED|WAYLAND_CONFIGURE_FLAG_FULLSCREEN))
-+            swp_flags |= SWP_NOSENDCHANGING;
-+        SetWindowPos(hwnd, 0, origin_x, origin_y, wine_width, wine_height, swp_flags);
-+    }
-+    else
-+    {
-+        wayland_surface_ack_configure(wsurface);
-+        if (needs_move_to_origin)
-+        {
-+            SetWindowPos(hwnd, 0, origin_x, origin_y, 0, 0,
-+                         SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER |
-+                         SWP_NOSIZE | SWP_NOREDRAW);
-+        }
-+    }
++    swp_flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER;
 +
-+    data->handling_wayland_configure_event = FALSE;
++    if (!needs_move_to_origin) swp_flags |= SWP_NOMOVE;
++    if (wine_width > 0 && wine_height > 0)
++        swp_flags |= SWP_FRAMECHANGED;
++    else
++        swp_flags |= SWP_NOSIZE | SWP_NOREDRAW;
++    /* When we are maximized or fullscreen, wayland is particular about the
++     * surface size it accepts, so don't allow the app to change it. */
++    if (flags & (WAYLAND_CONFIGURE_FLAG_MAXIMIZED|WAYLAND_CONFIGURE_FLAG_FULLSCREEN))
++        swp_flags |= SWP_NOSENDCHANGING;
++
++    SetWindowPos(hwnd, 0, origin_x, origin_y, wine_width, wine_height, swp_flags);
++
++    if ((data = get_win_data(hwnd)))
++    {
++        data->handling_wayland_configure_event = FALSE;
++        release_win_data(data);
++    }
 +
 +    return 0;
 +}
 +
 +static void handle_wm_wayland_surface_output_change(HWND hwnd)
 +{
-+    struct wayland_win_data *data;
 +    struct wayland_surface *wsurface;
 +    int x, y, w, h;
 +    UINT swp_flags;
 +
 +    TRACE("hwnd=%p\n", hwnd);
-+    if (!(data = get_win_data(hwnd))) return;
-+    wsurface = data->wayland_surface;
-+    release_win_data(data);
++
++    wsurface = wayland_surface_for_hwnd_lock(hwnd);
++    if (!wsurface || !wsurface->xdg_toplevel)
++    {
++        TRACE("no suitable wayland surface, returning\n");
++        goto out;
++    }
 +
 +    /* When becoming fullscreen (particularly on a different output), we may
 +     * get some confusing enter/leave events from the compositor. Ignore these
@@ -15281,7 +15674,7 @@ index 00000000000..84d6908afca
 +    {
 +        TRACE("in the middle of a fullscreen configuration, "
 +              "ignoring output change notification\n");
-+        return;
++        goto out;
 +    }
 +
 +    swp_flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER |
@@ -15325,6 +15718,9 @@ index 00000000000..84d6908afca
 +    }
 +
 +    SetWindowPos(hwnd, 0, x, y, w, h, swp_flags);
++
++out:
++    wayland_surface_for_hwnd_unlock(wsurface);
 +}
 +
 +static void CALLBACK post_configure(HWND hwnd, UINT msg, UINT_PTR timer_id, DWORD elapsed)
@@ -15364,10 +15760,13 @@ index 00000000000..84d6908afca
 +        }
 +        else
 +        {
-+            struct wayland_win_data *data;
-+            if (!(data = get_win_data(hwnd))) return 0;
-+            SetTimer(hwnd, (UINT_PTR)data->wayland_surface->wl_surface, 10, post_configure);
-+            release_win_data(data);
++            struct wayland_surface *wayland_surface = wayland_surface_for_hwnd_lock(hwnd);
++            if (wayland_surface && wayland_surface->xdg_toplevel)
++            {
++                SetTimer(hwnd, (UINT_PTR)wayland_surface->wl_surface, 10,
++                         post_configure);
++            }
++            wayland_surface_for_hwnd_unlock(wayland_surface);
 +        }
 +        break;
 +    case WM_WAYLAND_MODE_CHANGE:
@@ -15375,7 +15774,7 @@ index 00000000000..84d6908afca
 +        break;
 +    case WM_WAYLAND_POINTER_CONFINEMENT_UPDATE:
 +        {
-+            struct wayland_surface *wayland_surface = wayland_surface_for_hwnd(hwnd);
++            struct wayland_surface *wayland_surface = wayland_surface_for_hwnd_lock(hwnd);
 +            if (wayland_surface)
 +            {
 +                if (wp == WAYLAND_POINTER_CONFINEMENT_SYSTEM_CLIP)
@@ -15389,10 +15788,25 @@ index 00000000000..84d6908afca
 +                }
 +                wayland_surface_update_pointer_confinement(wayland_surface);
 +            }
++            wayland_surface_for_hwnd_unlock(wayland_surface);
 +        }
 +        break;
 +    case WM_WAYLAND_SURFACE_OUTPUT_CHANGE:
 +        handle_wm_wayland_surface_output_change(hwnd);
++        break;
++    case WM_WAYLAND_CLIPBOARD_WINDOW_CREATE:
++        wayland_data_device_ensure_clipboard_window(thread_wayland());
++        break;
++    case WM_WAYLAND_STATE_UPDATE:
++        {
++            struct wayland_win_data *data = get_win_data(hwnd);
++            if (data)
++            {
++                data->pending_state_update_message = FALSE;
++                update_wayland_state(data);
++                release_win_data(data);
++            }
++        }
 +        break;
 +    default:
 +        FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp);
@@ -15402,10 +15816,10 @@ index 00000000000..84d6908afca
 +}
 diff --git a/dlls/winewayland.drv/winewayland.drv.spec b/dlls/winewayland.drv/winewayland.drv.spec
 new file mode 100644
-index 00000000000..79f569458f0
+index 00000000000..53da50ae07e
 --- /dev/null
 +++ b/dlls/winewayland.drv/winewayland.drv.spec
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,31 @@
 +# GDI driver
 +
 +@ cdecl wine_get_gdi_driver(long) WAYLAND_get_gdi_driver
@@ -15429,6 +15843,7 @@ index 00000000000..79f569458f0
 +@ cdecl SetParent(long long long) WAYLAND_SetParent
 +@ cdecl SetWindowRgn(long long long) WAYLAND_SetWindowRgn
 +@ cdecl SetWindowStyle(ptr long ptr) WAYLAND_SetWindowStyle
++@ cdecl SetWindowText(long wstr) WAYLAND_SetWindowText
 +@ cdecl ShowWindow(long long ptr long) WAYLAND_ShowWindow
 +@ cdecl SysCommand(long long long) WAYLAND_SysCommand
 +@ cdecl UpdateLayeredWindow(long ptr ptr) WAYLAND_UpdateLayeredWindow
@@ -18181,10 +18596,10 @@ index 00000000000..2a33c7ba564
 +    return utf8_len;
 +}
 diff --git a/include/config.h.in b/include/config.h.in
-index 42aaa2708a8..1926609f583 100644
+index c1a68104fb8..fd26991d3b7 100644
 --- a/include/config.h.in
 +++ b/include/config.h.in
-@@ -977,6 +977,12 @@
+@@ -929,6 +929,12 @@
  /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
  #undef HAVE_VALGRIND_VALGRIND_H
  
@@ -18197,7 +18612,7 @@ index 42aaa2708a8..1926609f583 100644
  /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
  #undef HAVE_X11_EXTENSIONS_SHAPE_H
  
-@@ -1031,6 +1037,9 @@
+@@ -983,6 +989,9 @@
  /* Define if you have the XKB extension */
  #undef HAVE_XKB
  
@@ -18218,6 +18633,20 @@ index 124bb41f7d9..bfb69d1b6ca 100644
 +    DWORD                              draw_start_ticks; /* start ticks of fresh draw */
      /* driver-specific fields here */
  };
+ 
+diff --git a/include/winuser.h b/include/winuser.h
+index 260024d7e91..7446f7f4b45 100644
+--- a/include/winuser.h
++++ b/include/winuser.h
+@@ -4407,6 +4407,9 @@ WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
+ 
+ #ifdef __WINESRC__
+ WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
++LRESULT CDECL __wine_send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
++                                                    UINT msg, WPARAM wparam, LPARAM lparam,
++                                                    UINT flags, UINT timeout, PDWORD_PTR res_ptr );
+ 
+ /* Uxtheme hook functions and struct */
  
 diff --git a/programs/explorer/desktop.c b/programs/explorer/desktop.c
 index 2ba276f52cb..f9f7c708bd5 100644
