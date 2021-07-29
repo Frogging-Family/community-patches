@@ -28,7 +28,6 @@
 - NFSWLauncherfix.mypatch : Fix for Need for Speed World's SBRW launcher - https://github.com/SoapboxRaceWorld/wine
 - gta4_gamepad_workaround.mypatch : Workaround for GTA IV gamepad issues thanks to @AlexeyProkhin - https://github.com/ValveSoftware/Proton/issues/350#issuecomment-606425633
 - 0001-powershell-add-wrapper-for-powershell-using-Powershe.mypatch - Patch for Waves Central from Louis Lenders (requires winetricks arial) - https://github.com/Frogging-Family/community-patches/pull/20
-- star-citizen-StorageDeviceSeekPenaltyProperty.mypatch - Patch to add StorageDeviceSeekPenaltyProperty support, needed by StarCitizen 3.13+ - Enabling this patch on staging will also disable staging patchsets known to currently break Star Citizen (ntdll-ForceBottomUpAlloc, ntdll-WRITECOPY and ntdll-Builtin_Prot) - https://bugs.winehq.org/show_bug.cgi?id=50992
 - mass_effect_legendary_psapi.mypatch - Patch to allow Mass Effect Legendary edition to run - https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841587666 - Regarding other things needed for the game, see https://github.com/ValveSoftware/Proton/issues/4823#issuecomment-841761975
 - mfplat_nv12_d3d11_buffers.mypatch - Patch by Adrian | cooltyp100 (VKx) to fix Nier: Replicant videos having a green tint - Thanks!
 - roblox_fix.mypatch - Fixes an issue with VMProtect, allowing Roblox to run - Patch by Kalen Alwardt - https://bugs.winehq.org/show_bug.cgi?id=39142
