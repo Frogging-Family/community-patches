@@ -1,5 +1,5 @@
 diff --git a/configure b/configure
-index 5e5a1e47318..ee4984f134f 100755
+index 43acba7bf22..4118f6e19d3 100755
 --- a/configure
 +++ b/configure
 @@ -702,6 +702,12 @@ XSLT_CFLAGS
@@ -23,7 +23,7 @@ index 5e5a1e47318..ee4984f134f 100755
  with_wine_tools
  with_wine64
  enable_largefile
-@@ -1700,6 +1707,7 @@ enable_winepulse_drv
+@@ -1701,6 +1708,7 @@ enable_winepulse_drv
  enable_wineqtdecoder
  enable_wineusb_sys
  enable_winevulkan
@@ -31,7 +31,7 @@ index 5e5a1e47318..ee4984f134f 100755
  enable_winex11_drv
  enable_wing32
  enable_winhttp
-@@ -1915,6 +1923,12 @@ OBJC
+@@ -1916,6 +1924,12 @@ OBJC
  OBJCPP
  XMKMF
  CPP
@@ -44,7 +44,7 @@ index 5e5a1e47318..ee4984f134f 100755
  XML2_CFLAGS
  XML2_LIBS
  XSLT_CFLAGS
-@@ -2680,6 +2694,7 @@ Optional Packages:
+@@ -2681,6 +2695,7 @@ Optional Packages:
    --without-xshm          do not use XShm (shared memory extension)
    --without-xslt          do not use XSLT
    --without-xxf86vm       do not use XFree video mode extension
@@ -52,7 +52,7 @@ index 5e5a1e47318..ee4984f134f 100755
    --with-wine-tools=DIR   use Wine tools from directory DIR
    --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
    --with-x                use the X Window System
-@@ -2699,6 +2714,18 @@ Some influential environment variables:
+@@ -2700,6 +2715,18 @@ Some influential environment variables:
    OBJCPP      Objective C preprocessor
    XMKMF       Path to xmkmf, Makefile generator for X Window System
    CPP         C preprocessor
@@ -71,7 +71,7 @@ index 5e5a1e47318..ee4984f134f 100755
    XML2_CFLAGS C compiler flags for libxml-2.0, overriding pkg-config
    XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
    XSLT_CFLAGS C compiler flags for libxslt, overriding pkg-config
-@@ -4312,6 +4339,12 @@ if test "${with_xxf86vm+set}" = set; then :
+@@ -4313,6 +4340,12 @@ if test "${with_xxf86vm+set}" = set; then :
  fi
  
  
@@ -84,7 +84,7 @@ index 5e5a1e47318..ee4984f134f 100755
  
  # Check whether --with-wine-tools was given.
  if test "${with_wine_tools+set}" = set; then :
-@@ -12799,6 +12832,403 @@ enable_winex11_drv=${enable_winex11_drv:-no}
+@@ -12800,6 +12833,403 @@ enable_winex11_drv=${enable_winex11_drv:-no}
  fi
  fi
  
@@ -488,7 +488,7 @@ index 5e5a1e47318..ee4984f134f 100755
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
-@@ -19954,6 +20384,12 @@ X_CFLAGS = $X_CFLAGS
+@@ -19971,6 +20401,12 @@ X_CFLAGS = $X_CFLAGS
  X_PRE_LIBS = $X_PRE_LIBS
  X_LIBS = $X_LIBS
  X_EXTRA_LIBS = $X_EXTRA_LIBS
@@ -501,7 +501,7 @@ index 5e5a1e47318..ee4984f134f 100755
  PCAP_LIBS = $PCAP_LIBS
  XML2_CFLAGS = $XML2_CFLAGS
  XML2_LIBS = $XML2_LIBS
-@@ -21121,6 +21557,7 @@ wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
+@@ -21139,6 +21575,7 @@ wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
  wine_fn_config_makefile dlls/wineqtdecoder enable_wineqtdecoder
  wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
  wine_fn_config_makefile dlls/winevulkan enable_winevulkan
@@ -510,7 +510,7 @@ index 5e5a1e47318..ee4984f134f 100755
  wine_fn_config_makefile dlls/wing.dll16 enable_win16
  wine_fn_config_makefile dlls/wing32 enable_wing32
 diff --git a/configure.ac b/configure.ac
-index b5d3217f2a0..1ffc5499a8e 100644
+index 065b3f231bf..8f8c05cf703 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -113,6 +113,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared
@@ -548,7 +548,7 @@ index b5d3217f2a0..1ffc5499a8e 100644
  dnl **** Check for OpenCL ****
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
-@@ -3790,6 +3811,7 @@ WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
+@@ -3799,6 +3820,7 @@ WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
  WINE_CONFIG_MAKEFILE(dlls/wineqtdecoder)
  WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
  WINE_CONFIG_MAKEFILE(dlls/winevulkan)
@@ -557,10 +557,10 @@ index b5d3217f2a0..1ffc5499a8e 100644
  WINE_CONFIG_MAKEFILE(dlls/wing.dll16,enable_win16)
  WINE_CONFIG_MAKEFILE(dlls/wing32)
 diff --git a/dlls/gdi32/dibdrv/dc.c b/dlls/gdi32/dibdrv/dc.c
-index 274fc15454d..5d5dd09ebab 100644
+index 4237ee0e716..b9711865a22 100644
 --- a/dlls/gdi32/dibdrv/dc.c
 +++ b/dlls/gdi32/dibdrv/dc.c
-@@ -771,7 +771,6 @@ struct windrv_physdev
+@@ -741,7 +741,6 @@ struct windrv_physdev
      struct gdi_physdev     dev;
      struct dibdrv_physdev *dibdrv;
      struct window_surface *surface;
@@ -568,7 +568,7 @@ index 274fc15454d..5d5dd09ebab 100644
  };
  
  static const struct gdi_dc_funcs window_driver;
-@@ -785,13 +784,15 @@ static inline void lock_surface( struct windrv_physdev *dev )
+@@ -755,13 +754,15 @@ static inline void lock_surface( struct windrv_physdev *dev )
  {
      GDI_CheckNotLock();
      dev->surface->funcs->lock( dev->surface );
@@ -663,10 +663,10 @@ index 00000000000..6c42daa9d11
 +RC_SRCS = version.rc
 diff --git a/dlls/winewayland.drv/data_device.c b/dlls/winewayland.drv/data_device.c
 new file mode 100644
-index 00000000000..5fe4d8b2423
+index 00000000000..b39126161eb
 --- /dev/null
 +++ b/dlls/winewayland.drv/data_device.c
-@@ -0,0 +1,1421 @@
+@@ -0,0 +1,1420 @@
 +/*
 + * Wayland data device (clipboard and DnD) handling
 + *
@@ -878,8 +878,7 @@ index 00000000000..5fe4d8b2423
 +    return decoded;
 +
 +err:
-+    if (decoded)
-+        heap_free(decoded);
++    heap_free(decoded);
 +    return NULL;
 +}
 +
@@ -2090,10 +2089,10 @@ index 00000000000..5fe4d8b2423
 +};
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
 new file mode 100644
-index 00000000000..91a9f9e825d
+index 00000000000..d63cb9eec2d
 --- /dev/null
 +++ b/dlls/winewayland.drv/display.c
-@@ -0,0 +1,921 @@
+@@ -0,0 +1,942 @@
 +/*
 + * WAYLAND display device functions
 + *
@@ -2420,6 +2419,7 @@ index 00000000000..91a9f9e825d
 +    SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
 +    WCHAR bufferW[MAX_PATH];
 +    WCHAR output_name[128];
++    DWORD length;
 +    HKEY hkey;
 +    BOOL ret = FALSE;
 +    DWORD state_flags = DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE;
@@ -2473,9 +2473,9 @@ index 00000000000..91a9f9e825d
 +        goto done;
 +
 +    /* Adapter name */
-+    sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
++    length = sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
 +    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, DEVPROP_TYPE_STRING,
-+                                   (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR), 0))
++                                   (const BYTE *)bufferW, (length + 1) * sizeof(WCHAR), 0))
 +        goto done;
 +
 +    ret = TRUE;
@@ -2796,7 +2796,7 @@ index 00000000000..91a9f9e825d
 +    mode->u2.dmDisplayFlags = 0;
 +    mode->u1.s2.dmPosition.x = 0;
 +    mode->u1.s2.dmPosition.y = 0;
-+    mode->dmBitsPerPel = 32;
++    mode->dmBitsPerPel = output_mode->bpp;
 +    mode->dmPelsWidth = output_mode->width;
 +    mode->dmPelsHeight = output_mode->height;
 +    mode->dmDisplayFrequency = output_mode->refresh / 1000;
@@ -2910,16 +2910,32 @@ index 00000000000..91a9f9e825d
 +    return TRUE;
 +}
 +
-+static struct wayland_output_mode *get_matching_output_mode(struct wayland_output *output,
-+                                                            LPDEVMODEW devmode)
++static struct wayland_output_mode *get_matching_output_mode_32bpp(struct wayland_output *output,
++                                                                  LPDEVMODEW devmode)
 +{
 +    struct wayland_output_mode *output_mode;
++    DEVMODEW full_mode;
++
++    if (output->current_wine_mode)
++        populate_devmode(output->current_wine_mode, &full_mode);
++    else
++        populate_devmode(output->current_mode, &full_mode);
++
++    if (devmode->dmFields & DM_PELSWIDTH)
++        full_mode.dmPelsWidth = devmode->dmPelsWidth;
++    if (devmode->dmFields & DM_PELSHEIGHT)
++        full_mode.dmPelsHeight = devmode->dmPelsHeight;
++    if (devmode->dmFields & DM_BITSPERPEL)
++        full_mode.dmBitsPerPel = devmode->dmBitsPerPel;
 +
 +    wl_list_for_each(output_mode, &output->mode_list, link)
 +    {
-+        if (devmode->dmPelsWidth == output_mode->width &&
-+            devmode->dmPelsHeight == output_mode->height)
++        if (full_mode.dmPelsWidth == output_mode->width &&
++            full_mode.dmPelsHeight == output_mode->height &&
++            output_mode->bpp == 32)
++        {
 +            return output_mode;
++        }
 +    }
 +
 +    return NULL;
@@ -2935,7 +2951,7 @@ index 00000000000..91a9f9e825d
 +        DEVMODEW devmode;
 +
 +        if (read_registry_settings(output->wine_name, &devmode))
-+            output_mode = get_matching_output_mode(output, &devmode);
++            output_mode = get_matching_output_mode_32bpp(output, &devmode);
 +        else
 +            output_mode = output->current_mode;
 +
@@ -2968,17 +2984,21 @@ index 00000000000..91a9f9e825d
 +
 +    if (devname && devmode)
 +    {
++        DEVMODEW full_mode;
++
 +        output = wayland_get_output_by_wine_name(wayland, devname);
 +        if (!output)
 +            return DISP_CHANGE_BADPARAM;
 +
-+        output_mode = get_matching_output_mode(output, devmode);
++        output_mode = get_matching_output_mode_32bpp(output, devmode);
 +        if (!output_mode)
 +            return DISP_CHANGE_BADMODE;
 +
++        populate_devmode(output_mode, &full_mode);
++
 +        if (flags & CDS_UPDATEREGISTRY)
 +        {
-+            if (!write_registry_settings(devname, devmode))
++            if (!write_registry_settings(devname, &full_mode))
 +            {
 +                ERR("Failed to write %s display settings to registry.\n", wine_dbgstr_w(devname));
 +                return DISP_CHANGE_NOTUPDATED;
@@ -3017,10 +3037,10 @@ index 00000000000..91a9f9e825d
 +}
 diff --git a/dlls/winewayland.drv/dump_pixels.c b/dlls/winewayland.drv/dump_pixels.c
 new file mode 100644
-index 00000000000..3a3748ff237
+index 00000000000..20b4b4c895d
 --- /dev/null
 +++ b/dlls/winewayland.drv/dump_pixels.c
-@@ -0,0 +1,167 @@
+@@ -0,0 +1,169 @@
 +/*
 + * Debugging functions for pixel buffer contents
 + *
@@ -3068,8 +3088,7 @@ index 00000000000..3a3748ff237
 +    return data;
 +
 +err:
-+    if (data)
-+        heap_free(data);
++    heap_free(data);
 +    return NULL;
 +}
 +
@@ -3187,13 +3206,16 @@ index 00000000000..3a3748ff237
 +
 +    fflush(fp);
 +    fclose(fp);
++
++    heap_free(damage_data);
++    heap_free(win_region_data);
 +}
 diff --git a/dlls/winewayland.drv/init.c b/dlls/winewayland.drv/init.c
 new file mode 100644
-index 00000000000..90fd091a7bf
+index 00000000000..3e187b8ae15
 --- /dev/null
 +++ b/dlls/winewayland.drv/init.c
-@@ -0,0 +1,285 @@
+@@ -0,0 +1,255 @@
 +/*
 + * Wayland graphics driver initialisation functions
 + *
@@ -3353,11 +3375,9 @@ index 00000000000..90fd091a7bf
 +    NULL,                               /* pEndPath */
 +    NULL,                               /* pEnumFonts */
 +    NULL,                               /* pEnumICMProfiles */
-+    NULL,                               /* pExcludeClipRect */
 +    NULL,                               /* pExtDeviceMode */
 +    NULL,                               /* pExtEscape */
 +    NULL,                               /* pExtFloodFill */
-+    NULL,                               /* pExtSelectClipRgn */
 +    NULL,                               /* pExtTextOut */
 +    NULL,                               /* pFillPath */
 +    NULL,                               /* pFillRgn */
@@ -3390,14 +3410,9 @@ index 00000000000..90fd091a7bf
 +    NULL,                               /* pGetTextFace */
 +    NULL,                               /* pGetTextMetrics */
 +    NULL,                               /* pGradientFill */
-+    NULL,                               /* pIntersectClipRect */
 +    NULL,                               /* pInvertRgn */
 +    NULL,                               /* pLineTo */
-+    NULL,                               /* pModifyWorldTransform */
 +    NULL,                               /* pMoveTo */
-+    NULL,                               /* pOffsetClipRgn */
-+    NULL,                               /* pOffsetViewportOrg */
-+    NULL,                               /* pOffsetWindowOrg */
 +    NULL,                               /* pPaintRgn */
 +    NULL,                               /* pPatBlt */
 +    NULL,                               /* pPie */
@@ -3406,8 +3421,6 @@ index 00000000000..90fd091a7bf
 +    NULL,                               /* pPolyDraw */
 +    NULL,                               /* pPolyPolygon */
 +    NULL,                               /* pPolyPolyline */
-+    NULL,                               /* pPolygon */
-+    NULL,                               /* pPolyline */
 +    NULL,                               /* pPolylineTo */
 +    NULL,                               /* pPutImage */
 +    NULL,                               /* pRealizeDefaultPalette */
@@ -3416,41 +3429,20 @@ index 00000000000..90fd091a7bf
 +    NULL,                               /* pResetDC */
 +    NULL,                               /* pRestoreDC */
 +    NULL,                               /* pRoundRect */
-+    NULL,                               /* pSaveDC */
-+    NULL,                               /* pScaleViewportExt */
-+    NULL,                               /* pScaleWindowExt */
 +    NULL,                               /* pSelectBitmap */
 +    NULL,                               /* pSelectBrush */
 +    NULL,                               /* pSelectClipPath */
 +    NULL,                               /* pSelectFont */
-+    NULL,                               /* pSelectPalette */
 +    NULL,                               /* pSelectPen */
-+    NULL,                               /* pSetArcDirection */
 +    NULL,                               /* pSetBkColor */
-+    NULL,                               /* pSetBkMode */
 +    NULL,                               /* pSetBoundsRect */
 +    NULL,                               /* pSetDCBrushColor */
 +    NULL,                               /* pSetDCPenColor */
 +    NULL,                               /* pSetDIBitsToDevice */
 +    NULL,                               /* pSetDeviceClipping */
 +    NULL,                               /* pSetDeviceGammaRamp */
-+    NULL,                               /* pSetLayout */
-+    NULL,                               /* pSetMapMode */
-+    NULL,                               /* pSetMapperFlags */
 +    NULL,                               /* pSetPixel */
-+    NULL,                               /* pSetPolyFillMode */
-+    NULL,                               /* pSetROP2 */
-+    NULL,                               /* pSetRelAbs */
-+    NULL,                               /* pSetStretchBltMode */
-+    NULL,                               /* pSetTextAlign */
-+    NULL,                               /* pSetTextCharacterExtra */
 +    NULL,                               /* pSetTextColor */
-+    NULL,                               /* pSetTextJustification */
-+    NULL,                               /* pSetViewportExt */
-+    NULL,                               /* pSetViewportOrg */
-+    NULL,                               /* pSetWindowExt */
-+    NULL,                               /* pSetWindowOrg */
-+    NULL,                               /* pSetWorldTransform */
 +    NULL,                               /* pStartDoc */
 +    NULL,                               /* pStartPage */
 +    NULL,                               /* pStretchBlt */
@@ -5413,10 +5405,10 @@ index 00000000000..f54084bec03
 +#endif /* __WINE_WAYLANDDRV_KEYBOARD_LAYOUT_H */
 diff --git a/dlls/winewayland.drv/opengl.c b/dlls/winewayland.drv/opengl.c
 new file mode 100644
-index 00000000000..931aca962a8
+index 00000000000..aada333d7ab
 --- /dev/null
 +++ b/dlls/winewayland.drv/opengl.c
-@@ -0,0 +1,1281 @@
+@@ -0,0 +1,1354 @@
 +/*
 + * Wayland OpenGL functions
 + *
@@ -5472,6 +5464,10 @@ index 00000000000..931aca962a8
 +
 +WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 +
++/* Change to 1 to dump front buffer contents to disk when performing front
++ * buffer rendering. */
++#define DEBUG_DUMP_FRONT_BUFFER 0
++
 +#define DECL_FUNCPTR(f) __typeof__(f) * p_##f = NULL
 +DECL_FUNCPTR(eglBindAPI);
 +DECL_FUNCPTR(eglCreateContext);
@@ -5505,6 +5501,7 @@ index 00000000000..931aca962a8
 +    BOOL       has_been_current;
 +    BOOL       sharing;
 +    int        *attribs;
++    BOOL       is_draw_buffer_front;
 +};
 +
 +struct gl_drawable
@@ -5532,6 +5529,7 @@ index 00000000000..931aca962a8
 +
 +static void (*pglFinish)(void);
 +static void (*pglFlush)(void);
++static void (*pglDrawBuffer)(GLenum);
 +
 +static CRITICAL_SECTION drawable_section;
 +static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -5570,6 +5568,7 @@ index 00000000000..931aca962a8
 +    gl->pbuffer = p_eglCreatePbufferSurface(display,
 +                                            pixel_formats[gl->format - 1].config,
 +                                            attribs);
++
 +    EnterCriticalSection(&drawable_section);
 +    list_add_head(&gl_drawables, &gl->entry);
 +    return gl;
@@ -5774,11 +5773,8 @@ index 00000000000..931aca962a8
 +
 +static void egl_attribs_deinit(struct egl_attribs *attribs)
 +{
-+    if (attribs->data)
-+    {
-+        heap_free(attribs->data);
-+        attribs->data = NULL;
-+    }
++    heap_free(attribs->data);
++    attribs->data = NULL;
 +    attribs->count = 0;
 +}
 +
@@ -5802,6 +5798,7 @@ index 00000000000..931aca962a8
 +    ctx->context = p_eglCreateContext(display, ctx->config,
 +                                      share ? share->context : EGL_NO_CONTEXT,
 +                                      ctx->attribs);
++    ctx->is_draw_buffer_front = FALSE;
 +
 +    /* The drawable critical section also guards access to gl_contexts, so it's
 +     * safe to add the entry here. */
@@ -6030,8 +6027,7 @@ index 00000000000..931aca962a8
 +    list_remove(&ctx->entry);
 +    LeaveCriticalSection(&drawable_section);
 +    p_eglDestroyContext(display, ctx->context);
-+    if (ctx->attribs)
-+        heap_free(ctx->attribs);
++    heap_free(ctx->attribs);
 +    return HeapFree(GetProcessHeap(), 0, ctx);
 +}
 +
@@ -6219,15 +6215,83 @@ index 00000000000..931aca962a8
 +    pglFinish();
 +}
 +
++static void read_front_buffer_pixels(void *pixels_out, int width, int height)
++{
++    GLenum prev_read_buffer;
++    GLint prev_read_framebuffer;
++    GLint prev_row_length;
++    GLint prev_image_height;
++    GLint prev_skip_rows;
++    GLint prev_skip_pixels;
++    GLint prev_skip_images;
++    GLint prev_alignment;
++
++    /* Store state we might change */
++    egl_funcs.gl.p_glGetIntegerv(GL_READ_BUFFER, (GLint*)&prev_read_buffer);
++    egl_funcs.gl.p_glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prev_read_framebuffer);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_ROW_LENGTH, &prev_row_length);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_IMAGE_HEIGHT, &prev_image_height);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_SKIP_ROWS, &prev_skip_rows);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_SKIP_PIXELS, &prev_skip_pixels);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_SKIP_IMAGES, &prev_skip_images);
++    egl_funcs.gl.p_glGetIntegerv(GL_PACK_ALIGNMENT, &prev_alignment);
++
++    /* Set state we need for reading the pixels */
++    egl_funcs.ext.p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
++    egl_funcs.gl.p_glReadBuffer(GL_FRONT);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, 0);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_IMAGE_HEIGHT, 0);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, 0);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_IMAGES, 0);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_ALIGNMENT, 4);
++
++    egl_funcs.gl.p_glReadPixels(0, 0, width, height, GL_BGRA,  GL_UNSIGNED_BYTE,
++                                pixels_out);
++
++    /* Restore prev state */
++    egl_funcs.ext.p_glBindFramebuffer(GL_READ_FRAMEBUFFER, prev_read_framebuffer);
++    egl_funcs.gl.p_glReadBuffer(prev_read_buffer);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, prev_row_length);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_IMAGE_HEIGHT, prev_image_height);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, prev_skip_rows);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, prev_skip_pixels);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_SKIP_IMAGES, prev_skip_images);
++    egl_funcs.gl.p_glPixelStorei(GL_PACK_ALIGNMENT, prev_alignment);
++
++    if (DEBUG_DUMP_FRONT_BUFFER)
++    {
++        static int dbgid = 0;
++        dump_pixels("/tmp/winedbg/front-%.3d.pam", dbgid++, pixels_out,
++                    width, height, FALSE, NULL, NULL);
++    }
++}
++
 +static void wglFlush(void)
 +{
 +    struct wgl_context *ctx = NtCurrentTeb()->glContext;
 +
 +    if (!ctx) return;
-+    TRACE("hwnd %p egl_context %p\n", ctx->hwnd, ctx->context);
 +    refresh_context(ctx);
 +    pglFlush();
++
++    /* Mesa Wayland EGL, and Wayland in general, doesn't support front buffer
++     * rendering. Emulate it by manually updating the window front buffer
++     * pixels, to be applied when the window surface contents are flushed. */
++    if (ctx->is_draw_buffer_front)
++        wayland_update_front_buffer(ctx->hwnd, read_front_buffer_pixels);
 +}
++
++static void wglDrawBuffer(GLenum mode)
++{
++    struct wgl_context *ctx = NtCurrentTeb()->glContext;
++
++    if (!ctx) return;
++    TRACE("hwnd %p egl_context %p mode 0x%x\n", ctx->hwnd, ctx->context, mode);
++    ctx->is_draw_buffer_front = (mode == GL_FRONT || mode == GL_FRONT_LEFT);
++    pglDrawBuffer(mode);
++}
++
 +
 +static void register_extension(const char *ext)
 +{
@@ -6554,6 +6618,7 @@ index 00000000000..931aca962a8
 +    do { p##func = egl_funcs.gl.p_##func; egl_funcs.gl.p_##func = w##func; } while(0)
 +    REDIRECT(glFinish);
 +    REDIRECT(glFlush);
++    REDIRECT(glDrawBuffer);
 +#undef REDIRECT
 +}
 +
@@ -9328,10 +9393,10 @@ index 00000000000..f47d9889025
 +#endif /* SONAME_LIBVULKAN */
 diff --git a/dlls/winewayland.drv/wayland.c b/dlls/winewayland.drv/wayland.c
 new file mode 100644
-index 00000000000..2a7747c5a38
+index 00000000000..9bf0c3b07b3
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland.c
-@@ -0,0 +1,1650 @@
+@@ -0,0 +1,1662 @@
 +/*
 + * Wayland core handling
 + *
@@ -9428,8 +9493,8 @@ index 00000000000..2a7747c5a38
 +
 +static void wayland_output_add_mode(struct wayland_output *output,
 +                                    int32_t width, int32_t height,
-+                                    int32_t refresh, BOOL current,
-+                                    BOOL native)
++                                    int32_t refresh, int bpp,
++                                    BOOL current, BOOL native)
 +{
 +    struct wayland_output_mode *mode;
 +
@@ -9437,7 +9502,7 @@ index 00000000000..2a7747c5a38
 +    wl_list_for_each(mode, &output->mode_list, link)
 +    {
 +        if (mode->width == width && mode->height == height &&
-+            mode->refresh == refresh)
++            mode->refresh == refresh && mode->bpp == bpp)
 +        {
 +            /* Upgrade modes from virtual to native, never the reverse. */
 +            if (native) mode->native = TRUE;
@@ -9455,6 +9520,7 @@ index 00000000000..2a7747c5a38
 +    mode->width = width;
 +    mode->height = height;
 +    mode->refresh = refresh;
++    mode->bpp = bpp;
 +    mode->native = native;
 +
 +    if (current)
@@ -9464,6 +9530,16 @@ index 00000000000..2a7747c5a38
 +    }
 +
 +    wl_list_insert(&output->mode_list, &mode->link);
++}
++
++static void wayland_output_add_mode_all_bpp(struct wayland_output *output,
++                                            int32_t width, int32_t height,
++                                            int32_t refresh, BOOL current,
++                                            BOOL native)
++{
++    wayland_output_add_mode(output, width, height, refresh, 32, current, native);
++    wayland_output_add_mode(output, width, height, refresh, 16, FALSE, FALSE);
++    wayland_output_add_mode(output, width, height, refresh, 8, FALSE, FALSE);
 +}
 +
 +/* The output id is computed using the FNV-1a hash of the name. We start
@@ -9561,7 +9637,7 @@ index 00000000000..2a7747c5a38
 +            continue;
 +        }
 +
-+        wayland_output_add_mode(output, width, height, 60000, FALSE, FALSE);
++        wayland_output_add_mode_all_bpp(output, width, height, 60000, FALSE, FALSE);
 +    }
 +}
 +
@@ -9663,8 +9739,8 @@ index 00000000000..2a7747c5a38
 +    if (output->wayland->hidpi_scaling == WAYLAND_HIDPI_SCALING_COMPOSITOR)
 +    {
 +        wayland_output_clear_modes(output);
-+        wayland_output_add_mode(output, output->logical_w, output->logical_h,
-+                                60000, TRUE, TRUE);
++        wayland_output_add_mode_all_bpp(output, output->logical_w, output->logical_h,
++                                        60000, TRUE, TRUE);
 +    }
 +
 +    wayland_output_add_default_modes(output);
@@ -9710,9 +9786,9 @@ index 00000000000..2a7747c5a38
 +    if (output->wayland->hidpi_scaling == WAYLAND_HIDPI_SCALING_COMPOSITOR)
 +        return;
 +
-+    wayland_output_add_mode(output, width, height, refresh,
-+                            (flags & WL_OUTPUT_MODE_CURRENT),
-+                            TRUE);
++    wayland_output_add_mode_all_bpp(output, width, height, refresh,
++                                    (flags & WL_OUTPUT_MODE_CURRENT),
++                                    TRUE);
 +}
 +
 +static void output_handle_done(void *data, struct wl_output *wl_output)
@@ -10931,7 +11007,8 @@ index 00000000000..2a7747c5a38
 +
 +    wl_list_for_each(output_mode, &output->mode_list, link)
 +    {
-+        if (output_mode->width == width && output_mode->height == height)
++        if (output_mode->width == width && output_mode->height == height &&
++            output_mode->bpp == 32)
 +        {
 +            output->current_wine_mode = output_mode;
 +            break;
@@ -11150,10 +11227,10 @@ index 00000000000..f07f64f89a9
 +}
 diff --git a/dlls/winewayland.drv/wayland_cursor.c b/dlls/winewayland.drv/wayland_cursor.c
 new file mode 100644
-index 00000000000..5e29b70ddd9
+index 00000000000..4d09aa3f537
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_cursor.c
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,271 @@
 +/*
 + * Wayland cursor handling
 + *
@@ -11297,8 +11374,7 @@ index 00000000000..5e29b70ddd9
 +failed:
 +    if (shm_buffer)
 +        wayland_shm_buffer_destroy(shm_buffer);
-+    if (mask_bits)
-+        heap_free(mask_bits);
++    heap_free(mask_bits);
 +    return NULL;
 +}
 +
@@ -11428,10 +11504,10 @@ index 00000000000..5e29b70ddd9
 +}
 diff --git a/dlls/winewayland.drv/wayland_shm.c b/dlls/winewayland.drv/wayland_shm.c
 new file mode 100644
-index 00000000000..0ac5fdbfd7f
+index 00000000000..3d2e6e38f2c
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_shm.c
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,248 @@
 +/*
 + * Wayland SHM buffers
 + *
@@ -11677,16 +11753,15 @@ index 00000000000..0ac5fdbfd7f
 +err:
 +    if (damage_region && damage_region != shm_buffer->damage_region)
 +        DeleteObject(damage_region);
-+    if (data)
-+        heap_free(data);
++    heap_free(data);
 +    return NULL;
 +}
 diff --git a/dlls/winewayland.drv/wayland_surface.c b/dlls/winewayland.drv/wayland_surface.c
 new file mode 100644
-index 00000000000..3384bb0bde8
+index 00000000000..9343458db92
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_surface.c
-@@ -0,0 +1,1450 @@
+@@ -0,0 +1,1448 @@
 +/*
 + * Wayland surfaces
 + *
@@ -12121,8 +12196,7 @@ index 00000000000..3384bb0bde8
 +    return data;
 +
 +err:
-+    if (data)
-+        heap_free(data);
++    heap_free(data);
 +    return NULL;
 +}
 +
@@ -12291,8 +12365,6 @@ index 00000000000..3384bb0bde8
 +    surface->crit.DebugInfo->Spare[0] = 0;
 +    DeleteCriticalSection(&surface->crit);
 +
-+    heap_free(surface);
-+
 +    /* Destroying the surface can lead to events that we need to handle
 +     * immediately to get the latest state, so force a round trip, but only if
 +     * we are in the same thread that handles the window (otherwise we will
@@ -12303,6 +12375,8 @@ index 00000000000..3384bb0bde8
 +        wl_display_roundtrip_queue(surface->wayland->wl_display,
 +                                   surface->wayland->wl_event_queue);
 +    }
++
++    heap_free(surface);
 +}
 +
 +static struct wayland_surface *wayland_surface_create_glvk_common(struct wayland_surface *surface)
@@ -12814,7 +12888,6 @@ index 00000000000..3384bb0bde8
 +    LeaveCriticalSection(&surface->crit);
 +}
 +
-+
 +/**********************************************************************
 + *          wayland_surface_ref
 + *
@@ -13139,10 +13212,10 @@ index 00000000000..3384bb0bde8
 +}
 diff --git a/dlls/winewayland.drv/waylanddrv.h b/dlls/winewayland.drv/waylanddrv.h
 new file mode 100644
-index 00000000000..db970a3edd0
+index 00000000000..b6b21c9db3c
 --- /dev/null
 +++ b/dlls/winewayland.drv/waylanddrv.h
-@@ -0,0 +1,448 @@
+@@ -0,0 +1,452 @@
 +/*
 + * Wayland core handling
 + *
@@ -13301,6 +13374,7 @@ index 00000000000..db970a3edd0
 +    int32_t width;
 +    int32_t height;
 +    int32_t refresh;
++    int bpp;
 +    BOOL native;
 +};
 +
@@ -13569,6 +13643,9 @@ index 00000000000..db970a3edd0
 +struct opengl_funcs *wayland_get_wgl_driver(UINT version);
 +void wayland_update_gl_drawable(HWND hwnd, struct wayland_surface *wayland_surface);
 +void wayland_destroy_gl_drawable(HWND hwnd);
++void wayland_update_front_buffer(HWND hwnd,
++                                 void (*read_pixels)(void *pixels_out,
++                                                     int width, int height));
 +
 +/**********************************************************************
 + *          Vulkan support
@@ -13768,10 +13845,10 @@ index 00000000000..b4d8a75da9e
 +}
 diff --git a/dlls/winewayland.drv/window.c b/dlls/winewayland.drv/window.c
 new file mode 100644
-index 00000000000..6150f6bebb9
+index 00000000000..f58716f8ca7
 --- /dev/null
 +++ b/dlls/winewayland.drv/window.c
-@@ -0,0 +1,2042 @@
+@@ -0,0 +1,2141 @@
 +/*
 + * Window related functions
 + *
@@ -14084,6 +14161,8 @@ index 00000000000..6150f6bebb9
 +    CRITICAL_SECTION      crit;
 +    BITMAPINFO            info;   /* variable size, must be last */
 +    BOOL                  last_flush_missing_wayland;
++    void                 *front_bits; /* Front buffer pixels, stored bottom to top */
++    BOOL                  front_bits_dirty;
 +};
 +
 +static struct wayland_window_surface *get_wayland_window_surface(struct window_surface *surface)
@@ -14178,7 +14257,7 @@ index 00000000000..6150f6bebb9
 +    RECT damage_rect;
 +    BOOL needs_flush;
 +    RGNDATA *buffer_damage;
-+    HRGN surface_damage_region;
++    HRGN surface_damage_region = NULL;
 +    RECT *rgn_rect;
 +    RECT *rgn_rect_end;
 +
@@ -14188,6 +14267,36 @@ index 00000000000..6150f6bebb9
 +          wine_dbgstr_rect(&surface->header.rect), wine_dbgstr_rect(&surface->bounds));
 +
 +    needs_flush = IntersectRect(&damage_rect, &surface->header.rect, &surface->bounds);
++    if (needs_flush)
++    {
++        surface_damage_region = CreateRectRgnIndirect(&damage_rect);
++        if (surface->total_region)
++        {
++            needs_flush = CombineRgn(surface_damage_region, surface_damage_region,
++                                     surface->total_region, RGN_AND);
++        }
++    }
++
++    /* If we have a front buffer we always copy it to the buffer before copying
++     * the window surface contents, so the whole surface is considered damaged.
++     * TODO: Improve damage tracking and try to avoid unnecessary copying. */
++    if (surface->front_bits)
++    {
++        needs_flush |= surface->front_bits_dirty;
++        if (needs_flush)
++        {
++            if (surface_damage_region)
++            {
++                SetRectRgn(surface_damage_region,
++                           surface->header.rect.left, surface->header.rect.top,
++                           surface->header.rect.right, surface->header.rect.bottom);
++            }
++            else
++            {
++                surface_damage_region = CreateRectRgnIndirect(&surface->header.rect);
++            }
++        }
++    }
 +
 +    if (needs_flush &&
 +        (!surface->wayland_surface || !surface->wayland_buffer_queue ||
@@ -14211,8 +14320,6 @@ index 00000000000..6150f6bebb9
 +
 +    assert(surface->wayland_buffer_queue);
 +
-+    surface_damage_region = CreateRectRgnIndirect(&damage_rect);
-+
 +    if (DEBUG_DUMP_FLUSH_SURFACE_BUFFER)
 +    {
 +        static int dbgid = 0;
@@ -14225,17 +14332,33 @@ index 00000000000..6150f6bebb9
 +
 +    }
 +
-+    /* If the window has a region set, only flush damaged parts of the surface
-+     * that intersect with it. */
-+    if (surface->total_region)
-+    {
-+        CombineRgn(surface_damage_region, surface_damage_region,
-+                   surface->total_region, RGN_AND);
-+    }
-+
 +    wayland_buffer_queue_add_damage(surface->wayland_buffer_queue, surface_damage_region);
 +    buffer = wayland_buffer_queue_acquire_buffer(surface->wayland_buffer_queue);
 +    buffer_damage = wayland_shm_buffer_get_damage_clipped(buffer, surface->total_region);
++
++    /* Copy the whole front buffer to wayland SHM buffer. */
++    if (surface->front_bits)
++    {
++        int width = min(surface->info.bmiHeader.biWidth, buffer->width);
++        int height = min(-surface->info.bmiHeader.biHeight, buffer->height);
++        int stride = width * 4;
++        unsigned char *src = surface->front_bits;
++        unsigned char *dst = buffer->map_data;
++        int src_stride = surface->info.bmiHeader.biWidth * 4;
++        int dst_stride = buffer->width * 4;
++        int i;
++
++        TRACE("front buffer %p -> %p %dx%d\n", src, dst, width, height);
++
++        /* Front buffer lines are stored bottom to top, so we need to flip
++         * when copying to our buffer. */
++        for (i = 0; i < height; i++)
++        {
++            memcpy(dst + (height - i - 1) * dst_stride,
++                   src + i * src_stride,
++                   stride);
++        }
++    }
 +
 +    rgn_rect = (RECT *)buffer_damage->Buffer;
 +    rgn_rect_end = rgn_rect + buffer_damage->rdh.nCount;
@@ -14309,9 +14432,10 @@ index 00000000000..6150f6bebb9
 +    wayland_shm_buffer_clear_damage(buffer);
 +
 +    heap_free(buffer_damage);
-+    DeleteObject(surface_damage_region);
++    surface->front_bits_dirty = FALSE;
 +
 +done:
++    if (surface_damage_region) DeleteObject(surface_damage_region);
 +    window_surface->funcs->unlock(window_surface);
 +}
 +
@@ -14330,6 +14454,7 @@ index 00000000000..6150f6bebb9
 +    if (surface->total_region) DeleteObject(surface->total_region);
 +    if (surface->wayland_buffer_queue)
 +        wayland_buffer_queue_destroy(surface->wayland_buffer_queue);
++    heap_free(surface->front_bits);
 +    heap_free(surface->bits);
 +    heap_free(surface);
 +}
@@ -14356,6 +14481,55 @@ index 00000000000..6150f6bebb9
 +        get_wayland_window_surface(surface)->wayland_buffer_queue->format ==
 +            WL_SHM_FORMAT_ARGB8888 &&
 +        get_wayland_window_surface(surface)->src_alpha;
++}
++
++/***********************************************************************
++ *           wayland_update_front_buffer
++ *
++ * Update the front buffer we keep for windows that require it (i.e.,
++ * use front buffer rendering). The front buffer is populated by calling
++ * the supplied read_pixels function, which should store the pixels in
++ * the supplied pixels_out memory location.
++ *
++ * Note that the stored pixels are expected to be in BGRA8888 form with line
++ * order flipped upside down, i.e., starting with the bottom line (this
++ * is the order used, e.g., by glReadPixels).
++ */
++void wayland_update_front_buffer(HWND hwnd,
++                                 void (*read_pixels)(void *pixels_out,
++                                                     int width, int height))
++{
++    struct wayland_window_surface *wws;
++    struct wayland_win_data *data;
++
++    if (!(data = get_win_data(hwnd))) return;
++
++    wws = get_wayland_window_surface(data->surface);
++    if (!wws) goto out;
++
++    TRACE("hwnd %p front_bits %p %dx%d\n", hwnd, wws->front_bits,
++          wws->info.bmiHeader.biWidth, -wws->info.bmiHeader.biHeight);
++
++    data->surface->funcs->lock(data->surface);
++
++    if (!wws->front_bits)
++        wws->front_bits = heap_alloc(wws->info.bmiHeader.biSizeImage);
++
++    if (wws->front_bits)
++    {
++        (*read_pixels)(wws->front_bits, wws->info.bmiHeader.biWidth,
++                       -wws->info.bmiHeader.biHeight);
++        wws->front_bits_dirty = TRUE;
++    }
++    else
++    {
++        WARN("Failed to allocate memory for front buffer pixels\n");
++    }
++
++    data->surface->funcs->unlock(data->surface);
++
++out:
++    release_win_data(data);
 +}
 +
 +/***********************************************************************
@@ -14506,6 +14680,8 @@ index 00000000000..6150f6bebb9
 +    surface->hwnd         = hwnd;
 +    surface->alpha        = alpha;
 +    surface->src_alpha    = src_alpha;
++    surface->front_bits   = NULL;
++    surface->front_bits_dirty = FALSE;
 +    set_color_key(surface, color_key);
 +    set_surface_region(&surface->header, (HRGN)1);
 +    reset_bounds(&surface->bounds);
@@ -18596,10 +18772,10 @@ index 00000000000..2a33c7ba564
 +    return utf8_len;
 +}
 diff --git a/include/config.h.in b/include/config.h.in
-index c1a68104fb8..fd26991d3b7 100644
+index 24f7b64ffd3..37e050da9fc 100644
 --- a/include/config.h.in
 +++ b/include/config.h.in
-@@ -929,6 +929,12 @@
+@@ -935,6 +935,12 @@
  /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
  #undef HAVE_VALGRIND_VALGRIND_H
  
@@ -18612,7 +18788,7 @@ index c1a68104fb8..fd26991d3b7 100644
  /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
  #undef HAVE_X11_EXTENSIONS_SHAPE_H
  
-@@ -983,6 +989,9 @@
+@@ -989,6 +995,9 @@
  /* Define if you have the XKB extension */
  #undef HAVE_XKB
  
@@ -18623,10 +18799,10 @@ index c1a68104fb8..fd26991d3b7 100644
  #undef HAVE_XMLDOC_PROPERTIES
  
 diff --git a/include/wine/gdi_driver.h b/include/wine/gdi_driver.h
-index 124bb41f7d9..bfb69d1b6ca 100644
+index 08f294844be..37e20c3676c 100644
 --- a/include/wine/gdi_driver.h
 +++ b/include/wine/gdi_driver.h
-@@ -251,6 +251,7 @@ struct window_surface
+@@ -221,6 +221,7 @@ struct window_surface
      struct list                        entry; /* entry in global list managed by user32 */
      LONG                               ref;   /* reference count */
      RECT                               rect;  /* constant, no locking needed */
