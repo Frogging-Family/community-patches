@@ -35,6 +35,7 @@
 - roblox_mouse_fix.mypatch - Fixes the mouse cursor getting stuck in Roblox
 - roblox_mouse_fix-fshack.mypatch - Same as above, but compatible with proton's FS hack - Thanks to rezzafr33 on Discord
 - unprivileged_ICMP.mypatch - Notably fixes missing ping in BF4 (which could lead to kicks on some servers) - https://source.winehq.org/patches/data/207990
+- EA_desktop_fix.mypatch - Allows EA desktop to run - Patch by Esdras Tarsis - https://bugs.winehq.org/show_bug.cgi?id=49887
 
 ## Misc
 - 0001-rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
