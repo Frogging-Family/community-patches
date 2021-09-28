@@ -32,9 +32,9 @@ index 43acba7bf22..4118f6e19d3 100755
  enable_wing32
  enable_winhttp
 @@ -1916,6 +1924,12 @@ OBJC
+ OBJCFLAGS
  OBJCPP
  XMKMF
- CPP
 +WAYLAND_CLIENT_CFLAGS
 +WAYLAND_CLIENT_LIBS
 +WAYLAND_EGL_CFLAGS
@@ -53,9 +53,9 @@ index 43acba7bf22..4118f6e19d3 100755
    --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
    --with-x                use the X Window System
 @@ -2700,6 +2715,18 @@ Some influential environment variables:
+   OBJCFLAGS   Objective C compiler flags
    OBJCPP      Objective C preprocessor
    XMKMF       Path to xmkmf, Makefile generator for X Window System
-   CPP         C preprocessor
 +  WAYLAND_CLIENT_CFLAGS
 +              C compiler flags for wayland-client, overriding pkg-config
 +  WAYLAND_CLIENT_LIBS
@@ -572,16 +572,16 @@ index 4237ee0e716..b9711865a22 100644
  {
      GDI_CheckNotLock();
      dev->surface->funcs->lock( dev->surface );
--    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = GetTickCount();
+-    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
 +    if (is_rect_empty( dev->dibdrv->bounds ) || dev->surface->draw_start_ticks == 0)
-+        dev->surface->draw_start_ticks = GetTickCount();
++        dev->surface->draw_start_ticks = NtGetTickCount();
  }
  
  static inline void unlock_surface( struct windrv_physdev *dev )
  {
-+    BOOL should_flush = GetTickCount() - dev->surface->draw_start_ticks > FLUSH_PERIOD;
++    BOOL should_flush = NtGetTickCount() - dev->surface->draw_start_ticks > FLUSH_PERIOD;
      dev->surface->funcs->unlock( dev->surface );
--    if (GetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
+-    if (NtGetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
 +    if (should_flush) dev->surface->funcs->flush( dev->surface );
  }
  
@@ -3212,10 +3212,10 @@ index 00000000000..20b4b4c895d
 +}
 diff --git a/dlls/winewayland.drv/init.c b/dlls/winewayland.drv/init.c
 new file mode 100644
-index 00000000000..3e187b8ae15
+index 00000000000..dbd680453ab
 --- /dev/null
 +++ b/dlls/winewayland.drv/init.c
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,160 @@
 +/*
 + * Wayland graphics driver initialisation functions
 + *
@@ -3354,108 +3354,13 @@ index 00000000000..3e187b8ae15
 +
 +static const struct gdi_dc_funcs wayland_gdi_dc_funcs =
 +{
-+    NULL,                               /* pAbortDoc */
-+    NULL,                               /* pAbortPath */
-+    NULL,                               /* pAlphaBlend */
-+    NULL,                               /* pAngleArc */
-+    NULL,                               /* pArc */
-+    NULL,                               /* pArcTo */
-+    NULL,                               /* pBeginPath */
-+    NULL,                               /* pBlendImage */
-+    NULL,                               /* pChord */
-+    NULL,                               /* pCloseFigure */
-+    WAYLAND_CreateCompatibleDC,         /* pCreateCompatibleDC */
-+    WAYLAND_CreateDC,                   /* pCreateDC */
-+    WAYLAND_DeleteDC,                   /* pDeleteDC */
-+    NULL,                               /* pDeleteObject */
-+    NULL,                               /* pDeviceCapabilities */
-+    NULL,                               /* pEllipse */
-+    NULL,                               /* pEndDoc */
-+    NULL,                               /* pEndPage */
-+    NULL,                               /* pEndPath */
-+    NULL,                               /* pEnumFonts */
-+    NULL,                               /* pEnumICMProfiles */
-+    NULL,                               /* pExtDeviceMode */
-+    NULL,                               /* pExtEscape */
-+    NULL,                               /* pExtFloodFill */
-+    NULL,                               /* pExtTextOut */
-+    NULL,                               /* pFillPath */
-+    NULL,                               /* pFillRgn */
-+    NULL,                               /* pFlattenPath */
-+    NULL,                               /* pFontIsLinked */
-+    NULL,                               /* pFrameRgn */
-+    NULL,                               /* pGdiComment */
-+    NULL,                               /* pGetBoundsRect */
-+    NULL,                               /* pGetCharABCWidths */
-+    NULL,                               /* pGetCharABCWidthsI */
-+    NULL,                               /* pGetCharWidth */
-+    NULL,                               /* pGetCharWidthInfo */
-+    WAYLAND_GetDeviceCaps,              /* pGetDeviceCaps */
-+    NULL,                               /* pGetDeviceGammaRamp */
-+    NULL,                               /* pGetFontData */
-+    NULL,                               /* pGetFontRealizationInfo */
-+    NULL,                               /* pGetFontUnicodeRanges */
-+    NULL,                               /* pGetGlyphIndices */
-+    NULL,                               /* pGetGlyphOutline */
-+    NULL,                               /* pGetICMProfile */
-+    NULL,                               /* pGetImage */
-+    NULL,                               /* pGetKerningPairs */
-+    NULL,                               /* pGetNearestColor */
-+    NULL,                               /* pGetOutlineTextMetrics */
-+    NULL,                               /* pGetPixel */
-+    NULL,                               /* pGetSystemPaletteEntries */
-+    NULL,                               /* pGetTextCharsetInfo */
-+    NULL,                               /* pGetTextExtentExPoint */
-+    NULL,                               /* pGetTextExtentExPointI */
-+    NULL,                               /* pGetTextFace */
-+    NULL,                               /* pGetTextMetrics */
-+    NULL,                               /* pGradientFill */
-+    NULL,                               /* pInvertRgn */
-+    NULL,                               /* pLineTo */
-+    NULL,                               /* pMoveTo */
-+    NULL,                               /* pPaintRgn */
-+    NULL,                               /* pPatBlt */
-+    NULL,                               /* pPie */
-+    NULL,                               /* pPolyBezier */
-+    NULL,                               /* pPolyBezierTo */
-+    NULL,                               /* pPolyDraw */
-+    NULL,                               /* pPolyPolygon */
-+    NULL,                               /* pPolyPolyline */
-+    NULL,                               /* pPolylineTo */
-+    NULL,                               /* pPutImage */
-+    NULL,                               /* pRealizeDefaultPalette */
-+    NULL,                               /* pRealizePalette */
-+    NULL,                               /* pRectangle */
-+    NULL,                               /* pResetDC */
-+    NULL,                               /* pRestoreDC */
-+    NULL,                               /* pRoundRect */
-+    NULL,                               /* pSelectBitmap */
-+    NULL,                               /* pSelectBrush */
-+    NULL,                               /* pSelectClipPath */
-+    NULL,                               /* pSelectFont */
-+    NULL,                               /* pSelectPen */
-+    NULL,                               /* pSetBkColor */
-+    NULL,                               /* pSetBoundsRect */
-+    NULL,                               /* pSetDCBrushColor */
-+    NULL,                               /* pSetDCPenColor */
-+    NULL,                               /* pSetDIBitsToDevice */
-+    NULL,                               /* pSetDeviceClipping */
-+    NULL,                               /* pSetDeviceGammaRamp */
-+    NULL,                               /* pSetPixel */
-+    NULL,                               /* pSetTextColor */
-+    NULL,                               /* pStartDoc */
-+    NULL,                               /* pStartPage */
-+    NULL,                               /* pStretchBlt */
-+    NULL,                               /* pStretchDIBits */
-+    NULL,                               /* pStrokeAndFillPath */
-+    NULL,                               /* pStrokePath */
-+    NULL,                               /* pUnrealizePalette */
-+    NULL,                               /* pWidenPath */
-+    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
-+    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
-+    WAYLAND_wine_get_wgl_driver,        /* wine_get_wgl_driver */
-+    WAYLAND_wine_get_vulkan_driver,     /* wine_get_vulkan_driver */
-+    GDI_PRIORITY_GRAPHICS_DRV           /* priority */
++    .pCreateCompatibleDC = WAYLAND_CreateCompatibleDC,
++    .pCreateDC = WAYLAND_CreateDC,
++    .pDeleteDC = WAYLAND_DeleteDC,
++    .pGetDeviceCaps = WAYLAND_GetDeviceCaps,
++    .wine_get_wgl_driver = WAYLAND_wine_get_wgl_driver,
++    .wine_get_vulkan_driver = WAYLAND_wine_get_vulkan_driver,
++    .priority = GDI_PRIORITY_GRAPHICS_DRV
 +};
 +
 +/******************************************************************************
@@ -9269,7 +9174,7 @@ index 00000000000..f47d9889025
 +        static long prev_time, start_time;
 +        DWORD time;
 +
-+        time = GetTickCount();
++        time = NtGetTickCount();
 +        frames++;
 +        frames_total++;
 +        if (time - prev_time > 1500)
