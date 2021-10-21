@@ -337,7 +337,7 @@ index 80dbdfd88b..38b9c8c62c 100644
          switch (current->bOpcode)
          {
              case D3DOP_POINT:
-@@ -95,6 +210,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
+@@ -97,6 +212,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
              {
                  WORD *indices;
                  unsigned int index_pos = buffer->index_pos, index_count;
@@ -345,7 +345,7 @@ index 80dbdfd88b..38b9c8c62c 100644
                  TRACE("TRIANGLE         (%d)\n", count);
 
                  if (!count)
-@@ -173,6 +289,67 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
+@@ -174,6 +290,67 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                      {
                          case 3:
                              indices[(i * primitive_size) + 2] = ci->u3.v3;
@@ -413,7 +413,7 @@ index 80dbdfd88b..38b9c8c62c 100644
                              /* Drop through. */
                          case 2:
                              indices[(i * primitive_size) + 1] = ci->u2.v2;
-@@ -183,12 +360,16 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
+@@ -184,14 +361,18 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
 
                  wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->index_buffer), 0);
 
@@ -423,7 +423,8 @@ index 80dbdfd88b..38b9c8c62c 100644
 -                        ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
 -                wined3d_stateblock_set_index_buffer(device->state, buffer->index_buffer, WINED3DFMT_R16_UINT);
 -                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
--                wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
+-                d3d_device_sync_surfaces(device);
+-                wined3d_device_context_draw_indexed(device->immediate_context, 0, index_pos, index_count, 0, 0);
 +                /* Skip drawing if we're picking */
 +                if (pick_rect == NULL)
 +                {
@@ -433,12 +434,13 @@ index 80dbdfd88b..38b9c8c62c 100644
 +                            ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
 +                    wined3d_stateblock_set_index_buffer(device->state, buffer->index_buffer, WINED3DFMT_R16_UINT);
 +                    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-+                    wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
++                    d3d_device_sync_surfaces(device);
++                    wined3d_device_context_draw_indexed(device->immediate_context, 0, index_pos, index_count, 0, 0);
 +                }
 
                  buffer->index_pos = index_pos + index_count;
                  break;
-@@ -421,6 +602,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
+@@ -429,6 +610,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
  end_of_buffer:
      return D3D_OK;
  }
