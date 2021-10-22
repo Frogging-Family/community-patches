@@ -1,0 +1,13 @@
+diff --git a/src/compiler/nir/nir_opt_algebraic.py b/src/compiler/nir/nir_opt_algebraic.py
+index fad49d2e5f11b00bf16255846ce60832bd9e664e..cf7f85e8dc6c6ef2a1ca4301a5964dd6eea49731 100644
+--- a/src/compiler/nir/nir_opt_algebraic.py
++++ b/src/compiler/nir/nir_opt_algebraic.py
+@@ -445,6 +445,8 @@ optimizations.extend([
+
+    # (a + #b) * #c => (a * #c) + (#b * #c)
+    (('imul', ('iadd(is_used_once)', a, '#b'), '#c'), ('iadd', ('imul', a, c), ('imul', b, c))),
++   (('~fmul', ('fadd(is_used_once)', a, '#b'), '#c'), ('fadd', ('fmul', a, c), ('fmul', b, c)),
++    '!options->avoid_ternary_with_two_constants'),
+
+    # ((a + #b) + c) * #d => ((a + c) * #d) + (#b * #d)
+    (('imul', ('iadd(is_used_once)', ('iadd(is_used_once)', a, '#b'), c), '#d'),
