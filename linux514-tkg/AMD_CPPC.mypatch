@@ -1,223 +1,4 @@
-* [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism
-@ 2021-09-26  9:05 Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 01/21] x86/cpufreatures: add AMD Collaborative Processor Performance
-Hi all,
 
-We would like to introduce a new AMD CPU frequency control mechanism as the
-"amd-pstate" driver for modern AMD Zen based CPU series in Linux Kernel.
-The new mechanism is based on Collaborative processor performance control
-(CPPC) which is finer grain frequency management than legacy ACPI hardware
-P-States. Current AMD CPU platforms are using the ACPI P-states driver to
-manage CPU frequency and clocks with switching only in 3 P-states. AMD
-P-States is to replace the ACPI P-states controls, allows a flexible,
-low-latency interface for the Linux kernel to directly communicate the
-performance hints to hardware.
-
-"amd-pstate" leverages the Linux kernel governors such as *schedutil*,
-*ondemand*, etc. to manage the performance hints which are provided by CPPC
-hardware functionality. The first version for amd-pstate is to support one
-of the Zen3 processors, and we will support more in future after we verify
-the hardware and SBIOS functionalities.
-
-There are two types of hardware implementations for amd-pstate: one is full
-MSR support and another is shared memory support. It can use
-X86_FEATURE_AMD_CPPC_EXT feature flag to distinguish the different types.
-
-Using the new AMD P-States method + kernel governors (*schedutil*,
-*ondemand*, ...) to manage the frequency update is the most appropriate
-bridge between AMD Zen based hardware processor and Linux kernel, the
-processor is able to ajust to the most efficiency frequency according to
-the kernel scheduler loading.
-
-Performance Per Watt (PPW) Caculation:
-
-The PPW caculation is referred by below paper:
-https://software.intel.com/content/dam/develop/external/us/en/documents/performance-per-what-paper.pdf
-
-Below formula is referred from below spec to measure the PPW:
-
-(F / t) / P = F * t / (t * E) = F / E,
-
-"F" is the number of frames per second.
-"P" is power measurd in watts.
-"E" is energy measured in joules.
-
-We use the RAPL interface with "perf" tool to get the energy data of the
-package power.
-
-The data comparsions between amd-pstate and acpi-freq module are tested on
-AMD Cezanne processor:
-
-1) TBench CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               TBench (Performance Per Watt)                         |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: MB / (s * J)    |  Unit: MB / (s * J)    |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |         3.022          |        2.969           |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |         3.131          |        3.284           |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-2) Gitsource CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               Gitsource (Performance Per Watt)                      |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: 1 / (s * J)     |  Unit: 1 / (s * J)     |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |     3.42172E-07        |     2.74508E-07        |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |     4.09141E-07        |     3.47610E-07        |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-3) Speedometer 2.0 CPU benchmark:
-
-+---------------------------------------------------------------------+
-|                                                                     |
-|               Speedometer 2.0 (Performance Per Watt)                |
-|                                                    Higher is better |
-+-------------------+------------------------+------------------------+
-|                   |  Performance Per Watt  |  Performance Per Watt  |
-|   Kernel Module   |       (Schedutil)      |       (Ondemand)       |
-|                   |  Unit: 1 / (s * J)     |  Unit: 1 / (s * J)     |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|    acpi-cpufreq   |      0.116111767       |      0.110321664       |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-|                   |                        |                        |
-|     amd-pstate    |      0.115825281       |      0.122024299       |
-|                   |                        |                        |
-+-------------------+------------------------+------------------------+
-
-
-According to above average data, we can see this solution has shown better
-performance per watt scaling on mobile CPU benchmarks in most of cases.
-
-These patch series depends on a "hotplug capable" CPU fix below (Only few
-of CPU parts with "un-hotplug" core will encounter the issue and Mario is
-working on the fix):
-https://lore.kernel.org/linux-pm/20210813161842.222414-1-mario.limonciello@amd.com/
-
-And we can see patch series in below git repo:
-V1: https://git.kernel.org/pub/scm/linux/kernel/git/rui/linux.git/log/?h=amd-pstate-dev-v1
-V2: https://git.kernel.org/pub/scm/linux/kernel/git/rui/linux.git/log/?h=amd-pstate-dev-v2
-
-For details introduction, please see the patch 19.
-
-Changes from V1 -> V2:
-- cpufreq:
-- - Add detailed description in the commit log.
-- - Clean up the "extension" postfix in the x86 feature flag.
-- - Revise cppc_set_enable helper.
-- - Add a fix to check online cpus in cppc_acpi.
-- - Use static calls to avoid retpolines.
-- - Revise the comment style.
-- - Remove amd_pstate_boost_supported() function.
-- - Revise the return value in syfs attribute functions.
-- cpupower:
-- - Refine the commit log for cpupower patches.
-- - Expose a function to get the sysfs value from specific table.
-- - Move amd-pstate sysfs definitions and functions into amd helper file.
-- - Move the boost init function into amd helper file and explain the
-  details in the commit log.
-- - Remove the amd_pstate_get_data in the lib/cpufreq.c to keep the lib as
-  common operations.
-- - Move print_speed function into misc helper file.
-- - Add amd_pstate_show_perf_and_freq() function in amd helper for
-  cpufreq-info print.
-
-Thanks,
-Ray
-
-Huang Rui (19):
-  x86/cpufreatures: add AMD Collaborative Processor Performance Control
-    feature flag
-  x86/msr: add AMD CPPC MSR definitions
-  cpufreq: amd: introduce a new amd pstate driver to support future
-    processors
-  cpufreq: amd: add fast switch function for amd-pstate module
-  cpufreq: amd: add acpi cppc function as the backend for legacy
-    processors
-  cpufreq: amd: add trace for amd-pstate module
-  cpufreq: amd: add boost mode support for amd-pstate
-  cpufreq: amd: add amd-pstate checking support check attribute
-  cpufreq: amd: add amd-pstate frequencies attributes
-  cpufreq: amd: add amd-pstate performance attributes
-  cpupower: add AMD P-state capability flag
-  cpupower: add the function to check amd-pstate enabled
-  cpupower: initial AMD P-state capability
-  cpupower: add the function to get the sysfs value from specific table
-  cpupower: add amd-pstate sysfs definition and access helper
-  cpupower: enable boost state support for amd-pstate module
-  cpupower: move print_speed function into misc helper
-  cpupower: print amd-pstate information on cpupower
-  Documentation: amd-pstate: add amd-pstate driver introduction
-
-Jinzhou Su (1):
-  ACPI: CPPC: add cppc enable register function
-
-Mario Limonciello (1):
-  ACPI: CPPC: Check online CPUs for determining _CPC is valid
-
- Documentation/admin-guide/pm/amd_pstate.rst   | 377 +++++++++
- .../admin-guide/pm/working-state.rst          |   1 +
- arch/x86/include/asm/cpufeatures.h            |   1 +
- arch/x86/include/asm/msr-index.h              |  17 +
- drivers/acpi/cppc_acpi.c                      |  50 +-
- drivers/cpufreq/Kconfig.x86                   |  13 +
- drivers/cpufreq/Makefile                      |   5 +
- drivers/cpufreq/amd-pstate-trace.c            |   2 +
- drivers/cpufreq/amd-pstate-trace.h            |  96 +++
- drivers/cpufreq/amd-pstate.c                  | 724 ++++++++++++++++++
- include/acpi/cppc_acpi.h                      |   5 +
- tools/power/cpupower/lib/cpufreq.c            |  21 +-
- tools/power/cpupower/lib/cpufreq.h            |  12 +
- tools/power/cpupower/utils/cpufreq-info.c     |  68 +-
- tools/power/cpupower/utils/helpers/amd.c      |  82 ++
- tools/power/cpupower/utils/helpers/cpuid.c    |  13 +
- tools/power/cpupower/utils/helpers/helpers.h  |  21 +
- tools/power/cpupower/utils/helpers/misc.c     |  64 ++
- 18 files changed, 1514 insertions(+), 58 deletions(-)
- create mode 100644 Documentation/admin-guide/pm/amd_pstate.rst
- create mode 100644 drivers/cpufreq/amd-pstate-trace.c
- create mode 100644 drivers/cpufreq/amd-pstate-trace.h
- create mode 100644 drivers/cpufreq/amd-pstate.c
-
---
-2.25.1
-
-
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 01/21] x86/cpufreatures: add AMD Collaborative Processor Performance Control feature flag
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 02/21] x86/msr: add AMD CPPC MSR definitions Huang Rui
-                   ` (19 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Add Collaborative Processor Performance Control feature flag for AMD
 processors.
@@ -229,6 +10,7 @@ MSR Support" and another is "Shared Memory Support". The feature flag
 indicates the current processors with "Full MSR Support".
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
+Acked-by: Borislav Petkov <bp@suse.de>
 ---
  arch/x86/include/asm/cpufeatures.h | 1 +
  1 file changed, 1 insertion(+)
@@ -242,26 +24,11 @@ index d0ce5cfd3ac1..f23dc1abd485 100644
  #define X86_FEATURE_VIRT_SSBD		(13*32+25) /* Virtualized Speculative Store Bypass Disable */
  #define X86_FEATURE_AMD_SSB_NO		(13*32+26) /* "" Speculative Store Bypass is fixed in hardware. */
 +#define X86_FEATURE_AMD_CPPC		(13*32+27) /* Collaborative Processor Performance Control */
-
+ 
  /* Thermal and Power Management Leaf, CPUID level 0x00000006 (EAX), word 14 */
  #define X86_FEATURE_DTHERM		(14*32+ 0) /* Digital Thermal Sensor */
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 02/21] x86/msr: add AMD CPPC MSR definitions
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 01/21] x86/cpufreatures: add AMD Collaborative Processor Performance Control feature flag Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 03/21] ACPI: CPPC: Check online CPUs for determining _CPC is valid Huang Rui
-                   ` (18 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 AMD CPPC (Collaborative Processor Performance Control) function uses MSR
 registers to manage the performance hints. So add the MSR register macro
@@ -277,9 +44,9 @@ index a7c413432b33..ce42e15cf303 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
 @@ -486,6 +486,23 @@
-
+ 
  #define MSR_AMD64_VIRT_SPEC_CTRL	0xc001011f
-
+ 
 +/* AMD Collaborative Processor Performance Control MSRs */
 +#define MSR_AMD_CPPC_CAP1		0xc00102b0
 +#define MSR_AMD_CPPC_ENABLE		0xc00102b1
@@ -299,25 +66,101 @@ index a7c413432b33..ce42e15cf303 100644
 +
  /* Fam 17h MSRs */
  #define MSR_F17H_IRPERF			0xc00000e9
-
---
-2.25.1
+ 
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 03/21] ACPI: CPPC: Check online CPUs for determining _CPC is valid
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 01/21] x86/cpufreatures: add AMD Collaborative Processor Performance Control feature flag Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 02/21] x86/msr: add AMD CPPC MSR definitions Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 04/21] ACPI: CPPC: add cppc enable register function Huang Rui
-                   ` (17 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
+
+From: Steven Noonan <steven@valvesoftware.com>
+
+According to the ACPI v6.2 (and later) specification, SystemIO can be
+used for _CPC registers. This teaches cppc_acpi how to handle such
+registers.
+
+This patch was tested using the amd_pstate driver on my Zephyrus G15
+(model GA503QS) using the current version 410 BIOS, which uses
+a SystemIO register for the HighestPerformance element in _CPC.
+
+Signed-off-by: Steven Noonan <steven@valvesoftware.com>
+Signed-off-by: Huang Rui <ray.huang@amd.com>
+---
+ drivers/acpi/cppc_acpi.c | 46 +++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 43 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
+index bd482108310c..444c7a4605ad 100644
+--- a/drivers/acpi/cppc_acpi.c
++++ b/drivers/acpi/cppc_acpi.c
+@@ -759,9 +759,24 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
+ 						goto out_free;
+ 					cpc_ptr->cpc_regs[i-2].sys_mem_vaddr = addr;
+ 				}
++			} else if (gas_t->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
++				if (gas_t->access_width < 1 || gas_t->access_width > 3) {
++					/* 1 = 8-bit, 2 = 16-bit, and 3 = 32-bit. SystemIO doesn't
++					 * implement 64-bit registers.
++					 */
++					pr_debug("Invalid access width %d for SystemIO register\n",
++						gas_t->access_width);
++					goto out_free;
++				}
++				if (gas_t->address & ~0xFFFFULL) {
++					/* SystemIO registers use 16-bit integer addresses */
++					pr_debug("Invalid IO port %llu for SystemIO register\n",
++						gas_t->address);
++					goto out_free;
++				}
+ 			} else {
+ 				if (gas_t->space_id != ACPI_ADR_SPACE_FIXED_HARDWARE || !cpc_ffh_supported()) {
+-					/* Support only PCC ,SYS MEM and FFH type regs */
++					/* Support only PCC, SystemMemory, SystemIO, and FFH type regs. */
+ 					pr_debug("Unsupported register type: %d\n", gas_t->space_id);
+ 					goto out_free;
+ 				}
+@@ -936,7 +951,20 @@ static int cpc_read(int cpu, struct cpc_register_resource *reg_res, u64 *val)
+ 	}
+ 
+ 	*val = 0;
+-	if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
++
++	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
++		u32 width = 8 << (reg->access_width - 1);
++		acpi_status status;
++
++		status = acpi_os_read_port((acpi_io_address)reg->address, (u32 *)val, width);
++
++		if (status != AE_OK) {
++			pr_debug("Error: Failed to read SystemIO port %llx\n", reg->address);
++			return -EFAULT;
++		}
++
++		return 0;
++	} else if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
+ 		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
+ 	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+ 		vaddr = reg_res->sys_mem_vaddr;
+@@ -975,7 +1003,19 @@ static int cpc_write(int cpu, struct cpc_register_resource *reg_res, u64 val)
+ 	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
+ 	struct cpc_reg *reg = &reg_res->cpc_entry.reg;
+ 
+-	if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
++	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
++		u32 width = 8 << (reg->access_width - 1);
++		acpi_status status;
++
++		status = acpi_os_write_port((acpi_io_address)reg->address, (u32)val, width);
++
++		if (status != AE_OK) {
++			pr_debug("Error: Failed to write SystemIO port %llx\n", reg->address);
++			return -EFAULT;
++		}
++
++		return 0;
++	} else if (reg->space_id == ACPI_ADR_SPACE_PLATFORM_COMM && pcc_ss_id >= 0)
+ 		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
+ 	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+ 		vaddr = reg_res->sys_mem_vaddr;
+
+
 
 From: Mario Limonciello <mario.limonciello@amd.com>
 
@@ -328,7 +171,7 @@ While local APIC flags field (lapic_flags) of cpu core in MADT table is
 0, then the cpu core won't be enabled. In this case, _CPC won't be found
 in this core, and return back to _CPC invalid with walking through
 possible cpus (include disable cpus). This is not expected, so switch to
-check online CPUs instead.
+check present CPUs instead.
 
 Reported-by: Jinzhou Su <Jinzhou.Su@amd.com>
 Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
@@ -338,36 +181,20 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index a4d4eebba1da..2efe2ba97d96 100644
+index 444c7a4605ad..c9169c221209 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
 @@ -411,7 +411,7 @@ bool acpi_cpc_valid(void)
  	struct cpc_desc *cpc_ptr;
  	int cpu;
-
+ 
 -	for_each_possible_cpu(cpu) {
-+	for_each_online_cpu(cpu) {
++	for_each_present_cpu(cpu) {
  		cpc_ptr = per_cpu(cpc_desc_ptr, cpu);
  		if (!cpc_ptr)
  			return false;
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 04/21] ACPI: CPPC: add cppc enable register function
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (2 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 03/21] ACPI: CPPC: Check online CPUs for determining _CPC is valid Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 05/21] cpufreq: amd: introduce a new amd pstate driver to support future processors Huang Rui
-                   ` (16 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 From: Jinzhou Su <Jinzhou.Su@amd.com>
 
@@ -375,21 +202,31 @@ Add a new function to enable CPPC feature. This function
 will write Continuous Performance Control package
 EnableRegister field on the processor.
 
+CPPC EnableRegister register described in section 8.4.7.1 of ACPI 6.4:
+This element is optional. If supported, contains a resource descriptor
+with a single Register() descriptor that describes a register to which
+OSPM writes a One to enable CPPC on this processor. Before this register
+is set, the processor will be controlled by legacy mechanisms (ACPI
+Pstates, firmware, etc.).
+
+This register will be used for AMD processors to enable amd-pstate
+function instead of legacy ACPI P-States.
+
 Signed-off-by: Jinzhou Su <Jinzhou.Su@amd.com>
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/acpi/cppc_acpi.c | 48 ++++++++++++++++++++++++++++++++++++++++
+ drivers/acpi/cppc_acpi.c | 45 ++++++++++++++++++++++++++++++++++++++++
  include/acpi/cppc_acpi.h |  5 +++++
- 2 files changed, 53 insertions(+)
+ 2 files changed, 50 insertions(+)
 
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index 2efe2ba97d96..b285960c35e7 100644
+index c9169c221209..2d2297ef5bf9 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
-@@ -1220,6 +1220,54 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
+@@ -1275,6 +1275,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
  }
  EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
-
+ 
 +/**
 + * cppc_set_enable - Set to enable CPPC on the processor by writing the
 + * Continuous Performance Control package EnableRegister feild.
@@ -398,21 +235,17 @@ index 2efe2ba97d96..b285960c35e7 100644
 + *
 + * Return: 0 for success, -ERRNO or -EIO otherwise.
 + */
-+int cppc_set_enable(int cpu, u32 enable)
++int cppc_set_enable(int cpu, bool enable)
 +{
 +	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
 +	struct cpc_register_resource *enable_reg;
 +	struct cpc_desc *cpc_desc = per_cpu(cpc_desc_ptr, cpu);
 +	struct cppc_pcc_data *pcc_ss_data = NULL;
-+	int ret = -1;
-+
-+	/* check the input value*/
-+	if (cpu < 0 || cpu > num_possible_cpus() - 1 || enable > 1)
-+		return -ENODEV;
++	int ret = -EINVAL;
 +
 +	if (!cpc_desc) {
 +		pr_debug("No CPC descriptor for CPU:%d\n", cpu);
-+		return -ENODEV;
++		return -EINVAL;
 +	}
 +
 +	enable_reg = &cpc_desc->cpc_regs[ENABLE];
@@ -432,9 +265,10 @@ index 2efe2ba97d96..b285960c35e7 100644
 +		/* after writing CPC, transfer the ownership of PCC to platfrom */
 +		ret = send_pcc_cmd(pcc_ss_id, CMD_WRITE);
 +		up_write(&pcc_ss_data->pcc_lock);
++		return ret;
 +	}
 +
-+	return ret;
++	return cpc_write(cpu, enable_reg, enable);
 +}
 +EXPORT_SYMBOL_GPL(cppc_set_enable);
 +
@@ -442,46 +276,30 @@ index 2efe2ba97d96..b285960c35e7 100644
   * cppc_set_perf - Set a CPU's performance controls.
   * @cpu: CPU for which to set performance controls.
 diff --git a/include/acpi/cppc_acpi.h b/include/acpi/cppc_acpi.h
-index 9f4985b4d64d..3fdae40a75fc 100644
+index bc159a9b4a73..92b7ea8d8f5e 100644
 --- a/include/acpi/cppc_acpi.h
 +++ b/include/acpi/cppc_acpi.h
-@@ -137,6 +137,7 @@ struct cppc_cpudata {
- extern int cppc_get_desired_perf(int cpunum, u64 *desired_perf);
+@@ -138,6 +138,7 @@ extern int cppc_get_desired_perf(int cpunum, u64 *desired_perf);
+ extern int cppc_get_nominal_perf(int cpunum, u64 *nominal_perf);
  extern int cppc_get_perf_ctrs(int cpu, struct cppc_perf_fb_ctrs *perf_fb_ctrs);
  extern int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls);
-+extern int cppc_set_enable(int cpu, u32 enable);
++extern int cppc_set_enable(int cpu, bool enable);
  extern int cppc_get_perf_caps(int cpu, struct cppc_perf_caps *caps);
  extern bool acpi_cpc_valid(void);
  extern int acpi_get_psd_map(unsigned int cpu, struct cppc_cpudata *cpu_data);
-@@ -157,6 +158,10 @@ static inline int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
+@@ -162,6 +163,10 @@ static inline int cppc_set_perf(int cpu, struct cppc_perf_ctrls *perf_ctrls)
  {
  	return -ENOTSUPP;
  }
-+static inline int cppc_set_enable(int cpu, u32 enable)
++static inline int cppc_set_enable(int cpu, bool enable)
 +{
 +	return -ENOTSUPP;
 +}
  static inline int cppc_get_perf_caps(int cpu, struct cppc_perf_caps *caps)
  {
  	return -ENOTSUPP;
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 05/21] cpufreq: amd: introduce a new amd pstate driver to support future processors
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (3 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 04/21] ACPI: CPPC: add cppc enable register function Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 06/21] cpufreq: amd: add fast switch function for amd-pstate module Huang Rui
-                   ` (15 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 amd-pstate is the AMD CPU performance scaling driver that introduces a
 new CPU frequency control mechanism on AMD Zen based CPU series in Linux
@@ -593,22 +411,22 @@ performance per watt scaling on mobile CPU benchmarks in most of cases.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/Kconfig.x86  |  13 +
+ drivers/cpufreq/Kconfig.x86  |  17 ++
  drivers/cpufreq/Makefile     |   1 +
- drivers/cpufreq/amd-pstate.c | 446 +++++++++++++++++++++++++++++++++++
- 3 files changed, 460 insertions(+)
+ drivers/cpufreq/amd-pstate.c | 413 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 431 insertions(+)
  create mode 100644 drivers/cpufreq/amd-pstate.c
 
 diff --git a/drivers/cpufreq/Kconfig.x86 b/drivers/cpufreq/Kconfig.x86
-index 92701a18bdd9..9cd7e338bdcd 100644
+index 92701a18bdd9..2e798b2c0bdb 100644
 --- a/drivers/cpufreq/Kconfig.x86
 +++ b/drivers/cpufreq/Kconfig.x86
-@@ -34,6 +34,19 @@ config X86_PCC_CPUFREQ
-
+@@ -34,6 +34,23 @@ config X86_PCC_CPUFREQ
+ 
  	  If in doubt, say N.
-
+ 
 +config X86_AMD_PSTATE
-+	tristate "AMD Processor P-State driver"
++	bool "AMD Processor P-State driver"
 +	depends on X86
 +	select ACPI_PROCESSOR if ACPI
 +	select ACPI_CPPC_LIB if X86_64 && ACPI && SCHED_MC_PRIO
@@ -616,7 +434,11 @@ index 92701a18bdd9..9cd7e338bdcd 100644
 +	help
 +	  This driver adds a CPUFreq driver which utilizes a fine grain
 +	  processor performance freqency control range instead of legacy
-+	  performance levels. This driver also supports newer AMD CPUs.
++	  performance levels. This driver supports the AMD processors with
++	  _CPC object in the SBIOS.
++
++	  For details, take a look at:
++	  <file:Documentation/admin-guide/pm/amd-pstate.rst>.
 +
 +	  If in doubt, say N.
 +
@@ -624,12 +446,12 @@ index 92701a18bdd9..9cd7e338bdcd 100644
  	tristate "ACPI Processor P-States driver"
  	depends on ACPI_PROCESSOR
 diff --git a/drivers/cpufreq/Makefile b/drivers/cpufreq/Makefile
-index 27d3bd7ea9d4..5c9a2a1ee8dc 100644
+index 48ee5859030c..c8d307010922 100644
 --- a/drivers/cpufreq/Makefile
 +++ b/drivers/cpufreq/Makefile
 @@ -25,6 +25,7 @@ obj-$(CONFIG_CPUFREQ_DT_PLATDEV)	+= cpufreq-dt-platdev.o
  # speedstep-* is preferred over p4-clockmod.
-
+ 
  obj-$(CONFIG_X86_ACPI_CPUFREQ)		+= acpi-cpufreq.o
 +obj-$(CONFIG_X86_AMD_PSTATE)		+= amd-pstate.o
  obj-$(CONFIG_X86_POWERNOW_K8)		+= powernow-k8.o
@@ -637,11 +459,10 @@ index 27d3bd7ea9d4..5c9a2a1ee8dc 100644
  obj-$(CONFIG_X86_POWERNOW_K6)		+= powernow-k6.o
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
 new file mode 100644
-index 000000000000..693d796eae55
+index 000000000000..a400861c7fdc
 --- /dev/null
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -0,0 +1,446 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
+@@ -0,0 +1,413 @@
 +/*
 + * amd-pstate.c - AMD Processor P-state Frequency Driver
 + *
@@ -698,7 +519,6 @@ index 000000000000..693d796eae55
 +	int	cpu;
 +
 +	struct freq_qos_request req[2];
-+	struct cpufreq_policy *policy;
 +
 +	u64	cppc_req_cached;
 +
@@ -756,8 +576,7 @@ index 000000000000..693d796eae55
 +}
 +
 +static void pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
-+			       u32 des_perf, u32 max_perf,
-+			       bool fast_switch)
++			       u32 des_perf, u32 max_perf, bool fast_switch)
 +{
 +	if (fast_switch)
 +		wrmsrl(MSR_AMD_CPPC_REQ, READ_ONCE(cpudata->cppc_req_cached));
@@ -768,17 +587,16 @@ index 000000000000..693d796eae55
 +
 +DEFINE_STATIC_CALL(amd_pstate_update_perf, pstate_update_perf);
 +
-+static inline void
-+amd_pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
-+		       u32 des_perf, u32 max_perf, bool fast_switch)
++static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
++					  u32 min_perf, u32 des_perf,
++					  u32 max_perf, bool fast_switch)
 +{
 +	static_call(amd_pstate_update_perf)(cpudata, min_perf, des_perf,
 +					    max_perf, fast_switch);
 +}
 +
-+static void
-+amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
-+		  u32 des_perf, u32 max_perf, bool fast_switch)
++static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
++			      u32 des_perf, u32 max_perf, bool fast_switch)
 +{
 +	u64 prev = READ_ONCE(cpudata->cppc_req_cached);
 +	u64 value = prev;
@@ -913,23 +731,6 @@ index 000000000000..693d796eae55
 +	return lowest_nonlinear_freq * 1000;
 +}
 +
-+static int amd_pstate_init_freqs_in_cpudata(struct amd_cpudata *cpudata,
-+					    u32 max_freq, u32 min_freq,
-+					    u32 nominal_freq,
-+					    u32 lowest_nonlinear_freq)
-+{
-+	if (!cpudata)
-+		return -EINVAL;
-+
-+	/* Initial processor data capability frequencies */
-+	cpudata->max_freq = max_freq;
-+	cpudata->min_freq = min_freq;
-+	cpudata->nominal_freq = nominal_freq;
-+	cpudata->lowest_nonlinear_freq = lowest_nonlinear_freq;
-+
-+	return 0;
-+}
-+
 +static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
 +{
 +	int min_freq, max_freq, nominal_freq, lowest_nonlinear_freq, ret;
@@ -946,7 +747,6 @@ index 000000000000..693d796eae55
 +		return -ENOMEM;
 +
 +	cpudata->cpu = cpu;
-+	cpudata->policy = policy;
 +
 +	ret = amd_pstate_init_perf(cpudata);
 +	if (ret)
@@ -990,19 +790,16 @@ index 000000000000..693d796eae55
 +		goto free_cpudata2;
 +	}
 +
-+	ret = amd_pstate_init_freqs_in_cpudata(cpudata, max_freq, min_freq,
-+					       nominal_freq,
-+					       lowest_nonlinear_freq);
-+	if (ret) {
-+		dev_err(dev, "Failed to init cpudata (%d)\n", ret);
-+		goto free_cpudata3;
-+	}
++	/* Initial processor data capability frequencies */
++	cpudata->max_freq = max_freq;
++	cpudata->min_freq = min_freq;
++	cpudata->nominal_freq = nominal_freq;
++	cpudata->lowest_nonlinear_freq = lowest_nonlinear_freq;
 +
 +	policy->driver_data = cpudata;
 +
 +	return 0;
 +
-+free_cpudata3:
 +	freq_qos_remove_request(&cpudata->req[1]);
 +free_cpudata2:
 +	freq_qos_remove_request(&cpudata->req[0]);
@@ -1074,41 +871,17 @@ index 000000000000..693d796eae55
 +	return 0;
 +}
 +
-+static void __exit amd_pstate_exit(void)
-+{
-+	cpufreq_unregister_driver(&amd_pstate_driver);
-+
-+	amd_pstate_enable(false);
-+}
-+
-+module_init(amd_pstate_init);
-+module_exit(amd_pstate_exit);
++device_initcall(amd_pstate_init);
 +
 +MODULE_AUTHOR("Huang Rui <ray.huang@amd.com>");
 +MODULE_DESCRIPTION("AMD Processor P-state Frequency Driver");
 +MODULE_LICENSE("GPL");
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 06/21] cpufreq: amd: add fast switch function for amd-pstate module
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (4 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 05/21] cpufreq: amd: introduce a new amd pstate driver to support future processors Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 07/21] cpufreq: amd: add acpi cppc function as the backend for legacy processors Huang Rui
-                   ` (14 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
-Introduce the fast switch function for amd-pstate module on the AMD
-processors which support the full MSR register control. It's able to
-decrease the lattency on interrupt context.
+Introduce the fast switch function for amd-pstate on the AMD processors
+which support the full MSR register control. It's able to decrease the
+lattency on interrupt context.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
@@ -1116,13 +889,13 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 38 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 693d796eae55..aa4610ad186e 100644
+index a400861c7fdc..55ff03f85608 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -195,6 +195,41 @@ static int amd_pstate_target(struct cpufreq_policy *policy,
+@@ -191,6 +191,41 @@ static int amd_pstate_target(struct cpufreq_policy *policy,
  	return 0;
  }
-
+ 
 +static void amd_pstate_adjust_perf(unsigned int cpu,
 +				   unsigned long min_perf,
 +				   unsigned long target_perf,
@@ -1161,16 +934,16 @@ index 693d796eae55..aa4610ad186e 100644
  static int amd_get_min_freq(struct amd_cpudata *cpudata)
  {
  	struct cppc_perf_caps cppc_perf;
-@@ -333,6 +368,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+@@ -311,6 +346,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  	/* It will be updated by governor */
  	policy->cur = policy->cpuinfo.min_freq;
-
+ 
 +	policy->fast_switch_possible = true;
 +
  	ret = freq_qos_add_request(&policy->constraints, &cpudata->req[0],
  				   FREQ_QOS_MIN, policy->cpuinfo.min_freq);
  	if (ret < 0) {
-@@ -385,6 +422,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -360,6 +397,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
  	.target		= amd_pstate_target,
@@ -1178,24 +951,8 @@ index 693d796eae55..aa4610ad186e 100644
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,
  	.name		= "amd-pstate",
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 07/21] cpufreq: amd: add acpi cppc function as the backend for legacy processors
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (5 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 06/21] cpufreq: amd: add fast switch function for amd-pstate module Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 08/21] cpufreq: amd: add trace for amd-pstate module Huang Rui
-                   ` (13 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 In some old Zen based processors, they are using the shared memory that
 exposed from ACPI SBIOS.
@@ -1207,13 +964,13 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 53 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index aa4610ad186e..c9bee7b1698a 100644
+index 55ff03f85608..d399938d6d85 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -75,6 +75,19 @@ static inline int pstate_enable(bool enable)
+@@ -73,6 +73,19 @@ static inline int pstate_enable(bool enable)
  	return wrmsrl_safe(MSR_AMD_CPPC_ENABLE, enable ? 1 : 0);
  }
-
+ 
 +static int cppc_enable(bool enable)
 +{
 +	int cpu, ret = 0;
@@ -1228,12 +985,12 @@ index aa4610ad186e..c9bee7b1698a 100644
 +}
 +
  DEFINE_STATIC_CALL(amd_pstate_enable, pstate_enable);
-
+ 
  static inline int amd_pstate_enable(bool enable)
-@@ -105,6 +118,24 @@ static int pstate_init_perf(struct amd_cpudata *cpudata)
+@@ -103,6 +116,24 @@ static int pstate_init_perf(struct amd_cpudata *cpudata)
  	return 0;
  }
-
+ 
 +static int cppc_init_perf(struct amd_cpudata *cpudata)
 +{
 +	struct cppc_perf_caps cppc_perf;
@@ -1253,12 +1010,12 @@ index aa4610ad186e..c9bee7b1698a 100644
 +}
 +
  DEFINE_STATIC_CALL(amd_pstate_init_perf, pstate_init_perf);
-
+ 
  static inline int amd_pstate_init_perf(struct amd_cpudata *cpudata)
-@@ -123,6 +154,19 @@ static void pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
+@@ -120,6 +151,19 @@ static void pstate_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
  			      READ_ONCE(cpudata->cppc_req_cached));
  }
-
+ 
 +static void cppc_update_perf(struct amd_cpudata *cpudata,
 +			     u32 min_perf, u32 des_perf,
 +			     u32 max_perf, bool fast_switch)
@@ -1273,19 +1030,19 @@ index aa4610ad186e..c9bee7b1698a 100644
 +}
 +
  DEFINE_STATIC_CALL(amd_pstate_update_perf, pstate_update_perf);
-
- static inline void
-@@ -368,7 +412,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ 
+ static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
+@@ -346,7 +390,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
  	/* It will be updated by governor */
  	policy->cur = policy->cpuinfo.min_freq;
-
+ 
 -	policy->fast_switch_possible = true;
 +	if (boot_cpu_has(X86_FEATURE_AMD_CPPC))
 +		policy->fast_switch_possible = true;
-
+ 
  	ret = freq_qos_add_request(&policy->constraints, &cpudata->req[0],
  				   FREQ_QOS_MIN, policy->cpuinfo.min_freq);
-@@ -422,7 +467,6 @@ static struct cpufreq_driver amd_pstate_driver = {
+@@ -397,7 +442,6 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
  	.verify		= amd_pstate_verify,
  	.target		= amd_pstate_target,
@@ -1293,9 +1050,9 @@ index aa4610ad186e..c9bee7b1698a 100644
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,
  	.name		= "amd-pstate",
-@@ -446,10 +490,14 @@ static int __init amd_pstate_init(void)
+@@ -421,10 +465,14 @@ static int __init amd_pstate_init(void)
  		return -EEXIST;
-
+ 
  	/* capability check */
 -	if (!boot_cpu_has(X86_FEATURE_AMD_CPPC)) {
 -		pr_debug("%s, AMD CPPC MSR based functionality is not supported\n",
@@ -1309,134 +1066,66 @@ index aa4610ad186e..c9bee7b1698a 100644
 +		static_call_update(amd_pstate_init_perf, cppc_init_perf);
 +		static_call_update(amd_pstate_update_perf, cppc_update_perf);
  	}
-
+ 
  	/* enable amd pstate feature */
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 08/21] cpufreq: amd: add trace for amd-pstate module
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (6 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 07/21] cpufreq: amd: add acpi cppc function as the backend for legacy processors Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 09/21] cpufreq: amd: add boost mode support for amd-pstate Huang Rui
-                   ` (12 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Add trace event to monitor the performance value changes which is
 controlled by cpu governors.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/Makefile           |  6 +-
- drivers/cpufreq/amd-pstate-trace.c |  2 +
- drivers/cpufreq/amd-pstate-trace.h | 96 ++++++++++++++++++++++++++++++
- drivers/cpufreq/amd-pstate.c       | 11 ++++
- 4 files changed, 114 insertions(+), 1 deletion(-)
- create mode 100644 drivers/cpufreq/amd-pstate-trace.c
- create mode 100644 drivers/cpufreq/amd-pstate-trace.h
+ drivers/cpufreq/amd-pstate.c |  4 ++++
+ include/trace/events/power.h | 46 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 50 insertions(+)
 
-diff --git a/drivers/cpufreq/Makefile b/drivers/cpufreq/Makefile
-index 5c9a2a1ee8dc..04882bc4b145 100644
---- a/drivers/cpufreq/Makefile
-+++ b/drivers/cpufreq/Makefile
-@@ -17,6 +17,10 @@ obj-$(CONFIG_CPU_FREQ_GOV_ATTR_SET)	+= cpufreq_governor_attr_set.o
- obj-$(CONFIG_CPUFREQ_DT)		+= cpufreq-dt.o
- obj-$(CONFIG_CPUFREQ_DT_PLATDEV)	+= cpufreq-dt-platdev.o
-
-+# Traces
-+CFLAGS_amd-pstate-trace.o               := -I$(src)
-+amd_pstate-y				:= amd-pstate.o amd-pstate-trace.o
+diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
+index d399938d6d85..6037590e82a6 100644
+--- a/drivers/cpufreq/amd-pstate.c
++++ b/drivers/cpufreq/amd-pstate.c
+@@ -36,6 +36,7 @@
+ #include <linux/delay.h>
+ #include <linux/uaccess.h>
+ #include <linux/static_call.h>
++#include <trace/events/power.h>
+ 
+ #include <acpi/processor.h>
+ #include <acpi/cppc_acpi.h>
+@@ -189,6 +190,9 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
+ 	value &= ~REQ_MAX_PERF(~0L);
+ 	value |= REQ_MAX_PERF(max_perf);
+ 
++	trace_amd_pstate_perf(min_perf, des_perf, max_perf, cpudata->cpu,
++			      (value != prev), fast_switch);
 +
- ##################################################################################
- # x86 drivers.
- # Link order matters. K8 is preferred to ACPI because of firmware bugs in early
-@@ -25,7 +29,7 @@ obj-$(CONFIG_CPUFREQ_DT_PLATDEV)	+= cpufreq-dt-platdev.o
- # speedstep-* is preferred over p4-clockmod.
-
- obj-$(CONFIG_X86_ACPI_CPUFREQ)		+= acpi-cpufreq.o
--obj-$(CONFIG_X86_AMD_PSTATE)		+= amd-pstate.o
-+obj-$(CONFIG_X86_AMD_PSTATE)		+= amd_pstate.o
- obj-$(CONFIG_X86_POWERNOW_K8)		+= powernow-k8.o
- obj-$(CONFIG_X86_PCC_CPUFREQ)		+= pcc-cpufreq.o
- obj-$(CONFIG_X86_POWERNOW_K6)		+= powernow-k6.o
-diff --git a/drivers/cpufreq/amd-pstate-trace.c b/drivers/cpufreq/amd-pstate-trace.c
-new file mode 100644
-index 000000000000..891b696dcd69
---- /dev/null
-+++ b/drivers/cpufreq/amd-pstate-trace.c
-@@ -0,0 +1,2 @@
-+#define CREATE_TRACE_POINTS
-+#include "amd-pstate-trace.h"
-diff --git a/drivers/cpufreq/amd-pstate-trace.h b/drivers/cpufreq/amd-pstate-trace.h
-new file mode 100644
-index 000000000000..50c85e150f30
---- /dev/null
-+++ b/drivers/cpufreq/amd-pstate-trace.h
-@@ -0,0 +1,96 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * amd-pstate-trace.h - AMD Processor P-state Frequency Driver Tracer
-+ *
-+ * Copyright (C) 2021 Advanced Micro Devices, Inc. All Rights Reserved.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * as published by the Free Software Foundation; either version 2
-+ * of the License, or (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License along with
-+ * this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-+ *
-+ * Author: Huang Rui <ray.huang@amd.com>
-+ */
-+
-+#if !defined(_AMD_PSTATE_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _AMD_PSTATE_TRACE_H
-+
-+#include <linux/cpufreq.h>
-+#include <linux/tracepoint.h>
-+#include <linux/trace_events.h>
-+
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM amd_cpu
-+
-+#undef TRACE_INCLUDE_FILE
-+#define TRACE_INCLUDE_FILE amd-pstate-trace
-+
-+#define TPS(x)  tracepoint_string(x)
-+
+ 	if (value == prev)
+ 		return;
+ 
+diff --git a/include/trace/events/power.h b/include/trace/events/power.h
+index af5018aa9517..c95c0b8d443d 100644
+--- a/include/trace/events/power.h
++++ b/include/trace/events/power.h
+@@ -173,6 +173,52 @@ TRACE_EVENT(cpu_frequency_limits,
+ 		  (unsigned long)__entry->cpu_id)
+ );
+ 
 +TRACE_EVENT(amd_pstate_perf,
 +
 +	TP_PROTO(unsigned long min_perf,
 +		 unsigned long target_perf,
 +		 unsigned long capacity,
 +		 unsigned int cpu_id,
-+		 u64 prev,
-+		 u64 value,
-+		 int type
++		 bool changed,
++		 bool fast_switch
 +		 ),
 +
 +	TP_ARGS(min_perf,
 +		target_perf,
 +		capacity,
 +		cpu_id,
-+		prev,
-+		value,
-+		type
++		changed,
++		fast_switch
 +		),
 +
 +	TP_STRUCT__entry(
@@ -1444,9 +1133,8 @@ index 000000000000..50c85e150f30
 +		__field(unsigned long, target_perf)
 +		__field(unsigned long, capacity)
 +		__field(unsigned int, cpu_id)
-+		__field(u64, prev)
-+		__field(u64, value)
-+		__field(int, type)
++		__field(bool, changed)
++		__field(bool, fast_switch)
 +		),
 +
 +	TP_fast_assign(
@@ -1454,87 +1142,25 @@ index 000000000000..50c85e150f30
 +		__entry->target_perf = target_perf;
 +		__entry->capacity = capacity;
 +		__entry->cpu_id = cpu_id;
-+		__entry->prev = prev;
-+		__entry->value = value;
-+		__entry->type = type;
++		__entry->changed = changed;
++		__entry->fast_switch = fast_switch;
 +		),
 +
-+	TP_printk("amd_min_perf=%lu amd_des_perf=%lu amd_max_perf=%lu cpu_id=%u prev=0x%llx value=0x%llx type=0x%d",
++	TP_printk("amd_min_perf=%lu amd_des_perf=%lu amd_max_perf=%lu cpu_id=%u changed=%s fast_switch=%s",
 +		  (unsigned long)__entry->min_perf,
 +		  (unsigned long)__entry->target_perf,
 +		  (unsigned long)__entry->capacity,
 +		  (unsigned int)__entry->cpu_id,
-+		  (u64)__entry->prev,
-+		  (u64)__entry->value,
-+		  (int)__entry->type
++		  (__entry->changed) ? "true" : "false",
++		  (__entry->fast_switch) ? "true" : "false"
 +		 )
 +);
 +
-+#endif /* _AMD_PSTATE_TRACE_H */
-+
-+/* This part must be outside protection */
-+#undef TRACE_INCLUDE_PATH
-+#define TRACE_INCLUDE_PATH .
-+
-+#include <trace/define_trace.h>
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index c9bee7b1698a..0c9f9c0c8928 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -45,10 +45,17 @@
- #include <asm/processor.h>
- #include <asm/cpufeature.h>
- #include <asm/cpu_device_id.h>
-+#include "amd-pstate-trace.h"
-
- #define AMD_PSTATE_TRANSITION_LATENCY	0x20000
- #define AMD_PSTATE_TRANSITION_DELAY	500
-
-+enum switch_type
-+{
-+	AMD_TARGET = 0,
-+	AMD_ADJUST_PERF
-+};
-+
- static struct cpufreq_driver amd_pstate_driver;
-
- struct amd_cpudata {
-@@ -183,6 +190,7 @@ amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- {
- 	u64 prev = READ_ONCE(cpudata->cppc_req_cached);
- 	u64 value = prev;
-+	enum switch_type type = fast_switch ? AMD_ADJUST_PERF : AMD_TARGET;
-
- 	value &= ~REQ_MIN_PERF(~0L);
- 	value |= REQ_MIN_PERF(min_perf);
-@@ -193,6 +201,9 @@ amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- 	value &= ~REQ_MAX_PERF(~0L);
- 	value |= REQ_MAX_PERF(max_perf);
-
-+	trace_amd_pstate_perf(min_perf, des_perf, max_perf,
-+			      cpudata->cpu, prev, value, type);
-+
- 	if (value == prev)
- 		return;
-
---
-2.25.1
+ TRACE_EVENT(device_pm_callback_start,
+ 
+ 	TP_PROTO(struct device *dev, const char *pm_ops, int event),
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 09/21] cpufreq: amd: add boost mode support for amd-pstate
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (7 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 08/21] cpufreq: amd: add trace for amd-pstate module Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 10/21] cpufreq: amd: add amd-pstate checking support check attribute Huang Rui
-                   ` (11 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 If the sbios supports the boost mode of amd-pstate, let's switch to
 boost enabled by default.
@@ -1545,22 +1171,22 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  1 file changed, 44 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 0c9f9c0c8928..847ba00e3351 100644
+index 6037590e82a6..9af27ac1f818 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -75,6 +75,8 @@ struct amd_cpudata {
+@@ -67,6 +67,8 @@ struct amd_cpudata {
  	u32	min_freq;
  	u32	nominal_freq;
  	u32	lowest_nonlinear_freq;
 +
 +	bool	boost_supported;
  };
-
+ 
  static inline int pstate_enable(bool enable)
-@@ -360,6 +362,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
+@@ -349,6 +351,45 @@ static int amd_get_lowest_nonlinear_freq(struct amd_cpudata *cpudata)
  	return lowest_nonlinear_freq * 1000;
  }
-
+ 
 +static int amd_pstate_set_boost(struct cpufreq_policy *policy, int state)
 +{
 +	struct amd_cpudata *cpudata = policy->driver_data;
@@ -1600,125 +1226,53 @@ index 0c9f9c0c8928..847ba00e3351 100644
 +	amd_pstate_driver.boost_enabled = true;
 +}
 +
- static int amd_pstate_init_freqs_in_cpudata(struct amd_cpudata *cpudata,
- 					    u32 max_freq, u32 min_freq,
- 					    u32 nominal_freq,
-@@ -450,6 +491,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
-
+ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ {
+ 	int min_freq, max_freq, nominal_freq, lowest_nonlinear_freq, ret;
+@@ -419,6 +460,8 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ 
  	policy->driver_data = cpudata;
-
+ 
 +	amd_pstate_boost_init(cpudata);
 +
  	return 0;
-
- free_cpudata3:
-@@ -480,6 +523,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+ 
+ 	freq_qos_remove_request(&cpudata->req[1]);
+@@ -448,6 +491,7 @@ static struct cpufreq_driver amd_pstate_driver = {
  	.target		= amd_pstate_target,
  	.init		= amd_pstate_cpu_init,
  	.exit		= amd_pstate_cpu_exit,
 +	.set_boost	= amd_pstate_set_boost,
  	.name		= "amd-pstate",
  };
-
---
-2.25.1
+ 
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 10/21] cpufreq: amd: add amd-pstate checking support check attribute
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (8 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 09/21] cpufreq: amd: add boost mode support for amd-pstate Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 11/21] cpufreq: amd: add amd-pstate frequencies attributes Huang Rui
-                   ` (10 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
-
-The amd-pstate hardware support check will be needed by cpupower to know
-whether amd-pstate is enabled and supported.
-
-Signed-off-by: Huang Rui <ray.huang@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 847ba00e3351..74f896232d5a 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -517,6 +517,19 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
- 	return 0;
- }
-
-+static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
-+					char *buf)
-+{
-+	return sprintf(&buf[0], "%d\n", acpi_cpc_valid() ?  1 : 0);
-+}
-+
-+cpufreq_freq_attr_ro(is_amd_pstate_enabled);
-+
-+static struct freq_attr *amd_pstate_attr[] = {
-+	&is_amd_pstate_enabled,
-+	NULL,
-+};
-+
- static struct cpufreq_driver amd_pstate_driver = {
- 	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
- 	.verify		= amd_pstate_verify,
-@@ -525,6 +538,7 @@ static struct cpufreq_driver amd_pstate_driver = {
- 	.exit		= amd_pstate_cpu_exit,
- 	.set_boost	= amd_pstate_set_boost,
- 	.name		= "amd-pstate",
-+	.attr		= amd_pstate_attr,
- };
-
- static int __init amd_pstate_init(void)
---
-2.25.1
-
-
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 11/21] cpufreq: amd: add amd-pstate frequencies attributes
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (9 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 10/21] cpufreq: amd: add amd-pstate checking support check attribute Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 12/21] cpufreq: amd: add amd-pstate performance attributes Huang Rui
-                   ` (9 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Introduce sysfs attributes to get the different level processor
 frequencies.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 71 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 70 insertions(+), 1 deletion(-)
+ drivers/cpufreq/amd-pstate.c | 63 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 74f896232d5a..16fed25c3400 100644
+index 9af27ac1f818..8cf1e80f44e0 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -517,16 +517,85 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
+@@ -485,6 +485,68 @@ static int amd_pstate_cpu_exit(struct cpufreq_policy *policy)
  	return 0;
  }
-
--static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
+ 
 +/* Sysfs attributes */
 +
++/* This frequency is to indicate the maximum hardware frequency.
++ * If boost is not active but supported, the frequency will be larger than the
++ * one in cpuinfo.
++ */
 +static ssize_t show_amd_pstate_max_freq(struct cpufreq_policy *policy,
- 					char *buf)
++					char *buf)
 +{
 +	int max_freq;
 +	struct amd_cpudata *cpudata;
@@ -1747,8 +1301,8 @@ index 74f896232d5a..16fed25c3400 100644
 +	return sprintf(&buf[0], "%u\n", nominal_freq);
 +}
 +
-+static ssize_t
-+show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *policy, char *buf)
++static ssize_t show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *policy,
++						     char *buf)
 +{
 +	int freq;
 +	struct amd_cpudata *cpudata;
@@ -1762,78 +1316,49 @@ index 74f896232d5a..16fed25c3400 100644
 +	return sprintf(&buf[0], "%u\n", freq);
 +}
 +
-+static ssize_t show_amd_pstate_min_freq(struct cpufreq_policy *policy, char *buf)
-+{
-+	int min_freq;
-+	struct amd_cpudata *cpudata;
-+
-+	cpudata = policy->driver_data;
-+
-+	min_freq = amd_get_min_freq(cpudata);
-+	if (min_freq < 0)
-+		return min_freq;
-+
-+	return sprintf(&buf[0], "%u\n", min_freq);
-+}
-+
-+static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
-+					  char *buf)
- {
- 	return sprintf(&buf[0], "%d\n", acpi_cpc_valid() ?  1 : 0);
- }
-
- cpufreq_freq_attr_ro(is_amd_pstate_enabled);
 +cpufreq_freq_attr_ro(amd_pstate_max_freq);
 +cpufreq_freq_attr_ro(amd_pstate_nominal_freq);
 +cpufreq_freq_attr_ro(amd_pstate_lowest_nonlinear_freq);
-+cpufreq_freq_attr_ro(amd_pstate_min_freq);
-
- static struct freq_attr *amd_pstate_attr[] = {
- 	&is_amd_pstate_enabled,
++
++static struct freq_attr *amd_pstate_attr[] = {
 +	&amd_pstate_max_freq,
 +	&amd_pstate_nominal_freq,
 +	&amd_pstate_lowest_nonlinear_freq,
-+	&amd_pstate_min_freq,
- 	NULL,
++	NULL,
++};
++
+ static struct cpufreq_driver amd_pstate_driver = {
+ 	.flags		= CPUFREQ_CONST_LOOPS | CPUFREQ_NEED_UPDATE_LIMITS,
+ 	.verify		= amd_pstate_verify,
+@@ -493,6 +555,7 @@ static struct cpufreq_driver amd_pstate_driver = {
+ 	.exit		= amd_pstate_cpu_exit,
+ 	.set_boost	= amd_pstate_set_boost,
+ 	.name		= "amd-pstate",
++	.attr           = amd_pstate_attr,
  };
+ 
+ static int __init amd_pstate_init(void)
 
---
-2.25.1
 
-
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 12/21] cpufreq: amd: add amd-pstate performance attributes
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (10 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 11/21] cpufreq: amd: add amd-pstate frequencies attributes Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 13/21] cpupower: add AMD P-state capability flag Huang Rui
-                   ` (8 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Introduce sysfs attributes to get the different level amd-pstate
 performances.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 54 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 54 insertions(+)
+ drivers/cpufreq/amd-pstate.c | 53 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 16fed25c3400..b0353d13f74a 100644
+index 8cf1e80f44e0..58ee50bf492b 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -578,6 +578,50 @@ static ssize_t show_amd_pstate_min_freq(struct cpufreq_policy *policy, char *buf
- 	return sprintf(&buf[0], "%u\n", min_freq);
+@@ -536,14 +536,67 @@ static ssize_t show_amd_pstate_lowest_nonlinear_freq(struct cpufreq_policy *poli
+ 	return sprintf(&buf[0], "%u\n", freq);
  }
-
-+static ssize_t
-+show_amd_pstate_highest_perf(struct cpufreq_policy *policy, char *buf)
+ 
++static ssize_t show_amd_pstate_highest_perf(struct cpufreq_policy *policy,
++					    char *buf)
 +{
 +	u32 perf;
 +	struct amd_cpudata *cpudata = policy->driver_data;
@@ -1843,8 +1368,8 @@ index 16fed25c3400..b0353d13f74a 100644
 +	return sprintf(&buf[0], "%u\n", perf);
 +}
 +
-+static ssize_t
-+show_amd_pstate_nominal_perf(struct cpufreq_policy *policy, char *buf)
++static ssize_t show_amd_pstate_nominal_perf(struct cpufreq_policy *policy,
++					    char *buf)
 +{
 +	u32 perf;
 +	struct amd_cpudata *cpudata = policy->driver_data;
@@ -1854,8 +1379,8 @@ index 16fed25c3400..b0353d13f74a 100644
 +	return sprintf(&buf[0], "%u\n", perf);
 +}
 +
-+static ssize_t
-+show_amd_pstate_lowest_nonlinear_perf(struct cpufreq_policy *policy, char *buf)
++static ssize_t show_amd_pstate_lowest_nonlinear_perf(struct cpufreq_policy *policy,
++						     char *buf)
 +{
 +	u32 perf;
 +	struct amd_cpudata *cpudata = policy->driver_data;
@@ -1865,8 +1390,8 @@ index 16fed25c3400..b0353d13f74a 100644
 +	return sprintf(&buf[0], "%u\n", perf);
 +}
 +
-+static ssize_t
-+show_amd_pstate_lowest_perf(struct cpufreq_policy *policy, char *buf)
++static ssize_t show_amd_pstate_lowest_perf(struct cpufreq_policy *policy,
++					   char *buf)
 +{
 +	u32 perf;
 +	struct amd_cpudata *cpudata = policy->driver_data;
@@ -1876,55 +1401,28 @@ index 16fed25c3400..b0353d13f74a 100644
 +	return sprintf(&buf[0], "%u\n", perf);
 +}
 +
- static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
- 					  char *buf)
- {
-@@ -585,17 +629,27 @@ static ssize_t show_is_amd_pstate_enabled(struct cpufreq_policy *policy,
- }
-
- cpufreq_freq_attr_ro(is_amd_pstate_enabled);
-+
  cpufreq_freq_attr_ro(amd_pstate_max_freq);
  cpufreq_freq_attr_ro(amd_pstate_nominal_freq);
  cpufreq_freq_attr_ro(amd_pstate_lowest_nonlinear_freq);
- cpufreq_freq_attr_ro(amd_pstate_min_freq);
-
+ 
 +cpufreq_freq_attr_ro(amd_pstate_highest_perf);
 +cpufreq_freq_attr_ro(amd_pstate_nominal_perf);
 +cpufreq_freq_attr_ro(amd_pstate_lowest_nonlinear_perf);
 +cpufreq_freq_attr_ro(amd_pstate_lowest_perf);
 +
  static struct freq_attr *amd_pstate_attr[] = {
- 	&is_amd_pstate_enabled,
  	&amd_pstate_max_freq,
  	&amd_pstate_nominal_freq,
  	&amd_pstate_lowest_nonlinear_freq,
- 	&amd_pstate_min_freq,
 +	&amd_pstate_highest_perf,
 +	&amd_pstate_nominal_perf,
 +	&amd_pstate_lowest_nonlinear_perf,
 +	&amd_pstate_lowest_perf,
  	NULL,
  };
-
---
-2.25.1
+ 
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 13/21] cpupower: add AMD P-state capability flag
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (11 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 12/21] cpufreq: amd: add amd-pstate performance attributes Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 14/21] cpupower: add the function to check amd-pstate enabled Huang Rui
-                   ` (7 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Add AMD P-state capability flag in cpupower to indicate AMD new P-state
 kernel module support on Ryzen processors.
@@ -1943,27 +1441,11 @@ index 33ffacee7fcb..b4813efdfb00 100644
  #define CPUPOWER_CAP_AMD_PSTATEDEF	0x00000200
  #define CPUPOWER_CAP_AMD_CPB_MSR	0x00000400
 +#define CPUPOWER_CAP_AMD_PSTATE		0x00000800
-
+ 
  #define CPUPOWER_AMD_CPBDIS		0x02000000
-
---
-2.25.1
+ 
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 14/21] cpupower: add the function to check amd-pstate enabled
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (12 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 13/21] cpupower: add AMD P-state capability flag Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:05 ` [PATCH v2 15/21] cpupower: initial AMD P-state capability Huang Rui
-                   ` (6 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 The processor with amd-pstate function also supports legacy ACPI
 hardware P-States feature as well. Once driver sets amd-pstate eanbled,
@@ -1974,86 +1456,86 @@ module.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/helpers/helpers.h |  9 +++++++++
- tools/power/cpupower/utils/helpers/misc.c    | 20 ++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ tools/power/cpupower/utils/helpers/helpers.h | 10 ++++++++++
+ tools/power/cpupower/utils/helpers/misc.c    | 18 ++++++++++++++++++
+ 2 files changed, 28 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index b4813efdfb00..ae96efac759f 100644
+index b4813efdfb00..e03cc97297aa 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -136,6 +136,12 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
-
+@@ -11,6 +11,7 @@
+ 
+ #include <libintl.h>
+ #include <locale.h>
++#include <stdbool.h>
+ 
+ #include "helpers/bitmask.h"
+ #include <cpupower.h>
+@@ -136,6 +137,12 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
+ 
  extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
  				     int *active, int * states);
 +
 +/* AMD P-States stuff **************************/
-+extern unsigned long cpupower_amd_pstate_enabled(void);
++extern bool cpupower_amd_pstate_enabled(void);
 +
 +/* AMD P-States stuff **************************/
 +
  /*
   * CPUID functions returning a single datum
   */
-@@ -168,6 +174,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
+@@ -168,6 +175,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
  					    int *active, int * states)
  { return -1; }
-
-+static inline unsigned long cpupower_amd_pstate_enabled(void)
-+{ return 0; }
+ 
++static inline bool cpupower_amd_pstate_enabled(void)
++{ return false; }
 +
  /* cpuid and cpuinfo helpers  **************************/
-
+ 
  static inline unsigned int cpuid_eax(unsigned int op) { return 0; };
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index fc6e34511721..39ff154ea9cf 100644
+index fc6e34511721..0c483cdefcc2 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -83,6 +83,26 @@ int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
+@@ -3,9 +3,11 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
+ 
+ #include "helpers/helpers.h"
+ #include "helpers/sysfs.h"
++#include "cpufreq.h"
+ 
+ #if defined(__i386__) || defined(__x86_64__)
+ 
+@@ -83,6 +85,22 @@ int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
  	return 0;
  }
-
-+unsigned long cpupower_amd_pstate_enabled(void)
+ 
++bool cpupower_amd_pstate_enabled(void)
 +{
-+	char linebuf[MAX_LINE_LEN];
-+	char path[SYSFS_PATH_MAX];
-+	unsigned long val;
-+	char *endp;
++	char *driver = cpufreq_get_driver(0);
++	bool ret = false;
 +
-+	snprintf(path, sizeof(path),
-+		 PATH_TO_CPU "cpu0/cpufreq/is_amd_pstate_enabled");
++	if (!driver)
++		return ret;
 +
-+	if (cpupower_read_sysfs(path, linebuf, MAX_LINE_LEN) == 0)
-+		return 0;
++	if (!strcmp(driver, "amd-pstate"))
++		ret = true;
 +
-+	val = strtoul(linebuf, &endp, 0);
-+	if (endp == linebuf || errno == ERANGE)
-+		return 0;
++	cpufreq_put_driver(driver);
 +
-+	return val;
++	return ret;
 +}
 +
  #endif /* #if defined(__i386__) || defined(__x86_64__) */
-
+ 
  /* get_cpustate
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 15/21] cpupower: initial AMD P-state capability
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (13 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 14/21] cpupower: add the function to check amd-pstate enabled Huang Rui
-@ 2021-09-26  9:05 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 16/21] cpupower: add the function to get the sysfs value from specific table Huang Rui
-                   ` (5 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:05 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 If kernel starts the amd-pstate module, the cpupower will initial the
 capability flag as CPUPOWER_CAP_AMD_PSTATE. And once amd-pstate
@@ -2087,26 +1569,10 @@ index 72eb43593180..2a6dc104e76b 100644
 +			cpu_info->caps &= ~CPUPOWER_CAP_AMD_PSTATEDEF;
 +		}
  	}
-
+ 
  	if (cpu_info->vendor == X86_VENDOR_INTEL) {
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 16/21] cpupower: add the function to get the sysfs value from specific table
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (14 preceding siblings ...)
-  2021-09-26  9:05 ` [PATCH v2 15/21] cpupower: initial AMD P-state capability Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 17/21] cpupower: add amd-pstate sysfs definition and access helper Huang Rui
-                   ` (4 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Expose the helper into cpufreq header, then cpufreq driver can use this
 function to get the sysfs value if it has any specific sysfs interfaces.
@@ -2124,7 +1590,7 @@ index c3b56db8b921..02719cc400a1 100644
 @@ -83,20 +83,21 @@ static const char *cpufreq_value_files[MAX_CPUFREQ_VALUE_READ_FILES] = {
  	[STATS_NUM_TRANSITIONS] = "stats/total_trans"
  };
-
+ 
 -
 -static unsigned long sysfs_cpufreq_get_one_value(unsigned int cpu,
 -						 enum cpufreq_value which)
@@ -2137,22 +1603,22 @@ index c3b56db8b921..02719cc400a1 100644
  	unsigned int len;
  	char linebuf[MAX_LINE_LEN];
  	char *endp;
-
+ 
 -	if (which >= MAX_CPUFREQ_VALUE_READ_FILES)
 +	if (!table && !table[index] && index >= size)
  		return 0;
-
+ 
 -	len = sysfs_cpufreq_read_file(cpu, cpufreq_value_files[which],
 -				linebuf, sizeof(linebuf));
 +	len = sysfs_cpufreq_read_file(cpu, table[index], linebuf,
 +				      sizeof(linebuf));
-
+ 
  	if (len == 0)
  		return 0;
 @@ -109,6 +110,14 @@ static unsigned long sysfs_cpufreq_get_one_value(unsigned int cpu,
  	return value;
  }
-
+ 
 +static unsigned long sysfs_cpufreq_get_one_value(unsigned int cpu,
 +						 enum cpufreq_value which)
 +{
@@ -2162,7 +1628,7 @@ index c3b56db8b921..02719cc400a1 100644
 +}
 +
  /* read access to files which contain one string */
-
+ 
  enum cpufreq_string {
 diff --git a/tools/power/cpupower/lib/cpufreq.h b/tools/power/cpupower/lib/cpufreq.h
 index 95f4fd9e2656..107668c0c454 100644
@@ -2171,7 +1637,7 @@ index 95f4fd9e2656..107668c0c454 100644
 @@ -203,6 +203,18 @@ int cpufreq_modify_policy_governor(unsigned int cpu, char *governor);
  int cpufreq_set_frequency(unsigned int cpu,
  				unsigned long target_frequency);
-
+ 
 +/*
 + * get the sysfs value from specific table
 + *
@@ -2187,24 +1653,8 @@ index 95f4fd9e2656..107668c0c454 100644
  #ifdef __cplusplus
  }
  #endif
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 17/21] cpupower: add amd-pstate sysfs definition and access helper
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (15 preceding siblings ...)
-  2021-09-26  9:06 ` [PATCH v2 16/21] cpupower: add the function to get the sysfs value from specific table Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 18/21] cpupower: enable boost state support for amd-pstate module Huang Rui
-                   ` (3 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Introduce the marco definitions and access helper function for
 amd-pstate sysfs interfaces such as each performance goals and frequency
@@ -2213,24 +1663,24 @@ from amd-pstate cpufreq driver for cpupower utilities.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/helpers/amd.c | 39 ++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+ tools/power/cpupower/utils/helpers/amd.c | 37 ++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index 97f2c857048e..b953277215c0 100644
+index 97f2c857048e..f233a6ab75ac 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
 @@ -8,7 +8,9 @@
  #include <pci/pci.h>
-
+ 
  #include "helpers/helpers.h"
 +#include "cpufreq.h"
-
+ 
 +/* ACPI P-States Helper Functions for AMD Processors ***************/
  #define MSR_AMD_PSTATE_STATUS	0xc0010063
  #define MSR_AMD_PSTATE		0xc0010064
  #define MSR_AMD_PSTATE_LIMIT	0xc0010061
-@@ -146,4 +148,41 @@ int amd_pci_get_num_boost_states(int *active, int *states)
+@@ -146,4 +148,39 @@ int amd_pci_get_num_boost_states(int *active, int *states)
  	pci_cleanup(pci_acc);
  	return 0;
  }
@@ -2246,7 +1696,6 @@ index 97f2c857048e..b953277215c0 100644
 +	AMD_PSTATE_MAX_FREQ,
 +	AMD_PSTATE_NOMINAL_FREQ,
 +	AMD_PSTATE_LOWEST_NONLINEAR_FREQ,
-+	AMD_PSTATE_MIN_FREQ,
 +	MAX_AMD_PSTATE_VALUE_READ_FILES
 +};
 +
@@ -2258,7 +1707,6 @@ index 97f2c857048e..b953277215c0 100644
 +	[AMD_PSTATE_MAX_FREQ] = "amd_pstate_max_freq",
 +	[AMD_PSTATE_NOMINAL_FREQ] = "amd_pstate_nominal_freq",
 +	[AMD_PSTATE_LOWEST_NONLINEAR_FREQ] = "amd_pstate_lowest_nonlinear_freq",
-+	[AMD_PSTATE_MIN_FREQ] = "amd_pstate_min_freq"
 +};
 +
 +static unsigned long amd_pstate_get_data(unsigned int cpu,
@@ -2272,24 +1720,8 @@ index 97f2c857048e..b953277215c0 100644
 +
 +/* AMD P-States Helper Functions ***************/
  #endif /* defined(__i386__) || defined(__x86_64__) */
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 18/21] cpupower: enable boost state support for amd-pstate module
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (16 preceding siblings ...)
-  2021-09-26  9:06 ` [PATCH v2 17/21] cpupower: add amd-pstate sysfs definition and access helper Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 19/21] cpupower: move print_speed function into misc helper Huang Rui
-                   ` (2 subsequent siblings)
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 The legacy ACPI hardware P-States function has 3 P-States on ACPI table,
 the CPU frequency only can be switched between the 3 P-States. While the
@@ -2316,13 +1748,13 @@ Signed-off-by: Huang Rui <ray.huang@amd.com>
  3 files changed, 25 insertions(+)
 
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index b953277215c0..de68c14574c0 100644
+index f233a6ab75ac..92b9fb631768 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -184,5 +184,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
+@@ -182,5 +182,23 @@ static unsigned long amd_pstate_get_data(unsigned int cpu,
  						  MAX_AMD_PSTATE_VALUE_READ_FILES);
  }
-
+ 
 +void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
 +{
 +	unsigned long highest_perf, nominal_perf, cpuinfo_min,
@@ -2344,33 +1776,33 @@ index b953277215c0..de68c14574c0 100644
  /* AMD P-States Helper Functions ***************/
  #endif /* defined(__i386__) || defined(__x86_64__) */
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index ae96efac759f..976c142ecfa0 100644
+index e03cc97297aa..c03925bea655 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -139,6 +139,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
-
+@@ -140,6 +140,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
+ 
  /* AMD P-States stuff **************************/
- extern unsigned long cpupower_amd_pstate_enabled(void);
+ extern bool cpupower_amd_pstate_enabled(void);
 +extern void amd_pstate_boost_init(unsigned int cpu,
 +				  int *support, int *active);
-
+ 
  /* AMD P-States stuff **************************/
-
-@@ -176,6 +178,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
-
- static inline unsigned long cpupower_amd_pstate_enabled(void)
- { return 0; }
+ 
+@@ -177,6 +179,9 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
+ 
+ static inline bool cpupower_amd_pstate_enabled(void)
+ { return false; }
 +static void amd_pstate_boost_init(unsigned int cpu,
 +				  int *support, int *active)
 +{ return; }
-
+ 
  /* cpuid and cpuinfo helpers  **************************/
-
+ 
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index 39ff154ea9cf..99d1dc8917d0 100644
+index 0c483cdefcc2..e0d3145434d3 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -39,6 +39,8 @@ int cpufreq_has_boost_support(unsigned int cpu, int *support, int *active,
+@@ -41,6 +41,8 @@ int cpufreq_has_boost_support(unsigned int cpu, int *support, int *active,
  			if (ret)
  				return ret;
  		}
@@ -2379,24 +1811,8 @@ index 39ff154ea9cf..99d1dc8917d0 100644
  	} else if (cpupower_cpu_info.caps & CPUPOWER_CAP_INTEL_IDA)
  		*support = *active = 1;
  	return 0;
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 19/21] cpupower: move print_speed function into misc helper
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (17 preceding siblings ...)
-  2021-09-26  9:06 ` [PATCH v2 18/21] cpupower: enable boost state support for amd-pstate module Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 20/21] cpupower: print amd-pstate information on cpupower Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 21/21] Documentation: amd-pstate: add amd-pstate driver introduction Huang Rui
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 The print_speed can be as a common function, and expose it into misc
 helper header. Then it can be used on other helper files as well.
@@ -2414,7 +1830,7 @@ index f9895e31ff5a..b429454bf3ae 100644
 +++ b/tools/power/cpupower/utils/cpufreq-info.c
 @@ -84,43 +84,6 @@ static void proc_cpufreq_output(void)
  }
-
+ 
  static int no_rounding;
 -static void print_speed(unsigned long speed)
 -{
@@ -2489,7 +1905,7 @@ index f9895e31ff5a..b429454bf3ae 100644
  		printf("%lu", freq);
  	printf(_(" (asserted by call to hardware)\n"));
 @@ -316,9 +279,9 @@ static int get_hardware_limits(unsigned int cpu, unsigned int human)
-
+ 
  	if (human) {
  		printf(_("  hardware limits: "));
 -		print_speed(min);
@@ -2509,7 +1925,7 @@ index f9895e31ff5a..b429454bf3ae 100644
  	printf(_(" and "));
 -	print_speed(policy->max);
 +	print_speed(policy->max, no_rounding);
-
+ 
  	printf(".\n                  ");
  	printf(_("The governor \"%s\" may decide which speed to use\n"
 @@ -436,7 +399,7 @@ static int get_freq_stats(unsigned int cpu, unsigned int human)
@@ -2536,21 +1952,21 @@ index f9895e31ff5a..b429454bf3ae 100644
  		cpufreq_put_available_frequencies(freqs);
  	}
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index 976c142ecfa0..0b0f6a55354e 100644
+index c03925bea655..fbbfa6047c83 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -199,5 +199,6 @@ extern struct bitmask *offline_cpus;
+@@ -200,5 +200,6 @@ extern struct bitmask *offline_cpus;
  void get_cpustate(void);
  void print_online_cpus(void);
  void print_offline_cpus(void);
 +void print_speed(unsigned long speed, int no_rounding);
-
+ 
  #endif /* __CPUPOWERUTILS_HELPERS__ */
 diff --git a/tools/power/cpupower/utils/helpers/misc.c b/tools/power/cpupower/utils/helpers/misc.c
-index 99d1dc8917d0..730f670ab90d 100644
+index e0d3145434d3..d693c96cd09c 100644
 --- a/tools/power/cpupower/utils/helpers/misc.c
 +++ b/tools/power/cpupower/utils/helpers/misc.c
-@@ -166,3 +166,45 @@ void print_offline_cpus(void)
+@@ -164,3 +164,45 @@ void print_offline_cpus(void)
  		printf(_("cpupower set operation was not performed on them\n"));
  	}
  }
@@ -2596,23 +2012,8 @@ index 99d1dc8917d0..730f670ab90d 100644
 +
 +	return;
 +}
---
-2.25.1
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 20/21] cpupower: print amd-pstate information on cpupower
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (18 preceding siblings ...)
-  2021-09-26  9:06 ` [PATCH v2 19/21] cpupower: move print_speed function into misc helper Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  2021-09-26  9:06 ` [PATCH v2 21/21] Documentation: amd-pstate: add amd-pstate driver introduction Huang Rui
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 amd-pstate kernel module is using the fine grain frequency instead of
 acpi hardware pstate. So the performance and frequency values should be
@@ -2620,10 +2021,10 @@ printed in frequency-info.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++---
- tools/power/cpupower/utils/helpers/amd.c     | 25 ++++++++++++++++++++
- tools/power/cpupower/utils/helpers/helpers.h |  5 ++++
- 3 files changed, 36 insertions(+), 3 deletions(-)
+ tools/power/cpupower/utils/cpufreq-info.c    |  9 ++++--
+ tools/power/cpupower/utils/helpers/amd.c     | 32 ++++++++++++++++++++
+ tools/power/cpupower/utils/helpers/helpers.h |  5 +++
+ 3 files changed, 43 insertions(+), 3 deletions(-)
 
 diff --git a/tools/power/cpupower/utils/cpufreq-info.c b/tools/power/cpupower/utils/cpufreq-info.c
 index b429454bf3ae..f828f3c35a6f 100644
@@ -2632,7 +2033,7 @@ index b429454bf3ae..f828f3c35a6f 100644
 @@ -146,9 +146,12 @@ static int get_boost_mode_x86(unsigned int cpu)
  	printf(_("    Supported: %s\n"), support ? _("yes") : _("no"));
  	printf(_("    Active: %s\n"), active ? _("yes") : _("no"));
-
+ 
 -	if ((cpupower_cpu_info.vendor == X86_VENDOR_AMD &&
 -	     cpupower_cpu_info.family >= 0x10) ||
 -	     cpupower_cpu_info.vendor == X86_VENDOR_HYGON) {
@@ -2646,17 +2047,24 @@ index b429454bf3ae..f828f3c35a6f 100644
  		if (ret)
  			return ret;
 diff --git a/tools/power/cpupower/utils/helpers/amd.c b/tools/power/cpupower/utils/helpers/amd.c
-index de68c14574c0..d68d052ee4cb 100644
+index 92b9fb631768..fa38d3da42ce 100644
 --- a/tools/power/cpupower/utils/helpers/amd.c
 +++ b/tools/power/cpupower/utils/helpers/amd.c
-@@ -202,5 +202,30 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
+@@ -200,5 +200,37 @@ void amd_pstate_boost_init(unsigned int cpu, int *support, int *active)
  	*active = cpuinfo_max == amd_pstate_max ? 1 : 0;
  }
-
+ 
 +void amd_pstate_show_perf_and_freq(unsigned int cpu, int no_rounding)
 +{
++	unsigned long cpuinfo_max, cpuinfo_min;
++
++	cpufreq_get_hardware_limits(cpu, &cpuinfo_min, &cpuinfo_max);
++
 +	printf(_("    AMD PSTATE Highest Performance: %lu. Maximum Frequency: "),
 +	       amd_pstate_get_data(cpu, AMD_PSTATE_HIGHEST_PERF));
++	/* If boost isn't active, the cpuinfo_max doesn't indicate real max
++	 * frequency. So we read it back from amd-pstate sysfs entry.
++	 */
 +	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_MAX_FREQ), no_rounding);
 +	printf(".\n");
 +
@@ -2674,67 +2082,53 @@ index de68c14574c0..d68d052ee4cb 100644
 +
 +	printf(_("    AMD PSTATE Lowest Performance: %lu. Lowest Frequency: "),
 +	       amd_pstate_get_data(cpu, AMD_PSTATE_LOWEST_PERF));
-+	print_speed(amd_pstate_get_data(cpu, AMD_PSTATE_MIN_FREQ), no_rounding);
++	print_speed(cpuinfo_min, no_rounding);
 +	printf(".\n");
 +}
 +
  /* AMD P-States Helper Functions ***************/
  #endif /* defined(__i386__) || defined(__x86_64__) */
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index 0b0f6a55354e..80755568afc4 100644
+index fbbfa6047c83..5f6862502dbf 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
-@@ -141,6 +141,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
- extern unsigned long cpupower_amd_pstate_enabled(void);
+@@ -142,6 +142,8 @@ extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
+ extern bool cpupower_amd_pstate_enabled(void);
  extern void amd_pstate_boost_init(unsigned int cpu,
  				  int *support, int *active);
 +extern void amd_pstate_show_perf_and_freq(unsigned int cpu,
 +					  int no_rounding);
-
+ 
  /* AMD P-States stuff **************************/
-
-@@ -181,6 +183,9 @@ static inline unsigned long cpupower_amd_pstate_enabled(void)
+ 
+@@ -182,6 +184,9 @@ static inline bool cpupower_amd_pstate_enabled(void)
  static void amd_pstate_boost_init(unsigned int cpu,
  				  int *support, int *active)
  { return; }
 +static inline void amd_pstate_show_perf_and_freq(unsigned int cpu,
 +						 int no_rounding)
 +{ return; }
-
+ 
  /* cpuid and cpuinfo helpers  **************************/
-
---
-2.25.1
+ 
 
 
-^ permalink raw reply	[flat|nested] 22+ messages in thread
-* [PATCH v2 21/21] Documentation: amd-pstate: add amd-pstate driver introduction
-  2021-09-26  9:05 [PATCH v2 00/21] cpufreq: introduce a new AMD CPU frequency control mechanism Huang Rui
-                   ` (19 preceding siblings ...)
-  2021-09-26  9:06 ` [PATCH v2 20/21] cpupower: print amd-pstate information on cpupower Huang Rui
-@ 2021-09-26  9:06 ` Huang Rui
-  20 siblings, 0 replies; 22+ messages in thread
-From: Huang Rui @ 2021-09-26  9:06 UTC (permalink / raw)
-  To: Rafael J . Wysocki, Viresh Kumar, Shuah Khan, Borislav Petkov,
-	Peter Zijlstra, Ingo Molnar, linux-pm
-  Cc: Deepak Sharma, Alex Deucher, Mario Limonciello, Nathan Fontenot,
-	Jinzhou Su, Xiaojian Du, linux-kernel, x86, Huang Rui
 
 Introduce the amd-pstate driver design and implementation.
 
 Signed-off-by: Huang Rui <ray.huang@amd.com>
 ---
- Documentation/admin-guide/pm/amd_pstate.rst   | 377 ++++++++++++++++++
+ Documentation/admin-guide/pm/amd-pstate.rst   | 373 ++++++++++++++++++
  .../admin-guide/pm/working-state.rst          |   1 +
- 2 files changed, 378 insertions(+)
- create mode 100644 Documentation/admin-guide/pm/amd_pstate.rst
+ 2 files changed, 374 insertions(+)
+ create mode 100644 Documentation/admin-guide/pm/amd-pstate.rst
 
-diff --git a/Documentation/admin-guide/pm/amd_pstate.rst b/Documentation/admin-guide/pm/amd_pstate.rst
+diff --git a/Documentation/admin-guide/pm/amd-pstate.rst b/Documentation/admin-guide/pm/amd-pstate.rst
 new file mode 100644
-index 000000000000..c3659dde0cee
+index 000000000000..375374e3eb80
 --- /dev/null
-+++ b/Documentation/admin-guide/pm/amd_pstate.rst
-@@ -0,0 +1,377 @@
++++ b/Documentation/admin-guide/pm/amd-pstate.rst
+@@ -0,0 +1,373 @@
 +.. SPDX-License-Identifier: GPL-2.0
 +.. include:: <isonum.txt>
 +
@@ -2932,8 +2326,8 @@ index 000000000000..c3659dde0cee
 +
 +There are two types of hardware implementations for ``amd-pstate``: one is
 +`Full MSR Support <perf_cap_>`_ and another is `Shared Memory Support
-+<perf_cap_>`_. It can use :c:macro:`X86_FEATURE_AMD_CPPC_EXT` feature flag
-+(for details refer to Processor Programming Reference (PPR) for AMD Family
++<perf_cap_>`_. It can use :c:macro:`X86_FEATURE_AMD_CPPC` feature flag (for
++details refer to Processor Programming Reference (PPR) for AMD Family
 +19h Model 21h, Revision B0 Processors [3]_) to indicate the different
 +types. ``amd-pstate`` is to register different ``amd_pstate_perf_funcs``
 +instances for different hardware implementations.
@@ -2945,7 +2339,7 @@ index 000000000000..c3659dde0cee
 +-----------------
 +
 +Some new Zen3 processors such as Cezanne provide the MSR registers directly
-+while the :c:macro:`X86_FEATURE_AMD_CPPC_EXT` CPU feature flag is set.
++while the :c:macro:`X86_FEATURE_AMD_CPPC` CPU feature flag is set.
 +``amd-pstate`` can handle the MSR register to implement the fast switch
 +function in ``CPUFreq`` that can shrink latency of frequency control on the
 +interrupt context.
@@ -2953,10 +2347,10 @@ index 000000000000..c3659dde0cee
 +Shared Memory Support
 +----------------------
 +
-+If :c:macro:`X86_FEATURE_AMD_CPPC_EXT` CPU feature flag is not set, that
-+means the processor supports shared memory solution. In this case,
-+``amd-pstate`` uses the ``cppc_acpi`` helper methods to implement the
-+callback functions of ``amd_pstate_perf_funcs``.
++If :c:macro:`X86_FEATURE_AMD_CPPC` CPU feature flag is not set, that means
++the processor supports shared memory solution. In this case, ``amd-pstate``
++uses the ``cppc_acpi`` helper methods to implement the callback functions
++of ``amd_pstate_perf_funcs``.
 +
 +
 +AMD P-States and ACPI hardware P-States always can be supported in one
@@ -2981,14 +2375,7 @@ index 000000000000..c3659dde0cee
 + /sys/devices/system/cpu/cpufreq/policy0/amd_pstate_min_freq
 + /sys/devices/system/cpu/cpufreq/policy0/amd_pstate_nominal_freq
 + /sys/devices/system/cpu/cpufreq/policy0/amd_pstate_nominal_perf
-+ /sys/devices/system/cpu/cpufreq/policy0/is_amd_pstate_enabled
 +
-+
-+``is_amd_pstate_enabled``
-+
-+Query whether current kernel loads ``amd-pstate`` to enable the AMD
-+P-States functionality.
-+This attribute is read-only.
 +
 +``amd_pstate_highest_perf / amd_pstate_max_freq``
 +
@@ -3012,9 +2399,11 @@ index 000000000000..c3659dde0cee
 +Capability <perf_cap_>`_).
 +This attribute is read-only.
 +
-+``amd_pstate_lowest_perf / amd_pstate_min_freq``
++``amd_pstate_lowest_perf``
 +
-+The lowest physical CPPC performance and CPU frequency.
++The lowest physical CPPC performance. The minimum CPU frequency can be read
++back from ``cpuinfo`` member of ``cpufreq_policy``, so we won't expose it
++here.
 +This attribute is read-only.
 +
 +
@@ -3088,12 +2477,13 @@ index 000000000000..c3659dde0cee
 + #                              ||| /     delay
 + #           TASK-PID     CPU#  ||||   TIMESTAMP  FUNCTION
 + #              | |         |   ||||      |         |
-+           <idle>-0       [000] d.s. 244057.464842: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
-+           <idle>-0       [000] d.h. 244057.475436: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
-+           <idle>-0       [000] d.h. 244057.476629: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
-+           <idle>-0       [000] d.s. 244057.484847: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
-+           <idle>-0       [000] d.h. 244057.499821: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
-+     avahi-daemon-528     [000] d... 244057.513568: amd_pstate_perf: amd_min_perf=39 amd_des_perf=39 amd_max_perf=166 cpu_id=0 prev=0x2727a6 value=0x2727a6
++          <idle>-0       [015] dN...  4995.979886: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=15 changed=false fast_switch=true
++          <idle>-0       [007] d.h..  4995.979893: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=7 changed=false fast_switch=true
++             cat-2161    [000] d....  4995.980841: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=0 changed=false fast_switch=true
++            sshd-2125    [004] d.s..  4995.980968: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=4 changed=false fast_switch=true
++          <idle>-0       [007] d.s..  4995.980968: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=7 changed=false fast_switch=true
++          <idle>-0       [003] d.s..  4995.980971: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=3 changed=false fast_switch=true
++          <idle>-0       [011] d.s..  4995.980996: amd_pstate_perf: amd_min_perf=85 amd_des_perf=85 amd_max_perf=166 cpu_id=11 changed=false fast_switch=true
 +
 +The cpu_frequency trace event will be triggered either by the ``schedutil`` scaling
 +governor (for the policies it is attached to), or by the ``CPUFreq`` core (for the
@@ -3113,16 +2503,14 @@ index 000000000000..c3659dde0cee
 +       https://www.amd.com/system/files/TechDocs/55898_B1_pub_0.50.zip
 +
 diff --git a/Documentation/admin-guide/pm/working-state.rst b/Documentation/admin-guide/pm/working-state.rst
-index f40994c422dc..28db6156b55d 100644
+index f40994c422dc..5d2757e2de65 100644
 --- a/Documentation/admin-guide/pm/working-state.rst
 +++ b/Documentation/admin-guide/pm/working-state.rst
 @@ -11,6 +11,7 @@ Working-State Power Management
     intel_idle
     cpufreq
     intel_pstate
-+   amd_pstate
++   amd-pstate
     cpufreq_drivers
     intel_epb
     intel-speed-select
---
-2.25.1
