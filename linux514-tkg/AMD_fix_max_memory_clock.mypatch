@@ -1,0 +1,63 @@
+This patch reverts the commit that caused some RDNA and RDNA 2 graphics cards (Radeon RX 5- and 6- series) to
+have their memory clock stuck on maximum regardless of the load on the card, causing the power usage while idling
+to spike.
+
+If you have one of these graphics cards and you noticed that the card is running hotter than usual when idling
+(you can check it by running `sensors` or `sudo cat /sys/kernel/debug/dri/0/amdgpu_pm_info`), try to rebuild with
+this patch and see if it helps.
+
+For more information on the issue, see:
+https://gitlab.freedesktop.org/drm/amd/-/issues/1709
+
+diff --git a/drivers/gpu/drm/amd/display/dc/dcn20/dcn20_resource.c b/drivers/gpu/drm/amd/display/dc/dcn20/dcn20_resource.c
+index 3883f918b..83f5d9aaf 100644
+--- a/drivers/gpu/drm/amd/display/dc/dcn20/dcn20_resource.c
++++ b/drivers/gpu/drm/amd/display/dc/dcn20/dcn20_resource.c
+@@ -1069,7 +1069,7 @@ static const struct dc_debug_options debug_defaults_drv = {
+ 		.timing_trace = false,
+ 		.clock_trace = true,
+ 		.disable_pplib_clock_request = true,
+-		.pipe_split_policy = MPC_SPLIT_AVOID_MULT_DISP,
++		.pipe_split_policy = MPC_SPLIT_DYNAMIC,
+ 		.force_single_disp_pipe_split = false,
+ 		.disable_dcc = DCC_ENABLE,
+ 		.vsr_support = true,
+diff --git a/drivers/gpu/drm/amd/display/dc/dcn30/dcn30_resource.c b/drivers/gpu/drm/amd/display/dc/dcn30/dcn30_resource.c
+index 79a66e0c4..98852b586 100644
+--- a/drivers/gpu/drm/amd/display/dc/dcn30/dcn30_resource.c
++++ b/drivers/gpu/drm/amd/display/dc/dcn30/dcn30_resource.c
+@@ -840,7 +840,7 @@ static const struct dc_debug_options debug_defaults_drv = {
+ 	.timing_trace = false,
+ 	.clock_trace = true,
+ 	.disable_pplib_clock_request = true,
+-	.pipe_split_policy = MPC_SPLIT_AVOID_MULT_DISP,
++	.pipe_split_policy = MPC_SPLIT_DYNAMIC,
+ 	.force_single_disp_pipe_split = false,
+ 	.disable_dcc = DCC_ENABLE,
+ 	.vsr_support = true,
+diff --git a/drivers/gpu/drm/amd/display/dc/dcn302/dcn302_resource.c b/drivers/gpu/drm/amd/display/dc/dcn302/dcn302_resource.c
+index fcf96cf08..16e705939 100644
+--- a/drivers/gpu/drm/amd/display/dc/dcn302/dcn302_resource.c
++++ b/drivers/gpu/drm/amd/display/dc/dcn302/dcn302_resource.c
+@@ -211,7 +211,7 @@ static const struct dc_debug_options debug_defaults_drv = {
+ 		.timing_trace = false,
+ 		.clock_trace = true,
+ 		.disable_pplib_clock_request = true,
+-		.pipe_split_policy = MPC_SPLIT_AVOID_MULT_DISP,
++		.pipe_split_policy = MPC_SPLIT_DYNAMIC,
+ 		.force_single_disp_pipe_split = false,
+ 		.disable_dcc = DCC_ENABLE,
+ 		.vsr_support = true,
+diff --git a/drivers/gpu/drm/amd/display/dc/dcn303/dcn303_resource.c b/drivers/gpu/drm/amd/display/dc/dcn303/dcn303_resource.c
+index 4a9b64023..87cec14b7 100644
+--- a/drivers/gpu/drm/amd/display/dc/dcn303/dcn303_resource.c
++++ b/drivers/gpu/drm/amd/display/dc/dcn303/dcn303_resource.c
+@@ -193,7 +193,7 @@ static const struct dc_debug_options debug_defaults_drv = {
+ 		.timing_trace = false,
+ 		.clock_trace = true,
+ 		.disable_pplib_clock_request = true,
+-		.pipe_split_policy = MPC_SPLIT_AVOID_MULT_DISP,
++		.pipe_split_policy = MPC_SPLIT_DYNAMIC,
+ 		.force_single_disp_pipe_split = false,
+ 		.disable_dcc = DCC_ENABLE,
+ 		.vsr_support = true,
