@@ -1,4 +1,4 @@
-From 0bf65a164929d5b8d16e3f304493aef5c70fb82d Mon Sep 17 00:00:00 2001
+From 0a89526535c0ed431e9ff60bc585d1fc6e819f6a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 10 Dec 2020 14:09:36 +0200
 Subject: [PATCH 001/147] gdi32: Track ticks since draw start per
@@ -79,7 +79,7 @@ index 567a6c21608..e0d21d02ab1 100644
 2.34.1
 
 
-From 5b423bbc30340d10d85610dd5af01107143dd468 Mon Sep 17 00:00:00 2001
+From d20847281fc50d57a7b2e648b8ff66002e1fc363 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 23 Jun 2021 17:22:20 +0300
 Subject: [PATCH 002/147] user32: Expose function to send internal thread
@@ -96,10 +96,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 17 insertions(+)
 
 diff --git a/dlls/user32/message.c b/dlls/user32/message.c
-index 03fa42f0ae5..df82a119510 100644
+index d7dbc64d796..907233aa489 100644
 --- a/dlls/user32/message.c
 +++ b/dlls/user32/message.c
-@@ -3386,6 +3386,19 @@ LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+@@ -3388,6 +3388,19 @@ LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
      return ret;
  }
  
@@ -146,7 +146,7 @@ index 1d37bd44344..fb7304a08dd 100644
 2.34.1
 
 
-From fb55a8f1acbb6d835e779be81ae9c64c960bf942 Mon Sep 17 00:00:00 2001
+From e1dc70f68d4b4b959e66a46fd16d9e9936af3c6d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 15:48:36 +0300
 Subject: [PATCH 003/147] winewayland.drv: Add initial driver stub.
@@ -171,7 +171,7 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  create mode 100644 dlls/winewayland.drv/winewayland.drv.spec
 
 diff --git a/configure.ac b/configure.ac
-index d509cdae49c..ea8095b586d 100644
+index c1eb2f99a8c..a5a680823ea 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -87,6 +87,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared
@@ -182,7 +182,7 @@ index d509cdae49c..ea8095b586d 100644
  
  AC_ARG_WITH(system-dllpath,AS_HELP_STRING([--with-system-dllpath=PATH],[load external PE dependencies from colon-separated path PATH]),
              AC_SUBST(system_dllpath,[$withval]))
-@@ -1325,6 +1326,10 @@ else
+@@ -1323,6 +1324,10 @@ else
                       [enable_winex11_drv])
  fi
  
@@ -193,7 +193,7 @@ index d509cdae49c..ea8095b586d 100644
  dnl **** Check for OpenCL ****
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
-@@ -3418,6 +3423,7 @@ WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16,enable_win16)
+@@ -3393,6 +3398,7 @@ WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16,enable_win16)
  WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
  WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
  WINE_CONFIG_MAKEFILE(dlls/winevulkan)
@@ -350,7 +350,7 @@ index 00000000000..e69de29bb2d
 2.34.1
 
 
-From 5a9dd19e9041b5973d176e66a3418ba2529c64b1 Mon Sep 17 00:00:00 2001
+From 18a15ca4104dc8c93edfbdea7d6d084fdd30e6d0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 10 Dec 2020 18:41:03 +0200
 Subject: [PATCH 004/147] explorer: Add the Wayland driver to the default
@@ -384,7 +384,7 @@ index 6d577dd0fd1..e1dce4953e2 100644
 2.34.1
 
 
-From d513dbc51793da24607b8c7ea64cc0e88070c5a5 Mon Sep 17 00:00:00 2001
+From 1abcd4054dd0e325711879afdb448418a4392abf Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 16:21:21 +0300
 Subject: [PATCH 005/147] winewayland.drv: Perform basic per-process Wayland
@@ -406,10 +406,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  create mode 100644 dlls/winewayland.drv/wayland.c
 
 diff --git a/configure.ac b/configure.ac
-index ea8095b586d..429333f7ffc 100644
+index a5a680823ea..8c95ba8a600 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1326,7 +1326,14 @@ else
+@@ -1324,7 +1324,14 @@ else
                       [enable_winex11_drv])
  fi
  
@@ -524,10 +524,10 @@ index 92ef39777bd..607a5770e0f 100644
  }
  
 diff --git a/include/config.h.in b/include/config.h.in
-index 197c3b97f09..8531fa87f96 100644
+index 9717dc17236..24286070d82 100644
 --- a/include/config.h.in
 +++ b/include/config.h.in
-@@ -703,6 +703,9 @@
+@@ -697,6 +697,9 @@
  /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
  #undef HAVE_VALGRIND_VALGRIND_H
  
@@ -541,7 +541,7 @@ index 197c3b97f09..8531fa87f96 100644
 2.34.1
 
 
-From dd75ab0fa458ce9f676020aebbc4e40aded61119 Mon Sep 17 00:00:00 2001
+From d4997ba8167f8ade5701731c045c5a276dee80de Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 17:16:12 +0300
 Subject: [PATCH 006/147] winewayland.drv: Add stub for per-thread data.
@@ -668,7 +668,7 @@ index 607a5770e0f..1ff07ceefc8 100644
 2.34.1
 
 
-From 9f7c1931e97a448fea60178885ae93d47d96c8a2 Mon Sep 17 00:00:00 2001
+From 09817e9975dc25809956d9b5ccad3fc98b2f3782 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 16:53:51 +0300
 Subject: [PATCH 007/147] winewayland.drv: Initialize basic per-thread Wayland
@@ -893,7 +893,7 @@ index 1ff07ceefc8..905d1000c2d 100644
 2.34.1
 
 
-From 9d3919f00a6357a20b992c7e50b3891124d38900 Mon Sep 17 00:00:00 2001
+From 137531e71d189bec3c8f33e9feb4a470341fef38 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 17:39:54 +0300
 Subject: [PATCH 008/147] winewayland.drv: Initialize Wayland thread data for
@@ -1009,7 +1009,7 @@ index 00000000000..66e5c632ed8
 2.34.1
 
 
-From 0c27a25aed4d66fef9eb54fadd586c6e6402731a Mon Sep 17 00:00:00 2001
+From 2a314bbd2480d3be2c8481197d15236f371737f6 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 8 Nov 2021 12:34:39 +0200
 Subject: [PATCH 009/147] winewayland.drv: Maintain a per-process wayland
@@ -1111,7 +1111,7 @@ index 74133c90c58..ecad650ce6a 100644
 2.34.1
 
 
-From cd81b1ed393014410f988b449dcc98747f2ef3ab Mon Sep 17 00:00:00 2001
+From 44c8c17f8cc702c1a1125ae1e364f36fba4b7efb Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 14:04:43 +0300
 Subject: [PATCH 010/147] tools: Support building Wayland protocol source
@@ -1133,10 +1133,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 138 insertions(+), 5 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 429333f7ffc..8f94dc205a4 100644
+index 8c95ba8a600..95865edf813 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1332,9 +1332,16 @@ then
+@@ -1330,9 +1330,16 @@ then
          [AC_CHECK_HEADERS([wayland-client.h])
           AC_CHECK_LIB(wayland-client,wl_display_connect,[:],
                        [WAYLAND_CLIENT_LIBS=""],[$WAYLAND_CLIENT_LIBS])])
@@ -1265,7 +1265,7 @@ index e69dc3ce0a4..d295a25be42 100644
 2.34.1
 
 
-From 1617a04f27227faea9d91bac14ae879041b4a508 Mon Sep 17 00:00:00 2001
+From 14f71b583e97f84c6fd48b26c2b6b64111fc5b07 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 31 Aug 2021 18:21:04 +0300
 Subject: [PATCH 011/147] winewayland.drv: Handle Wayland output global events.
@@ -1950,7 +1950,7 @@ index ecad650ce6a..e9fe5be3407 100644
 2.34.1
 
 
-From e7e01e24b2a9ae3a39322d66bf74aa80937666ff Mon Sep 17 00:00:00 2001
+From 76d4c731213de06c824bbc8667884a81d52f333c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 9 Nov 2021 18:58:22 +0200
 Subject: [PATCH 012/147] winewayland.drv: Add stub for driver window messages.
@@ -2013,7 +2013,7 @@ index 66e5c632ed8..cc5c99318cf 100644
 2.34.1
 
 
-From 9bba16413168442197da380a7d2699d557d15c24 Mon Sep 17 00:00:00 2001
+From aa5f82184322eddb85a671a32a7aa08c886234a5 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 15:28:21 +0300
 Subject: [PATCH 013/147] winewayland.drv: Update Windows monitor information
@@ -2030,12 +2030,12 @@ adapter.
 Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 ---
  dlls/winewayland.drv/Makefile.in       |   3 +-
- dlls/winewayland.drv/display.c         | 138 +++++++++++++++++++++++++
+ dlls/winewayland.drv/display.c         | 140 +++++++++++++++++++++++++
  dlls/winewayland.drv/wayland.c         |   2 +
  dlls/winewayland.drv/wayland_output.c  |   3 +
  dlls/winewayland.drv/waylanddrv.h      |   7 ++
  dlls/winewayland.drv/waylanddrv_main.c |   1 +
- 6 files changed, 153 insertions(+), 1 deletion(-)
+ 6 files changed, 155 insertions(+), 1 deletion(-)
  create mode 100644 dlls/winewayland.drv/display.c
 
 diff --git a/dlls/winewayland.drv/Makefile.in b/dlls/winewayland.drv/Makefile.in
@@ -2059,10 +2059,10 @@ index f1e1d1cc655..8ccbac45930 100644
  	waylanddrv_main.c \
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
 new file mode 100644
-index 00000000000..443f4b1bc47
+index 00000000000..4b5d2c2449d
 --- /dev/null
 +++ b/dlls/winewayland.drv/display.c
-@@ -0,0 +1,138 @@
+@@ -0,0 +1,140 @@
 +/*
 + * WAYLAND display device functions
 + *
@@ -2118,6 +2118,8 @@ index 00000000000..443f4b1bc47
 +    static const WCHAR wayland_gpuW[] = {'W','a','y','l','a','n','d','G','P','U',0};
 +    struct gdi_gpu gpu = {0};
 +    lstrcpyW(gpu.name, wayland_gpuW);
++
++    /* TODO: Fill in gpu information from vulkan. */
 +
 +    TRACE("id=0x%s name=%s\n",
 +          wine_dbgstr_longlong(gpu.id), wine_dbgstr_w(gpu.name));
@@ -2276,7 +2278,7 @@ index 249bf08cbfd..c26caa059b0 100644
 2.34.1
 
 
-From 40f7d89cf75828fde454a5ec90c91343a1bac02b Mon Sep 17 00:00:00 2001
+From 87f525e04efdb602e6b813d84d21eaabf9a45167 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 9 Nov 2021 19:22:04 +0200
 Subject: [PATCH 014/147] winewayland.drv: Broadcast WM_DISPLAYCHANGE after
@@ -2290,7 +2292,7 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 45 insertions(+)
 
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
-index 443f4b1bc47..af12976df54 100644
+index 4b5d2c2449d..9fcbd9554a1 100644
 --- a/dlls/winewayland.drv/display.c
 +++ b/dlls/winewayland.drv/display.c
 @@ -42,9 +42,41 @@ static void wayland_refresh_display_devices(void)
@@ -2374,7 +2376,7 @@ index cc5c99318cf..9a462d46f89 100644
 2.34.1
 
 
-From 2a6bb9511625a212e9a49ca4d3bf4539aeb28074 Mon Sep 17 00:00:00 2001
+From 5b0594d541c432a20239cbd41550fca2fe0386e4 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 8 Nov 2021 13:23:34 +0200
 Subject: [PATCH 015/147] winewayland.drv: Track the Wine monitor associated
@@ -2388,7 +2390,7 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 67 insertions(+)
 
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
-index af12976df54..bc335796a3a 100644
+index 9fcbd9554a1..3ae5d3935f4 100644
 --- a/dlls/winewayland.drv/display.c
 +++ b/dlls/winewayland.drv/display.c
 @@ -32,6 +32,7 @@
@@ -2399,7 +2401,7 @@ index af12976df54..bc335796a3a 100644
  static BOOL force_display_devices_refresh;
  
  static void wayland_refresh_display_devices(void)
-@@ -166,5 +167,16 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
+@@ -168,5 +169,16 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
          output_id++;
      }
  
@@ -2508,7 +2510,7 @@ index 8a473046452..6f574ffdc78 100644
 2.34.1
 
 
-From c30b5451e0aa11665dc3ed1ac4548b1943a15d11 Mon Sep 17 00:00:00 2001
+From c6498e7a7595c6c28c47fb211fb47b04a6287181 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 15:34:01 +0300
 Subject: [PATCH 016/147] winewayland.drv: Implement EnumDisplaySettingsEx.
@@ -2536,10 +2538,10 @@ index 8ccbac45930..c9ef96495ea 100644
  EXTRALIBS = $(WAYLAND_CLIENT_LIBS)
  CFLAGS = -std=c11 -Wno-declaration-after-statement
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
-index bc335796a3a..465254c2cf1 100644
+index 3ae5d3935f4..1aa6dc3333e 100644
 --- a/dlls/winewayland.drv/display.c
 +++ b/dlls/winewayland.drv/display.c
-@@ -180,3 +180,219 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
+@@ -182,3 +182,219 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
  
      wayland_process_release();
  }
@@ -2787,7 +2789,7 @@ index c26caa059b0..3562e747d89 100644
 2.34.1
 
 
-From f641fd56f5d84c30f8b6cd9b6f1f7bab7016d4bb Mon Sep 17 00:00:00 2001
+From 45e5eb27d0dac12e17695a9c301bde8972409c1e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 16:22:13 +0300
 Subject: [PATCH 017/147] winewayland.drv: Introduce private driver window data
@@ -3016,7 +3018,7 @@ index 9a462d46f89..a7a2228097c 100644
 2.34.1
 
 
-From 5dd0ac9bd566ff4a2868c84137414bde8cdfbf75 Mon Sep 17 00:00:00 2001
+From 21d13fa125fd2e45bcb6d7d871edbc88a294f15e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 17:11:53 +0300
 Subject: [PATCH 018/147] winewayland.drv: Support dispatching Wayland buffer
@@ -3114,7 +3116,7 @@ index c1809cbd532..3d168c8cf66 100644
 2.34.1
 
 
-From d4159dbf9b19fa5246b42582dedadb556ee9d8ec Mon Sep 17 00:00:00 2001
+From 4008a77d36c1da91b06ca425af1304a5fef8a6dc Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 16:56:28 +0300
 Subject: [PATCH 019/147] winewayland.drv: Add infrastructure for Wayland SHM
@@ -3486,7 +3488,7 @@ index 3d168c8cf66..bb75c456c9f 100644
 2.34.1
 
 
-From b4635150631cdae14c9a7bdb32f12315bc8c3b0c Mon Sep 17 00:00:00 2001
+From 1c8954b5241ecf5f6e501c18341ee02317661b84 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 2 Sep 2021 17:19:09 +0300
 Subject: [PATCH 020/147] winewayland.drv: Add a Wayland SHM buffer queue.
@@ -3742,7 +3744,7 @@ index bb75c456c9f..95fbe005e8a 100644
 2.34.1
 
 
-From 5afdb4aad709a9ad6b64707e291ad6c2c6af463a Mon Sep 17 00:00:00 2001
+From 07d025448af7b5b5715f58de3c977c5b2e47f26d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 11:05:17 +0300
 Subject: [PATCH 021/147] winewayland.drv: Introduce support for Wayland
@@ -4121,7 +4123,7 @@ index 95fbe005e8a..8b719e48294 100644
 2.34.1
 
 
-From a17d28891072ad443e612120e7b89ea65d6969d7 Mon Sep 17 00:00:00 2001
+From e8c7d9c42a975c5595e2df31f2f235bbf9f7f2a5 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 12:55:01 +0300
 Subject: [PATCH 022/147] winewayland.drv: Basic handling of Wayland surface
@@ -4309,7 +4311,7 @@ index 8b719e48294..71e2232e32c 100644
 2.34.1
 
 
-From 419cb089fdb55d0efb596c5de197cac1d8c2b867 Mon Sep 17 00:00:00 2001
+From 84d8e4e3b07296baea0481ff850695d5e1dd5dcb Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 13:03:11 +0300
 Subject: [PATCH 023/147] winewayland.drv: Add functions to transform Wine
@@ -4387,7 +4389,7 @@ index 71e2232e32c..1003512ac9e 100644
 2.34.1
 
 
-From f35753899e8ffc60ee506bf2ee108b44152ce87a Mon Sep 17 00:00:00 2001
+From 87613f4af0e5403e1f278aedeb29bfd761b9fbf1 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 18 Nov 2021 10:15:43 +0200
 Subject: [PATCH 024/147] winewayland.drv: Add function to check surface state
@@ -4466,7 +4468,7 @@ index 1003512ac9e..c46effe248a 100644
 2.34.1
 
 
-From 487bfd6e01108310d03787a67d5cd4bc5ee9151b Mon Sep 17 00:00:00 2001
+From aeb88bcc3dae5c0099a9390e4546dd92b3e262c9 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 13:11:01 +0300
 Subject: [PATCH 025/147] winewayland.drv: Add function to commit a buffer to a
@@ -4632,7 +4634,7 @@ index c46effe248a..953f96a5f74 100644
 2.34.1
 
 
-From da5da7e06d8044067ab97d0cad6d81905bbbf75e Mon Sep 17 00:00:00 2001
+From 667a88f1c1b53f88932b709a4a245c9513b83245 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 13:24:03 +0300
 Subject: [PATCH 026/147] winewayland.drv: Add function to unmap a Wayland
@@ -4706,7 +4708,7 @@ index 953f96a5f74..2ed617b3066 100644
 2.34.1
 
 
-From 7b98469dca04fe72233808131d0cc53930a5db93 Mon Sep 17 00:00:00 2001
+From 8ed9e385781a1ea94dbbbb84ba2c4373b8295b3b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 28 Sep 2021 13:26:30 +0300
 Subject: [PATCH 027/147] winewayland.drv: Allow associating a Wayland surface
@@ -4759,7 +4761,7 @@ index 2ed617b3066..1c39fa0c227 100644
 2.34.1
 
 
-From 100edc4da9916cec67ced4e02918ac3f1e814c0f Mon Sep 17 00:00:00 2001
+From f5455ea8765d5ede792b258ceba502d5b0d55d13 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 26 Nov 2021 15:51:22 +0200
 Subject: [PATCH 028/147] winewayland.drv: Introduce function to clear a
@@ -4837,7 +4839,7 @@ index 1c39fa0c227..12bc68e720c 100644
 2.34.1
 
 
-From 7cff76ae3a37b61db6a9396ce507f674e409d279 Mon Sep 17 00:00:00 2001
+From 6045b8eade6a077f29c49ed8a0adb5593fd2a61a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 3 Sep 2021 10:38:51 +0300
 Subject: [PATCH 029/147] winewayland.drv: Create backing Wayland surfaces for
@@ -5123,7 +5125,7 @@ index a7a2228097c..e0fad2ceba8 100644
 2.34.1
 
 
-From 702c96d495701be8d17fe16b4e0ab75c6059d8f2 Mon Sep 17 00:00:00 2001
+From 72e15b9f4759fa9e57ea0d7b33c0c0032f43ae1c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 3 Sep 2021 13:49:48 +0300
 Subject: [PATCH 030/147] winewayland.drv: Implement window_surface for
@@ -5645,7 +5647,7 @@ index 00000000000..b61d5bc0489
 2.34.1
 
 
-From cdbb99f13050f38af2e24a8f24071f0198406c4d Mon Sep 17 00:00:00 2001
+From cc06e777d5bd460399e28f9b8ee1b4d4ef14b136 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 3 Sep 2021 14:37:22 +0300
 Subject: [PATCH 031/147] winewayland.drv: Read and dispatch Wayland events.
@@ -5951,7 +5953,7 @@ index 1e96be9c972..cf0b6bcbd4f 100644
 2.34.1
 
 
-From f90cc0a276d9ac65403c0a3b9e46b69c06ae32a6 Mon Sep 17 00:00:00 2001
+From efd565dc8891a752a3010dd4fbfb0f1350fc2736 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 3 Sep 2021 16:37:15 +0300
 Subject: [PATCH 032/147] winewayland.drv: Add functions to transform Wayland
@@ -6060,7 +6062,7 @@ index a3cde85999b..09460f01da9 100644
 2.34.1
 
 
-From 5b11dbed76a263960e3bfbba827f18ccd5876503 Mon Sep 17 00:00:00 2001
+From feb28a5672a53d784aeab0e5f47f5e0449def012 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 3 Sep 2021 16:49:33 +0300
 Subject: [PATCH 033/147] winewayland.drv: Implement
@@ -6234,7 +6236,7 @@ index cf0b6bcbd4f..9556e809769 100644
 2.34.1
 
 
-From 180f9400da3fd2cb8a71fc1d5ecdde396191f2d2 Mon Sep 17 00:00:00 2001
+From 2571e9f4ef5d197a1ad75deaf62fd4ca1d43945c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 4 Oct 2021 12:56:08 +0300
 Subject: [PATCH 034/147] winewayland.drv: Handle Wayland pointer events.
@@ -6628,7 +6630,7 @@ index 87f6fba41e2..29311fa8525 100644
 2.34.1
 
 
-From 03043cbe49017355e2f77120b7f25320b5fb8bf3 Mon Sep 17 00:00:00 2001
+From 76d47b74ab1dc517be939d8525a7219c0a62950d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 4 Oct 2021 13:02:25 +0300
 Subject: [PATCH 035/147] winewayland.drv: Implement SetCursor.
@@ -7203,7 +7205,7 @@ index 38c79e70a68..c5d672f5e64 100644
 2.34.1
 
 
-From ea44ecf094daac6a1678b7fbf376895807a272c0 Mon Sep 17 00:00:00 2001
+From 2d4436c3e6d7efb58e63436afd91a944421ffc1f Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 13:24:54 +0300
 Subject: [PATCH 036/147] winewayland.drv: Basic handling of Wayland keyboard
@@ -7229,10 +7231,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  create mode 100644 dlls/winewayland.drv/wayland_keyboard_layout.h
 
 diff --git a/configure.ac b/configure.ac
-index 8f94dc205a4..c5c0a057f5a 100644
+index 95865edf813..4dc9faed3d3 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1337,10 +1337,14 @@ then
+@@ -1335,10 +1335,14 @@ then
                     `$PKG_CONFIG --atleast-version=1.14 wayland-protocols && $PKG_CONFIG --variable=pkgdatadir wayland-protocols`)])
      AC_PATH_PROG(WAYLAND_SCANNER,wayland-scanner,
                   [`$PKG_CONFIG --variable=wayland_scanner wayland-scanner`])
@@ -8095,10 +8097,10 @@ index c5d672f5e64..f69cfb0ce8b 100644
          FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp);
      }
 diff --git a/include/config.h.in b/include/config.h.in
-index 8531fa87f96..de541b343e9 100644
+index 24286070d82..ba4cd3620a9 100644
 --- a/include/config.h.in
 +++ b/include/config.h.in
-@@ -760,6 +760,9 @@
+@@ -754,6 +754,9 @@
  /* Define if you have the XKB extension */
  #undef HAVE_XKB
  
@@ -8112,7 +8114,7 @@ index 8531fa87f96..de541b343e9 100644
 2.34.1
 
 
-From 2b525cada1a2fd25d8a1932ca34b468db6c55ba1 Mon Sep 17 00:00:00 2001
+From 2b519cbc6b6f8b8a6e2ad8ca6ceabcb5226b1878 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 13:55:18 +0300
 Subject: [PATCH 037/147] winewayland.drv: Basic support for Wayland keymaps.
@@ -9034,7 +9036,7 @@ index 00000000000..2a33c7ba564
 2.34.1
 
 
-From 75db1a6886458735fb2f074336c97f02af57424c Mon Sep 17 00:00:00 2001
+From 71e04637769abb55a2fd673490b77f5a2e0a7403 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 13:57:33 +0300
 Subject: [PATCH 038/147] winewayland.drv: Add detection of best keyboard
@@ -9178,7 +9180,7 @@ index 60786cce7d2..1172c95f9d8 100644
 2.34.1
 
 
-From fd7793c6bfb0690244bb9cad7ed5045dc11a0154 Mon Sep 17 00:00:00 2001
+From 8f88fbf58f778e5e6219d522d8666328e51c1b4e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 14:00:11 +0300
 Subject: [PATCH 039/147] winewayland.drv: Add support for more keyboard
@@ -9928,7 +9930,7 @@ index 2eafb6d2cb5..26f688cc636 100644
 2.34.1
 
 
-From 14803fd6a1e6ab4e85fec34728760897802fbda1 Mon Sep 17 00:00:00 2001
+From 148cb6df9f162cbeaeec6c57899e62cb44ca39b5 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 14:14:40 +0300
 Subject: [PATCH 040/147] winewayland.drv: Implement ToUnicodeEx.
@@ -10202,7 +10204,7 @@ index d8ede04bf57..c0968b2be61 100644
 2.34.1
 
 
-From 5b563d3eed2e5bfc3420c75a530ce37a83e0f55b Mon Sep 17 00:00:00 2001
+From 0176098df23b92fb21c1506c8aab544bbbf84ee9 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 14:20:54 +0300
 Subject: [PATCH 041/147] winewayland.drv: Implement GetKeyNameText.
@@ -10449,7 +10451,7 @@ index c0968b2be61..3ef31fab2c2 100644
 2.34.1
 
 
-From a50d8e4116bf2a70bc38fc07e2b7a2b89aba7abe Mon Sep 17 00:00:00 2001
+From 6900a670c315c5b753f01ff011c53e5e451641e1 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 14:24:49 +0300
 Subject: [PATCH 042/147] winewayland.drv: Implement MapVirtualKeyEx.
@@ -10653,7 +10655,7 @@ index 3ef31fab2c2..fb58349e312 100644
 2.34.1
 
 
-From 3f837e3195d0ba6e3377ff5dd2b653edcadef3fa Mon Sep 17 00:00:00 2001
+From ca2be1e42296382b8fd9c832cea528030cd4211f Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 6 Sep 2021 14:31:19 +0300
 Subject: [PATCH 043/147] winewayland.drv: Implement VkKeyScanEx.
@@ -10801,7 +10803,7 @@ index fb58349e312..8e696e71210 100644
 2.34.1
 
 
-From ec1b825923fa93b20c05b115ad6b4cd546d317b9 Mon Sep 17 00:00:00 2001
+From c28fd0df8cfca0557a759b4f83c218bd4fb6875d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 11:34:08 +0300
 Subject: [PATCH 044/147] winewayland.drv: Refine heuristics for relative
@@ -11179,7 +11181,7 @@ index f69cfb0ce8b..72ce622edd8 100644
 2.34.1
 
 
-From 4104d992a0b6048712d419de8de1744520ff6a6b Mon Sep 17 00:00:00 2001
+From 501d0411d07cdc2e6726788500c7030dbee2a012 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:01:12 +0300
 Subject: [PATCH 045/147] winewayland.drv: Update Wayland surface state.
@@ -11539,7 +11541,7 @@ index 72ce622edd8..550b3ace7a2 100644
 2.34.1
 
 
-From 93d65dd9283890f82dada90dc49fe717b48d4709 Mon Sep 17 00:00:00 2001
+From aaa4f2522f09a82f3b8abe4a9c30357752cd382e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 17 Nov 2021 18:12:25 +0200
 Subject: [PATCH 046/147] winewayland.drv: Handle window sizes larger than
@@ -11686,7 +11688,7 @@ index 550b3ace7a2..1e6ebce5b36 100644
 2.34.1
 
 
-From 73d5da0ffef667f16f4f5cbadf471f04f945a733 Mon Sep 17 00:00:00 2001
+From 451bb9f147d48b6f4a935ed3024e81d12adc7af0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:09:31 +0300
 Subject: [PATCH 047/147] winewayland.drv: Disallow commits during state
@@ -11767,7 +11769,7 @@ index 1e6ebce5b36..d75ee2c0301 100644
 2.34.1
 
 
-From 62b593d9005430f8ce531ff5cc58c722e596e3a0 Mon Sep 17 00:00:00 2001
+From 776df27c3fec72f780ff06497fbf2dcbb7113fe2 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 18 Nov 2021 14:33:51 +0200
 Subject: [PATCH 048/147] winewayland.drv: Disallow commits to unmappable
@@ -11841,7 +11843,7 @@ index d75ee2c0301..ea34c090aa7 100644
 2.34.1
 
 
-From e64e4a2c0fe7ca3990ba38f2f5bc4ce0630cafd7 Mon Sep 17 00:00:00 2001
+From e8cc0b9cffae0ec78b066d32ca4ab9904ea39199 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:30:53 +0300
 Subject: [PATCH 049/147] winewayland.drv: Handle dynamic Wayland surface
@@ -12242,7 +12244,7 @@ index ea34c090aa7..925951e74af 100644
 2.34.1
 
 
-From 0b9b31672e9a4a048c422dee7880cafee71c0bea Mon Sep 17 00:00:00 2001
+From a39bd6661428e10073a149f00a51f51c674f8673 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:40:58 +0300
 Subject: [PATCH 050/147] winewayland.drv: Handle window minimization and
@@ -12374,7 +12376,7 @@ index 925951e74af..97974d38117 100644
 2.34.1
 
 
-From fd12d041ba3ac75435e8f20959519aa820fe5671 Mon Sep 17 00:00:00 2001
+From 03cd919be705b918e2b9365844ce3c0cde805d13 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:49:26 +0300
 Subject: [PATCH 051/147] winewayland.drv: Handle interactive window resizing.
@@ -12499,7 +12501,7 @@ index 97974d38117..3236f5fa4f6 100644
 2.34.1
 
 
-From 89a6773362e64cc7d04db0aa183aa9cc8a2a9458 Mon Sep 17 00:00:00 2001
+From 644e97e6810fb80cd91b78ee83c666ea2d2a7682 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 12:51:31 +0300
 Subject: [PATCH 052/147] winewayland.drv: Handle interactive window movement.
@@ -12538,7 +12540,7 @@ index 3236f5fa4f6..e28e211eb0f 100644
 2.34.1
 
 
-From 730239594d0ea8ed1607dd32ae393299d9477def Mon Sep 17 00:00:00 2001
+From 546f38a6c2153fcd7371e0760dcc8f50b8d6001b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Sep 2021 15:53:46 +0300
 Subject: [PATCH 053/147] winewayland.drv: Support window and window_surface
@@ -12879,7 +12881,7 @@ index b61d5bc0489..b39bb0984db 100644
 2.34.1
 
 
-From 85336ab81cc148516894bcfe7ad614bf530f168a Mon Sep 17 00:00:00 2001
+From ee2aa881c76b951570831a52dd8c7e846980d29a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 9 Sep 2021 10:47:53 +0300
 Subject: [PATCH 054/147] winewayland.drv: Implement
@@ -13156,7 +13158,7 @@ index b39bb0984db..ef3e86ea53d 100644
 2.34.1
 
 
-From 46801b09165b89d7a4f2f33e10df389df6065fbb Mon Sep 17 00:00:00 2001
+From c5e60803b9b2d71826557e942813cdb52203fd09 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 9 Sep 2021 14:39:51 +0300
 Subject: [PATCH 055/147] winewayland.drv: Implement UpdateLayeredWindow.
@@ -13475,7 +13477,7 @@ index ef3e86ea53d..b4061942104 100644
 2.34.1
 
 
-From a4ebeffe8c367c171dc4b40fa5841d4e05d56184 Mon Sep 17 00:00:00 2001
+From 22a4bc147ececcb664301ebedba6188554be83f8 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 10 Sep 2021 14:25:25 +0300
 Subject: [PATCH 056/147] winewayland.drv: Fix thread safety issue with
@@ -13562,7 +13564,7 @@ index 68e678ce6ea..cf66b86151d 100644
 2.34.1
 
 
-From 8a21edca2d3b272450eab06a79a8639a16f1651d Mon Sep 17 00:00:00 2001
+From 2306db69f11cc76223bf6a786ac67dfb708484df Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 10 Sep 2021 15:38:48 +0300
 Subject: [PATCH 057/147] winewayland.drv: Store a list of Wayland child
@@ -13757,7 +13759,7 @@ index 1380412282c..801d20f70fa 100644
 2.34.1
 
 
-From 519312ed686b80d4bdf45a8019fa9f0aedba99d0 Mon Sep 17 00:00:00 2001
+From e5973a800854280ea3af2c910ab77587ab1efe58 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 27 Oct 2021 17:41:37 +0300
 Subject: [PATCH 058/147] winewayland.drv: Update children surfaces when parent
@@ -13807,7 +13809,7 @@ index cf66b86151d..0bd27f82b0c 100644
 2.34.1
 
 
-From e1dbc083f71811a2872a973392d149f2b9887a30 Mon Sep 17 00:00:00 2001
+From 0a6b0257924d31ab2a17c766bd995fc96eaf51ea Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 10 Sep 2021 18:40:24 +0300
 Subject: [PATCH 059/147] winewayland.drv: Handle Wayland surface output
@@ -14214,7 +14216,7 @@ index 0bd27f82b0c..e6cd2efec19 100644
 2.34.1
 
 
-From 3802fde97795d6ad110c353938ee87cedf1a96f1 Mon Sep 17 00:00:00 2001
+From 83f48b6f24a0dce13df6e890f0ef48f01fd4cfaa Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 26 Oct 2021 13:16:38 +0300
 Subject: [PATCH 060/147] winewayland.drv: Track the Wayland output containing
@@ -14342,7 +14344,7 @@ index e6cd2efec19..8fe743c49ef 100644
 2.34.1
 
 
-From f64920f2051b0597c51eb0bb282fca0442314b0d Mon Sep 17 00:00:00 2001
+From b32be7ca9e15c515dba875c57e71cdf41e5498fa Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Sat, 11 Sep 2021 01:51:44 +0300
 Subject: [PATCH 061/147] winewayland.drv: Use output scale on Wayland surface
@@ -14506,7 +14508,7 @@ index 00451445faf..21183bbdcb9 100644
 2.34.1
 
 
-From fb94388bc8605c14eb9339c95d5f210637c50637 Mon Sep 17 00:00:00 2001
+From be9289d56574f2cdb8dea5591528c777ce15fd30 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 13 Sep 2021 17:14:48 +0300
 Subject: [PATCH 062/147] winewayland.drv: Support tracking the Wine current
@@ -14524,7 +14526,7 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 31 insertions(+), 8 deletions(-)
 
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
-index 465254c2cf1..1baf54b1f1e 100644
+index 1aa6dc3333e..a4d609330e0 100644
 --- a/dlls/winewayland.drv/display.c
 +++ b/dlls/winewayland.drv/display.c
 @@ -60,9 +60,9 @@ static void wayland_broadcast_wm_display_change(void)
@@ -14540,7 +14542,7 @@ index 465254c2cf1..1baf54b1f1e 100644
              wayland_process_release();
  
              SendMessageW(GetDesktopWindow(), WM_WAYLAND_BROADCAST_DISPLAY_CHANGE,
-@@ -121,8 +121,8 @@ static void wayland_add_monitor(const struct gdi_device_manager *device_manager,
+@@ -123,8 +123,8 @@ static void wayland_add_monitor(const struct gdi_device_manager *device_manager,
      }
  
      SetRect(&monitor.rc_monitor, output->x, output->y,
@@ -14551,7 +14553,7 @@ index 465254c2cf1..1baf54b1f1e 100644
  
      /* We don't have a direct way to get the work area in Wayland. */
      monitor.rc_work = monitor.rc_monitor;
-@@ -158,7 +158,7 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
+@@ -160,7 +160,7 @@ void CDECL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_
  
      wl_list_for_each(output, &wayland->output_list, link)
      {
@@ -14560,7 +14562,7 @@ index 465254c2cf1..1baf54b1f1e 100644
  
          /* TODO: Detect and support multiple monitors per adapter (i.e., mirroring). */
          wayland_add_adapter(device_manager, param, output_id);
-@@ -301,7 +301,7 @@ static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *
+@@ -303,7 +303,7 @@ static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *
      mode->dmDisplayFrequency = output_mode->refresh / 1000;
  }
  
@@ -14569,7 +14571,7 @@ index 465254c2cf1..1baf54b1f1e 100644
  {
      struct wayland_output *output;
  
-@@ -317,6 +317,22 @@ static BOOL wayland_get_current_devmode(struct wayland *wayland, LPCWSTR name, D
+@@ -319,6 +319,22 @@ static BOOL wayland_get_current_devmode(struct wayland *wayland, LPCWSTR name, D
      return TRUE;
  }
  
@@ -14592,7 +14594,7 @@ index 465254c2cf1..1baf54b1f1e 100644
  static BOOL wayland_get_devmode(struct wayland *wayland, LPCWSTR name, DWORD n, DEVMODEW *mode)
  {
      struct wayland_output *output;
-@@ -355,7 +371,7 @@ BOOL CDECL WAYLAND_EnumDisplaySettingsEx(LPCWSTR name, DWORD n, LPDEVMODEW devmo
+@@ -357,7 +373,7 @@ BOOL CDECL WAYLAND_EnumDisplaySettingsEx(LPCWSTR name, DWORD n, LPDEVMODEW devmo
      if (n == ENUM_REGISTRY_SETTINGS)
      {
          if (!read_registry_settings(name, devmode) &&
@@ -14643,7 +14645,7 @@ index 21183bbdcb9..96383f04e42 100644
 2.34.1
 
 
-From 708e7195e0e88b923dd2b869c98e55b824d8bf9f Mon Sep 17 00:00:00 2001
+From 10aff1fae8865f9ba82a263c6270409bac46e459 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 13 Sep 2021 17:17:32 +0300
 Subject: [PATCH 063/147] winewayland.drv: Update coordinate transformations
@@ -14846,7 +14848,7 @@ index 8fe743c49ef..ae8905c4d6d 100644
 2.34.1
 
 
-From 245bbdee2ac7411086089334682a265dc250988e Mon Sep 17 00:00:00 2001
+From 0d7a8dae54929271bf0f4e326f9ade940aa8992e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 13 Sep 2021 17:18:46 +0300
 Subject: [PATCH 064/147] winewayland.drv: Scale surfaces to apply Wine display
@@ -15026,7 +15028,7 @@ index ae8905c4d6d..cf43501388e 100644
 2.34.1
 
 
-From b4225bccf2ef77b30dc89b94be74cf442c38f3ce Mon Sep 17 00:00:00 2001
+From da8897a1c0b9992db90ec9b8c0715504de71fd38 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 13:45:18 +0300
 Subject: [PATCH 065/147] winewayland.drv: Implement Wine monitor change
@@ -15209,7 +15211,7 @@ index cf43501388e..ba14fc747f8 100644
 2.34.1
 
 
-From 533671dfb27b96ffab941b7102aa0c5f1f34dce7 Mon Sep 17 00:00:00 2001
+From 7c756905388b002b75121b3c51f935dd04525e8b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 13:47:29 +0300
 Subject: [PATCH 066/147] winewayland.drv: Implement ChangeDisplaySettingsEx.
@@ -15225,10 +15227,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  3 files changed, 197 insertions(+)
 
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
-index 1baf54b1f1e..bb25c376926 100644
+index a4d609330e0..9a0a6871899 100644
 --- a/dlls/winewayland.drv/display.c
 +++ b/dlls/winewayland.drv/display.c
-@@ -287,6 +287,51 @@ done:
+@@ -289,6 +289,51 @@ done:
      return ret;
  }
  
@@ -15280,7 +15282,7 @@ index 1baf54b1f1e..bb25c376926 100644
  static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *mode)
  {
      mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
-@@ -412,3 +457,152 @@ err:
+@@ -414,3 +459,152 @@ err:
      wayland_process_release();
      return FALSE;
  }
@@ -15462,7 +15464,7 @@ index 34d6a7e3f34..1bba4b58f23 100644
 2.34.1
 
 
-From 1a93a41df554b11049a8de5aa07fccd313822d0a Mon Sep 17 00:00:00 2001
+From 1478c7d139517160f1998557bd385006807c1875 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 13 Sep 2021 16:59:19 +0300
 Subject: [PATCH 067/147] winewayland.drv: Add skeleton GDI driver.
@@ -15628,7 +15630,7 @@ index 1bba4b58f23..28902e02458 100644
 2.34.1
 
 
-From ded8878fc9f5d05587bb4ab19a3ad7a42d90376e Mon Sep 17 00:00:00 2001
+From 82f4b396fade0a4cff80984afbc7b4808d5de572 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 30 Sep 2021 13:41:29 +0300
 Subject: [PATCH 068/147] winewayland.drv: Add helper to get client rect in
@@ -15692,7 +15694,7 @@ index ba14fc747f8..15f7776e5da 100644
 2.34.1
 
 
-From 97b3a9eec965582666722cbca14e793efd98a77b Mon Sep 17 00:00:00 2001
+From 94cc25d90f1859ef873b35328b98789c58a78fb6 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 13 Sep 2021 17:48:15 +0300
 Subject: [PATCH 069/147] winewayland.drv: Prepare for handling windows with
@@ -15714,10 +15716,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  7 files changed, 328 insertions(+), 18 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index c5c0a057f5a..ee7f15344a8 100644
+index 4dc9faed3d3..922b29ac024 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1340,6 +1340,10 @@ then
+@@ -1338,6 +1338,10 @@ then
      WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
          [AC_CHECK_HEADERS([xkbcommon/xkbcommon.h])
           AC_CHECK_LIB(xkbcommon,xkb_context_new,[:],[XKBCOMMON_LIBS=""],[$XKBCOMMON_LIBS])])
@@ -16072,10 +16074,10 @@ index 15f7776e5da..cadcfcbc531 100644
      if (wsurface->xdg_toplevel || wsurface->wl_subsurface)
          wsurface->drawing_allowed = TRUE;
 diff --git a/include/config.h.in b/include/config.h.in
-index de541b343e9..b47bac300dc 100644
+index ba4cd3620a9..347b1c2613d 100644
 --- a/include/config.h.in
 +++ b/include/config.h.in
-@@ -706,6 +706,9 @@
+@@ -700,6 +700,9 @@
  /* Define to 1 if you have the <wayland-client.h> header file. */
  #undef HAVE_WAYLAND_CLIENT_H
  
@@ -16089,7 +16091,7 @@ index de541b343e9..b47bac300dc 100644
 2.34.1
 
 
-From 8aa7002914d5ed802dbaab157d18d1fbd125301c Mon Sep 17 00:00:00 2001
+From 793ae5429072c0f5e968f26d4c6a7f64994d7de4 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 14:17:56 +0300
 Subject: [PATCH 070/147] winewayland.drv: Add skeleton OpenGL driver.
@@ -16108,10 +16110,10 @@ Signed-off-by: Alexandros Frantzis <alexandros.frantzis@collabora.com>
  create mode 100644 dlls/winewayland.drv/opengl.c
 
 diff --git a/configure.ac b/configure.ac
-index ee7f15344a8..82a4535e8de 100644
+index 922b29ac024..11d35f35eed 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1344,6 +1344,9 @@ then
+@@ -1342,6 +1342,9 @@ then
          [AC_CHECK_HEADERS([wayland-egl.h])
           AC_CHECK_LIB(wayland-egl,wl_egl_window_create,[:],
                        [WAYLAND_EGL_LIBS=""],[$WAYLAND_EGL_LIBS])])
@@ -16264,7 +16266,7 @@ index 3a97897a6a5..e417139f829 100644
 2.34.1
 
 
-From 94bb9836645780f1b97cc593c07183c182cc39d6 Mon Sep 17 00:00:00 2001
+From c4058cf3ddc32ed4909f984a1218ee9f7de7261b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 14:25:46 +0300
 Subject: [PATCH 071/147] winewayland.drv: Perform basic EGL initialization.
@@ -16319,7 +16321,7 @@ index 4cdca1a5fd1..260d1ad0399 100644
 2.34.1
 
 
-From ac191f1d549a2fe98acfeee1f29cb57d4e5f6943 Mon Sep 17 00:00:00 2001
+From 8ca0b702155519dc8b115fc195d185a330e1ee89 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 14:30:53 +0300
 Subject: [PATCH 072/147] winewayland.drv: Initialize standard GL and extension
@@ -16647,7 +16649,7 @@ index 260d1ad0399..048b909774a 100644
 2.34.1
 
 
-From 144d88595ede2c3a4abcff38470449df9ec1b32d Mon Sep 17 00:00:00 2001
+From 3b0c33c610a24f38ffee5470f89890c4a1883f54 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 14:33:33 +0300
 Subject: [PATCH 073/147] winewayland.drv: Implement
@@ -16716,7 +16718,7 @@ index 048b909774a..bc1b0ee4d7a 100644
 2.34.1
 
 
-From 811f324c1e7f206a3d7f1dbe699278629000933e Mon Sep 17 00:00:00 2001
+From 96e5ad592ae8004269ed82e56abae8ee8669eb8c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 14:37:55 +0300
 Subject: [PATCH 074/147] winewayland.drv: Implement wglGetProcAddress.
@@ -16776,7 +16778,7 @@ index bc1b0ee4d7a..759db450ddf 100644
 2.34.1
 
 
-From 8d34c8cdba7921e15be830e3af1eb459ddaa8faa Mon Sep 17 00:00:00 2001
+From 900bf58b215ff175d42ef056ae40b998d44ccaf8 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 12:26:45 +0300
 Subject: [PATCH 075/147] winewayland.drv: Initialize OpenGL pixel formats.
@@ -16909,7 +16911,7 @@ index 759db450ddf..ff42ab950ad 100644
 2.34.1
 
 
-From e7af5007b5f4ef186dd580c1db4d953416072503 Mon Sep 17 00:00:00 2001
+From c4594b05b687229c6835a060c80b545e8940ca6d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 12:32:28 +0300
 Subject: [PATCH 076/147] winewayland.drv: Implement wglDescribePixelFormat.
@@ -16998,7 +17000,7 @@ index ff42ab950ad..630bb2ae449 100644
 2.34.1
 
 
-From e3f7ed4ee4982d16a3cef87961fae0f028239915 Mon Sep 17 00:00:00 2001
+From d5a194866d35e8bbeb04774e14007b939068f7a4 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 13:19:52 +0300
 Subject: [PATCH 077/147] winewayland.drv: Add infrastructure to associate an
@@ -17195,7 +17197,7 @@ index cadcfcbc531..ed232ee4231 100644
 2.34.1
 
 
-From 9cf0b55442d1ad6b287fde0e3a7ee6e5744a6a40 Mon Sep 17 00:00:00 2001
+From bf46c23357d6c849f54f1bdeec4507afea3c2247 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 13:20:22 +0300
 Subject: [PATCH 078/147] winewayland.drv: Implement wglSetPixelFormat(WINE).
@@ -17319,7 +17321,7 @@ index 17fb3060307..e4b7491d71b 100644
 2.34.1
 
 
-From e9dd174cd9849622a0104e740f626a889a847eb0 Mon Sep 17 00:00:00 2001
+From 02083383656afca3c699b9c3306980402f15d454 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 13:44:37 +0300
 Subject: [PATCH 079/147] winewayland.drv: Implement GL context creation.
@@ -17470,7 +17472,7 @@ index e4b7491d71b..5e7bf539230 100644
 2.34.1
 
 
-From 76874fd5ac6420dee6e215e0a042f5fe52885fce Mon Sep 17 00:00:00 2001
+From f7bf12aba9cbfa98e211bfe6787a48aeb55dffcd Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 14:34:46 +0300
 Subject: [PATCH 080/147] winewayland.drv: Implement wglMakeCurrent and
@@ -17627,7 +17629,7 @@ index 5e7bf539230..fea99664c4b 100644
 2.34.1
 
 
-From 0f56e37ceeff68fd2728deb6d466b45dccaafa90 Mon Sep 17 00:00:00 2001
+From ecf7cd92f172c425b53685a32c4f698ad57c5544 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 14:46:40 +0300
 Subject: [PATCH 081/147] winewayland.drv: Implement wglGetPixelFormat.
@@ -17678,7 +17680,7 @@ index fea99664c4b..07c6ab51b16 100644
 2.34.1
 
 
-From 0438d7b2a99751ffaccbf8fd613883b56993e45e Mon Sep 17 00:00:00 2001
+From 02d89ea49d6f3c27f8a4d76c4876526a47dd272a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 14:56:36 +0300
 Subject: [PATCH 082/147] winewayland.drv: Implement
@@ -17882,7 +17884,7 @@ index 07c6ab51b16..b9f27c0f2ba 100644
 2.34.1
 
 
-From f060e6cdaf7448b11dc536bc353aca100a121d6c Mon Sep 17 00:00:00 2001
+From fb61edf7443c691e35559ed7a7b82a021932231f Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 14:57:55 +0300
 Subject: [PATCH 083/147] winewayland.drv: Implement wglShareLists.
@@ -17995,7 +17997,7 @@ index b9f27c0f2ba..7304557f7fa 100644
 2.34.1
 
 
-From 18450b44f306749d300e18cc0b20157d280a6770 Mon Sep 17 00:00:00 2001
+From 5a36b82af8e5efc727660d40c5e6d8693a71d284 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 15:25:18 +0300
 Subject: [PATCH 084/147] winewayland.drv: Add function to ensure a Wayland
@@ -18121,7 +18123,7 @@ index a8db536d3a4..5b989181907 100644
 2.34.1
 
 
-From 1fc35ce626bf7309034dfb573bc044bd94390066 Mon Sep 17 00:00:00 2001
+From 5a0f953210b8cab385bd4b3fa806fb595999a79c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 15:26:32 +0300
 Subject: [PATCH 085/147] winewayland.drv: Implement wglSwapBuffers.
@@ -18259,7 +18261,7 @@ index 7304557f7fa..53dfc794d1d 100644
 2.34.1
 
 
-From a987de1c2f00b68490265d3f391f04faf307624e Mon Sep 17 00:00:00 2001
+From 5411be02ab9fb447e1ab49d32a8f84473ae87695 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 15:31:10 +0300
 Subject: [PATCH 086/147] winewayland.drv: Refresh the context on glFlush and
@@ -18333,7 +18335,7 @@ index 53dfc794d1d..5a602ee8db0 100644
 2.34.1
 
 
-From fac5e2f6bb4b4a5ee106eecbe48de7946e69a79f Mon Sep 17 00:00:00 2001
+From 5f3d744b1ac33a43c8613ff13713e3d99066c747 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 29 Sep 2021 18:38:22 +0300
 Subject: [PATCH 087/147] winewayland.drv: Advertise WGL_EXT_framebuffer_sRGB.
@@ -18462,7 +18464,7 @@ index 5a602ee8db0..7d77d494734 100644
 2.34.1
 
 
-From 3438d7c5779d0a75e7b7e61b4ded21b580138f11 Mon Sep 17 00:00:00 2001
+From 56a745ca446ed0ba521c2145f9becd3eae1eb352 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 30 Sep 2021 11:23:00 +0300
 Subject: [PATCH 088/147] winewayland.drv: Update GL drawable on surface
@@ -18557,7 +18559,7 @@ index ed232ee4231..f29bdce8902 100644
 2.34.1
 
 
-From eed8089cb101eb9b0f2b5c6852c68dfd9fe04078 Mon Sep 17 00:00:00 2001
+From 2a9787b8f1dfa2c3c1ed0673bd293fe431c93c02 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 30 Sep 2021 11:24:36 +0300
 Subject: [PATCH 089/147] winewayland.drv: Destroy GL drawable on window
@@ -18611,7 +18613,7 @@ index f29bdce8902..9d849c087dc 100644
 2.34.1
 
 
-From e9de6e8acacf4d6ad2994a0d964b8acf17a83fd7 Mon Sep 17 00:00:00 2001
+From 5a6722840f7e15065230843cd292188f172c847a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 30 Sep 2021 11:25:07 +0300
 Subject: [PATCH 090/147] winewayland.drv: Enable OpenGL driver.
@@ -18677,7 +18679,7 @@ index 28902e02458..6cb3b715a6a 100644
 2.34.1
 
 
-From cb318cdd6f88f1f43f9f498275a205d5308a7c01 Mon Sep 17 00:00:00 2001
+From 74fe8b31d8da1656f9a9220c53da4c3741e8e27c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 16:06:08 +0300
 Subject: [PATCH 091/147] winewayland.drv: Support front buffer rendering in
@@ -18957,7 +18959,7 @@ index b4061942104..ef17e711c56 100644
 2.34.1
 
 
-From 329689f15577e9929ba7019408a8e0797831a485 Mon Sep 17 00:00:00 2001
+From 889e620d1d113a198a7bf6015102c5f4badaf530 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 14 Sep 2021 16:34:39 +0300
 Subject: [PATCH 092/147] winewayland.drv: Support front buffer rendering in
@@ -19116,7 +19118,7 @@ index c1d2e9a633b..fa32e6a675f 100644
 2.34.1
 
 
-From 4e630510b116f029abebe2ec4a15787505deec7e Mon Sep 17 00:00:00 2001
+From 647a58028803195aec855212da668dba04570a2f Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 15:40:50 +0300
 Subject: [PATCH 093/147] winewayland.drv: Support setting Wayland pointer to
@@ -19326,7 +19328,7 @@ index 73e12e51351..15d4899dd90 100644
 2.34.1
 
 
-From 9e81904f1b0936587c12020171e0e3db1ce332a0 Mon Sep 17 00:00:00 2001
+From 18617a7046131e1fed70645c7524723b30d752b2 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 16:06:48 +0300
 Subject: [PATCH 094/147] winewayland.drv: Introduce function to get Wayland
@@ -19400,7 +19402,7 @@ index 15d4899dd90..fda12fa5718 100644
 2.34.1
 
 
-From a128abfae7e74cdeb56d1156632b5fc583021b97 Mon Sep 17 00:00:00 2001
+From 825f546d2bf64aa9f9b40e78a8657cef350a6c0a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 16:18:20 +0300
 Subject: [PATCH 095/147] winewayland.drv: Implement ClipCursor.
@@ -19866,7 +19868,7 @@ index f98a4d24e8f..d009dacbbc3 100644
 2.34.1
 
 
-From bb379e123fe138ccb4ac3f90bc4ebd451a13d1e6 Mon Sep 17 00:00:00 2001
+From 3957a570b80ad20b771a92df807643d27d9cb123 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 17:16:49 +0300
 Subject: [PATCH 096/147] winewayland.drv: Implement SetWindowText.
@@ -19998,7 +20000,7 @@ index d009dacbbc3..dc4cd8e3563 100644
 2.34.1
 
 
-From a748936b90846555a140e010e64cead9770c7171 Mon Sep 17 00:00:00 2001
+From a24b86d0351562b41acf83c6822e678de304a667 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 18:33:07 +0300
 Subject: [PATCH 097/147] winewayland.drv: Add skeleton Vulkan driver.
@@ -20129,7 +20131,7 @@ index 99c72bd44c0..c1b5923872d 100644
 2.34.1
 
 
-From 799117bdad0e5dd3f20e6eea645adde8fb92704d Mon Sep 17 00:00:00 2001
+From 84ef6d25a13842182d4cb61ef6187811c617572e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 18:41:32 +0300
 Subject: [PATCH 098/147] winewayland.drv: Implement vkCreateInstance.
@@ -20266,7 +20268,7 @@ index f6970b44ebc..3155ecf6428 100644
 2.34.1
 
 
-From c69511f8999c74abf27e6d9a1a3918550bae19a6 Mon Sep 17 00:00:00 2001
+From 0a8155543b9a489481120c049b421f1a3f40213b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 18:44:10 +0300
 Subject: [PATCH 099/147] winewayland.drv: Implement vkDestroyInstance.
@@ -20325,7 +20327,7 @@ index 3155ecf6428..08eb01a1d8b 100644
 2.34.1
 
 
-From 1638a6da16d25fe691b0c40dac8fe597089fc205 Mon Sep 17 00:00:00 2001
+From 3503e4c5396538fb319e8a673233210c62e88ef3 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 19:08:02 +0300
 Subject: [PATCH 100/147] winewayland.drv: Prepare for supporting windows with
@@ -20420,7 +20422,7 @@ index c1b5923872d..220712f687b 100644
 2.34.1
 
 
-From 67d66a8e963bc04f63602368e46e44eceadc7871 Mon Sep 17 00:00:00 2001
+From d1f77f3ebe85008ca3d3d1704506b686e77a5b1b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 15 Sep 2021 19:08:53 +0300
 Subject: [PATCH 101/147] winewayland.drv: Implement vkCreateWin32SurfaceKHR.
@@ -20614,7 +20616,7 @@ index 08eb01a1d8b..525c91717da 100644
 2.34.1
 
 
-From e6f23b2a6d0d6c4855e1fa00dd85e5d2259bfb58 Mon Sep 17 00:00:00 2001
+From ed8519ca3d23de12f04ad8776a71fa5ea4d55ecc Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 17 Sep 2021 12:02:59 +0300
 Subject: [PATCH 102/147] winewayland.drv: Implement vkDestroySurfaceKHR.
@@ -20704,7 +20706,7 @@ index 525c91717da..811b924f29a 100644
 2.34.1
 
 
-From d03020f3b48afe0dd531d1639a35aaf007e30e9c Mon Sep 17 00:00:00 2001
+From c791be5914511b32ca2947d5c2d8a780827950e8 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 17 Sep 2021 12:21:29 +0300
 Subject: [PATCH 103/147] winewayland.drv: Implement vkCreateSwapchainKHR.
@@ -20863,7 +20865,7 @@ index 811b924f29a..7e208bf88b8 100644
 2.34.1
 
 
-From a4a4ef2ad63579bcb757b0b2a703f131e7aa42c6 Mon Sep 17 00:00:00 2001
+From 6a4b3e243d1fb0428301355d78b9e660d9682e8b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 17 Sep 2021 12:35:30 +0300
 Subject: [PATCH 104/147] winewayland.drv: Implement vkDestroySwapchainKHR.
@@ -20954,7 +20956,7 @@ index 7e208bf88b8..23b931477d9 100644
 2.34.1
 
 
-From 86c2d70e7fa288183fe2ada13a129266216419dc Mon Sep 17 00:00:00 2001
+From 4ec90ad73453bd45edb049b6c2d8598f84da1404 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 17 Sep 2021 13:22:11 +0300
 Subject: [PATCH 105/147] winewayland.drv: Implement vkQueuePresentKHR.
@@ -21091,7 +21093,7 @@ index 23b931477d9..7c7b2491d87 100644
 2.34.1
 
 
-From 4f64bd2979326d5e04415779beb0040ed7255bc3 Mon Sep 17 00:00:00 2001
+From e0c6d13dad6b71cac4b12c630cb7ebe36d8945fa Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 17 Sep 2021 13:30:46 +0300
 Subject: [PATCH 106/147] winewayland.drv: Handle window resizes under Vulkan.
@@ -21160,7 +21162,7 @@ index 7c7b2491d87..2e7267448f5 100644
 2.34.1
 
 
-From cd5cc9a7e3421c076b8fab31b2a70176b34f15a8 Mon Sep 17 00:00:00 2001
+From 92a4de3fc984f819eb12a37cb89e47a530d72f1c Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 10:43:33 +0300
 Subject: [PATCH 107/147] winewayland.drv: Add mechanism to invalidate Vulkan
@@ -21290,7 +21292,7 @@ index 220712f687b..beb8df211eb 100644
 2.34.1
 
 
-From 55f73606f70f87f45b123f80a0fd37bff314f0d5 Mon Sep 17 00:00:00 2001
+From ce3a9d6804b22b31fd2f25d39d646cbc3cd7d8a0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 10:34:43 +0300
 Subject: [PATCH 108/147] winewayland.drv: Implement
@@ -21385,7 +21387,7 @@ index 1e1f5569d9e..8ef327a7802 100644
 2.34.1
 
 
-From f72a0321631f90f257504113e41d5ed563a226ef Mon Sep 17 00:00:00 2001
+From bbcef7be6b2bff86097a4f9c60f455e6608f4994 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:58:45 +0300
 Subject: [PATCH 109/147] winewayland.drv: Implement
@@ -21474,7 +21476,7 @@ index 8ef327a7802..5bc44592667 100644
 2.34.1
 
 
-From 86715bca34754a540efac5a1acb9aaddf4392ce9 Mon Sep 17 00:00:00 2001
+From fe52400fb965e5ea7a8244b9667cb8e75cd8b20d Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 10:56:18 +0300
 Subject: [PATCH 110/147] winewayland.drv: Implement vkGetDeviceProcAddr and
@@ -21560,7 +21562,7 @@ index 5bc44592667..b3bec899b0c 100644
 2.34.1
 
 
-From 95b9ba134365e0ea62a572b8e787306b88ee0232 Mon Sep 17 00:00:00 2001
+From 44da430ae4ab5f16ac47ee4d45829ea47858fd88 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 11:04:58 +0300
 Subject: [PATCH 111/147] winewayland.drv: Implement
@@ -21621,7 +21623,7 @@ index b3bec899b0c..3c1523e31e6 100644
 2.34.1
 
 
-From 85ef338584b8703569e3b3f0a935f36d4792eab2 Mon Sep 17 00:00:00 2001
+From ab9d6b8b95608db9ac409c377f60f3d9a220d071 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 11:11:41 +0300
 Subject: [PATCH 112/147] winewayland.drv: Implement
@@ -21782,7 +21784,7 @@ index 3c1523e31e6..57ac6e6b239 100644
 2.34.1
 
 
-From 40dee75132de6cbfd3bc2cc92d7078b60417d489 Mon Sep 17 00:00:00 2001
+From a5adc3162ffc0bebcd8cb1f165a8bf42d68b41d6 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:27:03 +0300
 Subject: [PATCH 113/147] winewayland.drv: Implement
@@ -21901,7 +21903,7 @@ index 57ac6e6b239..a4c680215cb 100644
 2.34.1
 
 
-From b7b7096cc2392872eae1f2c513b6ea6b33ed0cd2 Mon Sep 17 00:00:00 2001
+From d68e5f9c556910d7729c9ceadcbee44a7ba97831 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:40:48 +0300
 Subject: [PATCH 114/147] winewayland.drv: Implement
@@ -21967,7 +21969,7 @@ index a4c680215cb..2bcaf4bcdec 100644
 2.34.1
 
 
-From 24f28350b31d25a04c037eb5c8667d81a6b0da66 Mon Sep 17 00:00:00 2001
+From 8b762a76e2436ee939818a8b0b2a508c25d4c054 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:42:03 +0300
 Subject: [PATCH 115/147] winewayland.drv: Implement
@@ -22033,7 +22035,7 @@ index 2bcaf4bcdec..3f045d6dbc8 100644
 2.34.1
 
 
-From 34a73d1d064226fe92681317ad45ac587d48d109 Mon Sep 17 00:00:00 2001
+From fe650c9ad98d5765183437587891181d0d0c2585 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:45:12 +0300
 Subject: [PATCH 116/147] winewayland.drv: Implement
@@ -22095,7 +22097,7 @@ index 3f045d6dbc8..616c09f0167 100644
 2.34.1
 
 
-From 03a4aa12e835d9b3de2f6be6af7b25051b60f1d0 Mon Sep 17 00:00:00 2001
+From 299cb1822f54f6ec218d0431c9809f2d104992b4 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 12:59:01 +0300
 Subject: [PATCH 117/147] winewayland.drv: Implement vkGetSwapchainImagesKHR.
@@ -22154,7 +22156,7 @@ index 616c09f0167..5650dbbd6cb 100644
 2.34.1
 
 
-From e2726719e181e32f399389a6eb743a8ca3966850 Mon Sep 17 00:00:00 2001
+From 40f596d2b23f01b74822e8366dd16109bb1b3e76 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 20 Sep 2021 16:35:45 +0300
 Subject: [PATCH 118/147] winewayland.drv: Implement wine_get_native_surface.
@@ -22198,7 +22200,7 @@ index 5650dbbd6cb..aa998fe6d4c 100644
 2.34.1
 
 
-From f34fb9398b6030f9ce2765c62114c103dac03081 Mon Sep 17 00:00:00 2001
+From 1adc09ac719eb6b1836f1ceac1758121971cc63a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 4 Oct 2021 17:04:04 +0300
 Subject: [PATCH 119/147] winewayland.drv: Invalidate Vulkan objects on Wayland
@@ -22239,7 +22241,7 @@ index dc4cd8e3563..f3b40f7a028 100644
 2.34.1
 
 
-From eea3989b85f10e4755c73691439dd4ca6d101cbf Mon Sep 17 00:00:00 2001
+From c9e429ddb90bbfc9d55bb30cb2c58e863f7e53e6 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Mon, 4 Oct 2021 17:06:56 +0300
 Subject: [PATCH 120/147] winewayland.drv: Enable Vulkan driver.
@@ -22298,7 +22300,7 @@ index d51376e25b4..09949a7af14 100644
 2.34.1
 
 
-From ccb9532d82a53d3c76953b79f8ef958e57e86eb4 Mon Sep 17 00:00:00 2001
+From d6bf2f80b8394aa51b48cc2724542dbf8afa5f02 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 10:59:51 +0300
 Subject: [PATCH 121/147] winewayland.drv: Add skeleton Wayland data device
@@ -22525,7 +22527,7 @@ index fa17f8c1d6c..c477f575159 100644
 2.34.1
 
 
-From a2f5b108f9535d2f4c568dc9fcbef4bd16898754 Mon Sep 17 00:00:00 2001
+From af11e74d0aeb9290399ba7a0286176ca28f2cad0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 12:04:01 +0300
 Subject: [PATCH 122/147] winewayland.drv: Basic tracking of Wayland data
@@ -22757,7 +22759,7 @@ index c477f575159..427f2964750 100644
 2.34.1
 
 
-From 7041777392eb098e8126c99190704b1e27f5f99c Mon Sep 17 00:00:00 2001
+From e325fea7ef064f60decb3bc570a2761d28926168 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 12:35:18 +0300
 Subject: [PATCH 123/147] winewayland.drv: Create dedicated window to handle
@@ -22918,7 +22920,7 @@ index f3b40f7a028..c73b0173d27 100644
 2.34.1
 
 
-From ae8d630e1e749920af9b8873fdfbd4381937ef21 Mon Sep 17 00:00:00 2001
+From b447b020db5507f9f55893309389a645d73ec9da Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:00:10 +0300
 Subject: [PATCH 124/147] winewayland.drv: Add skeleton data device format
@@ -23075,7 +23077,7 @@ index 4e545cad55b..f1f7f4fa68d 100644
 2.34.1
 
 
-From 9a5e630b1ec6f37ef8dec30cbacf5e89becc577f Mon Sep 17 00:00:00 2001
+From 2ecb58f411fe2ff246b51dcaea98b151475267d9 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Tue, 5 Oct 2021 10:08:26 +0300
 Subject: [PATCH 125/147] winewayland.drv: Add helper to write all data to a
@@ -23133,7 +23135,7 @@ index 8491a48d64b..8a604e7bc6d 100644
 2.34.1
 
 
-From e0aa14a38db569db9a468029bad6713c935d725b Mon Sep 17 00:00:00 2001
+From 12fbee7611287f7df3919e600c5ea6642b79d1d0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:04:39 +0300
 Subject: [PATCH 126/147] winewayland.drv: Support text/plain data device
@@ -23230,7 +23232,7 @@ index 8a604e7bc6d..85489a8c4fa 100644
 2.34.1
 
 
-From a00034bc89aebb72166166d77ec346cfef692580 Mon Sep 17 00:00:00 2001
+From 0dd3e1a0ee776c6d6ff2fc574cbd4e5cf1c839ec Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:06:57 +0300
 Subject: [PATCH 127/147] winewayland.drv: Support RTF data device format.
@@ -23306,7 +23308,7 @@ index 85489a8c4fa..96cfe5aa624 100644
 2.34.1
 
 
-From 3ced05562b40f50bdb355902a3e74d163186fe51 Mon Sep 17 00:00:00 2001
+From f3c5136666f6fbba0071a49f94e379f61b176b2b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:12:09 +0300
 Subject: [PATCH 128/147] winewayland.drv: Support text/uri-list data device
@@ -23547,7 +23549,7 @@ index 96cfe5aa624..7c8418e2236 100644
 2.34.1
 
 
-From 16d1c08f279be0a9bc50af2e4b1cf300fb82708c Mon Sep 17 00:00:00 2001
+From e02b3755e7c32834dc09e111384e88b7bf38d7e6 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:14:04 +0300
 Subject: [PATCH 129/147] winewayland.drv: Support common image data device
@@ -23579,7 +23581,7 @@ index 7c8418e2236..aa1b324a38c 100644
 2.34.1
 
 
-From cea5a4ca04b07398ec4dc15e3c2e0ba227d17070 Mon Sep 17 00:00:00 2001
+From 6846894d8d08ed22d1d48dbae6c7b7f9b013ec65 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:22:00 +0300
 Subject: [PATCH 130/147] winewayland.drv: Handle WM_CLIPBOARDUPDATE message.
@@ -23743,7 +23745,7 @@ index c9b5572c890..295a050e41e 100644
 2.34.1
 
 
-From 81c9c29846a8a7fa4a33212d6dd48225808f451e Mon Sep 17 00:00:00 2001
+From f0b32f8a2cc39caaaf6d3cb7ae5ef48cb269bb22 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:33:25 +0300
 Subject: [PATCH 131/147] winewayland.drv: Handle WM_RENDERFORMAT message.
@@ -23920,7 +23922,7 @@ index 295a050e41e..984fd3e8e6e 100644
 2.34.1
 
 
-From 4c1d2831743e9a83bc1da7dd3961e7c1b045f23f Mon Sep 17 00:00:00 2001
+From b6f0f803a8c42bcf621f7b5fcfa631945b222ba4 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:35:36 +0300
 Subject: [PATCH 132/147] winewayland.drv: Handle WM_DESTROYCLIPBOARD message.
@@ -23964,7 +23966,7 @@ index 984fd3e8e6e..f6d39c4c64c 100644
 2.34.1
 
 
-From 8a9c0ed5cb480dbbbc26819de6e32477e1742bbb Mon Sep 17 00:00:00 2001
+From ce92f67f742b5dadae48999cb7158e6cc7fddac5 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 13:27:47 +0300
 Subject: [PATCH 133/147] winewayland.drv: Handle Wayland data device selection
@@ -24067,7 +24069,7 @@ index f6d39c4c64c..e62f9468411 100644
 2.34.1
 
 
-From d82904eed5f6930895a28676c11d639c28d9ed27 Mon Sep 17 00:00:00 2001
+From ee326af049bd0e53cd3aa18b633eab92f2277080 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 17:27:13 +0300
 Subject: [PATCH 134/147] winewayland.drv: Add skeleton IDataObject for data
@@ -24267,7 +24269,7 @@ index e62f9468411..9b4d484a670 100644
 2.34.1
 
 
-From 2e896d80bb06ab25f85bdca5bdf14291e150bbea Mon Sep 17 00:00:00 2001
+From 99b9fa05f9d177e8684f95583e33a43672a9d5e0 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 17:30:21 +0300
 Subject: [PATCH 135/147] winewayland.drv: Implement IDataObject::QueryGetData
@@ -24336,7 +24338,7 @@ index 9b4d484a670..dbc100b41b9 100644
 2.34.1
 
 
-From dd2586e1d8f8f825f50e5f04fb2b12232aee65e1 Mon Sep 17 00:00:00 2001
+From 789f3a624ecfde049c33fedb407e6031e9cbdc7a Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 17:59:58 +0300
 Subject: [PATCH 136/147] winewayland.drv: Implement IDataObject::GetData for
@@ -24416,7 +24418,7 @@ index dbc100b41b9..ca64400f381 100644
 2.34.1
 
 
-From 8646246c10584cab165c198b734eb8ebae8137ec Mon Sep 17 00:00:00 2001
+From d99b07e0ba02f7db89c884b6342f35a2706a9b0b Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 22 Sep 2021 18:36:38 +0300
 Subject: [PATCH 137/147] winewayland.drv: Implement IDataObject::EnumFormatEtc
@@ -24531,7 +24533,7 @@ index ca64400f381..1d562430ea0 100644
 2.34.1
 
 
-From 1dd71f209112076bd166be288ecd64341bd8fbe1 Mon Sep 17 00:00:00 2001
+From 71af1d618732496d97713e07e5a343c68332c68f Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 23 Sep 2021 12:43:19 +0300
 Subject: [PATCH 138/147] winewayland.drv: Introduce functions for IDropTarget
@@ -24673,7 +24675,7 @@ index 1d562430ea0..cd2748f05de 100644
 2.34.1
 
 
-From da7228cebc44a29fe01b2a2a7545680ff726c689 Mon Sep 17 00:00:00 2001
+From ff4c1abaae635e14f7f8e0a764145306414a6b27 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 23 Sep 2021 12:52:27 +0300
 Subject: [PATCH 139/147] winewayland.drv: Handle the wl_data_device::enter
@@ -24822,7 +24824,7 @@ index f1f7f4fa68d..1cafd853f2b 100644
 2.34.1
 
 
-From cca2feebb2e59e5f525157779cdb991611c456ac Mon Sep 17 00:00:00 2001
+From b1c1ebc068c268836153880c9e1404c370df9931 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 23 Sep 2021 13:02:14 +0300
 Subject: [PATCH 140/147] winewayland.drv: Handle the wl_data_device::leave
@@ -24874,7 +24876,7 @@ index 5d78f3e6070..a5563180562 100644
 2.34.1
 
 
-From c7307f2719b8ef946fc5b63728b42a40f0231a62 Mon Sep 17 00:00:00 2001
+From b80025f2c9a57939d0ed422d1c1243dec5324829 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 23 Sep 2021 13:03:47 +0300
 Subject: [PATCH 141/147] winewayland.drv: Handle the wl_data_device::motion
@@ -24944,7 +24946,7 @@ index a5563180562..9a262b5a125 100644
 2.34.1
 
 
-From 228f695f7bcee0b02b571e48ac655df3c3d1d2af Mon Sep 17 00:00:00 2001
+From 7b8ad4a82de5f85ff7f8408601984d9e303c4c0e Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Thu, 23 Sep 2021 13:05:09 +0300
 Subject: [PATCH 142/147] winewayland.drv: Handle the wl_data_device::drop
@@ -25006,7 +25008,7 @@ index 9a262b5a125..63c558e1f17 100644
 2.34.1
 
 
-From dbf008a776848ac175972c3532ea8f5a6132a8ca Mon Sep 17 00:00:00 2001
+From ccf5315aa154cf075a0f391ef44bbf5da47c6e47 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 24 Sep 2021 11:13:42 +0300
 Subject: [PATCH 143/147] winewayland.drv: Support compositor-side scaling.
@@ -25130,7 +25132,7 @@ index 1cafd853f2b..7918a5df3ac 100644
 2.34.1
 
 
-From 856d09f4356d81ccf331c664ba33b03a6dcf2323 Mon Sep 17 00:00:00 2001
+From 355534b6f90efd5b84d8a0cffda8cfee04c29eaf Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 24 Sep 2021 11:22:32 +0300
 Subject: [PATCH 144/147] winewayland.drv: Read HiDPI scaling mode from driver
@@ -25286,7 +25288,7 @@ index 7918a5df3ac..0014021b7e9 100644
 2.34.1
 
 
-From 9570aedc1d8e21aeaff134192304bf555b590b7f Mon Sep 17 00:00:00 2001
+From 80021a09cd78f0af6dccab4a6404c5f817335779 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 24 Sep 2021 13:36:40 +0300
 Subject: [PATCH 145/147] winewayland.drv: Add debugging helpers for pixel
@@ -25599,7 +25601,7 @@ index ef17e711c56..a3febfb6efd 100644
 2.34.1
 
 
-From 64d2897fd9e281862234fc8e9623e215c6bccece Mon Sep 17 00:00:00 2001
+From 7953bb4ca3f1eccc3dac9d1e54df68316f175da7 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Fri, 10 Dec 2021 13:04:55 +0200
 Subject: [PATCH 146/147] winewayland.drv: Experimental support for systray.
@@ -26437,7 +26439,7 @@ index e69de29bb2d..5f086f5c4e5 100644
 2.34.1
 
 
-From 2c2e1405914fc32b144f26fdadb30ae8b970d5df Mon Sep 17 00:00:00 2001
+From 92fff3283a10337a1ab35871bd8c292832f8fbe8 Mon Sep 17 00:00:00 2001
 From: Alexandros Frantzis <alexandros.frantzis@collabora.com>
 Date: Wed, 8 Dec 2021 16:30:05 +0200
 Subject: [PATCH 147/147] winewayland.drv: Input event compatibility with
@@ -26445,7 +26447,7 @@ Subject: [PATCH 147/147] winewayland.drv: Input event compatibility with
 
 The rawinput patches in wine-staging require the drivers to send
 INPUT_MOUSE and INPUT_KEYBOARD events with a non-NULL rawinput
-parameter. Since the rawinput pareametr is currently ignored in
+parameter. Since the rawinput parameter is currently ignored in
 upstream for such events, apply this change to maintain a unified
 codebase across upstream and staging.
 
