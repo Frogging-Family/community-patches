@@ -61,8 +61,18 @@ index 5a0ef02f98a..59e49a9a92d 100755
          f.write("};\n\n")
 
          f.write("extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version);\n\n")
+diff --git a/dlls/winevulkan/winevulkan.spec b/dlls/winevulkan/winevulkan.spec
+index 3e55c99fdc0..d9fb7ac76c2 100644
+--- a/dlls/winevulkan/winevulkan.spec
++++ b/dlls/winevulkan/winevulkan.spec
+@@ -217,3 +217,4 @@
+ @ stdcall vkWaitSemaphores(ptr ptr int64)
+ @ stdcall -private DllRegisterServer()
+ @ stdcall -private DllUnregisterServer()
++@ cdecl _o_exp2f(float) exp2f
+
 diff --git a/dlls/winevulkan/vulkan.c b/dlls/winevulkan/vulkan.c
-index bcd0dfb9823..8bb5b7c04a3 100644
+index 38a63df67a3..f5fa3c88801 100644
 --- a/dlls/winevulkan/vulkan.c
 +++ b/dlls/winevulkan/vulkan.c
 @@ -2006,7 +2006,7 @@ void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type,
@@ -2306,6 +2316,19 @@ index 8bb5b7c04a3..7f538f90b43 100644
                          res = VK_ERROR_DEVICE_LOST;
                      }
                  }
+diff --git a/dlls/winevulkan/Makefile.in b/dlls/winevulkan/Makefile.in
+index 38809211308..f7ca282921f 100644
+--- a/dlls/winevulkan/Makefile.in
++++ b/dlls/winevulkan/Makefile.in
+@@ -2,7 +2,7 @@ MODULE    = winevulkan.dll
+ UNIXLIB   = winevulkan.so
+ IMPORTLIB = winevulkan
+ IMPORTS   = user32 gdi32 advapi32 setupapi win32u
+-EXTRALIBS = $(PTHREAD_LIBS)
++EXTRALIBS = -lm $(PTHREAD_LIBS)
+
+ C_SRCS = \
+ 	loader.c \
 From 6cdad4ea774347ddbb14d695784ea62641b69c96 Mon Sep 17 00:00:00 2001
 From: Tk-Glitch <ti3nou@gmail.com>
 Date: Sat, 17 Jul 2021 23:54:42 +0200
