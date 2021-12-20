@@ -412,6 +412,24 @@ index f40994c422dc..5d2757e2de65 100644
     cpufreq_drivers
     intel_epb
     intel-speed-select
+diff --git a/MAINTAINERS b/MAINTAINERS
+index fe347675fb5c..8e0666a552df 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -975,6 +975,13 @@ S:	Supported
+ T:	git https://gitlab.freedesktop.org/agd5f/linux.git
+ F:	drivers/gpu/drm/amd/pm/
+ 
++AMD PSTATE DRIVER
++M:	Huang Rui <ray.huang@amd.com>
++L:	linux-pm@vger.kernel.org
++S:	Supported
++F:	Documentation/admin-guide/pm/amd-pstate.rst
++F:	drivers/cpufreq/amd-pstate*
++
+ AMD PTDMA DRIVER
+ M:	Sanjay R Mehta <sanju.mehta@amd.com>
+ L:	dmaengine@vger.kernel.org
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
 index d5b5f2ab87a0..18de5f76f198 100644
 --- a/arch/x86/include/asm/cpufeatures.h
@@ -453,10 +471,19 @@ index 01e2650b9585..e7945ef6a8df 100644
  #define MSR_F17H_IRPERF			0xc00000e9
  
 diff --git a/drivers/acpi/cppc_acpi.c b/drivers/acpi/cppc_acpi.c
-index a85c351589be..003df9fba122 100644
+index a85c351589be..6c0a55a17dfc 100644
 --- a/drivers/acpi/cppc_acpi.c
 +++ b/drivers/acpi/cppc_acpi.c
-@@ -411,7 +411,7 @@ bool acpi_cpc_valid(void)
+@@ -118,6 +118,8 @@ static DEFINE_PER_CPU(struct cpc_desc *, cpc_desc_ptr);
+  */
+ #define NUM_RETRIES 500ULL
+ 
++#define OVER_16BTS_MASK ~0xFFFFULL
++
+ #define define_one_cppc_ro(_name)		\
+ static struct kobj_attribute _name =		\
+ __ATTR(_name, 0444, show_##_name, NULL)
+@@ -411,7 +413,7 @@ bool acpi_cpc_valid(void)
  	struct cpc_desc *cpc_ptr;
  	int cpu;
  
@@ -465,20 +492,22 @@ index a85c351589be..003df9fba122 100644
  		cpc_ptr = per_cpu(cpc_desc_ptr, cpu);
  		if (!cpc_ptr)
  			return false;
-@@ -746,9 +746,24 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
+@@ -746,9 +748,26 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
  						goto out_free;
  					cpc_ptr->cpc_regs[i-2].sys_mem_vaddr = addr;
  				}
 +			} else if (gas_t->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
 +				if (gas_t->access_width < 1 || gas_t->access_width > 3) {
-+					/* 1 = 8-bit, 2 = 16-bit, and 3 = 32-bit. SystemIO doesn't
-+					 * implement 64-bit registers.
++					/*
++					 * 1 = 8-bit, 2 = 16-bit, and 3 = 32-bit.
++					 * SystemIO doesn't implement 64-bit
++					 * registers.
 +					 */
 +					pr_debug("Invalid access width %d for SystemIO register\n",
 +						gas_t->access_width);
 +					goto out_free;
 +				}
-+				if (gas_t->address & ~0xFFFFULL) {
++				if (gas_t->address & OVER_16BTS_MASK) {
 +					/* SystemIO registers use 16-bit integer addresses */
 +					pr_debug("Invalid IO port %llu for SystemIO register\n",
 +						gas_t->address);
@@ -491,7 +520,7 @@ index a85c351589be..003df9fba122 100644
  					pr_debug("Unsupported register type: %d\n", gas_t->space_id);
  					goto out_free;
  				}
-@@ -923,7 +938,20 @@ static int cpc_read(int cpu, struct cpc_register_resource *reg_res, u64 *val)
+@@ -923,7 +942,21 @@ static int cpc_read(int cpu, struct cpc_register_resource *reg_res, u64 *val)
  	}
  
  	*val = 0;
@@ -501,10 +530,11 @@ index a85c351589be..003df9fba122 100644
 +		u32 width = 8 << (reg->access_width - 1);
 +		acpi_status status;
 +
-+		status = acpi_os_read_port((acpi_io_address)reg->address, (u32 *)val, width);
-+
-+		if (status != AE_OK) {
-+			pr_debug("Error: Failed to read SystemIO port %llx\n", reg->address);
++		status = acpi_os_read_port((acpi_io_address)reg->address,
++					   (u32 *)val, width);
++		if (ACPI_FAILURE(status)) {
++			pr_debug("Error: Failed to read SystemIO port %llx\n",
++				 reg->address);
 +			return -EFAULT;
 +		}
 +
@@ -513,7 +543,7 @@ index a85c351589be..003df9fba122 100644
  		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
  	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
  		vaddr = reg_res->sys_mem_vaddr;
-@@ -962,7 +990,19 @@ static int cpc_write(int cpu, struct cpc_register_resource *reg_res, u64 val)
+@@ -962,7 +995,20 @@ static int cpc_write(int cpu, struct cpc_register_resource *reg_res, u64 val)
  	int pcc_ss_id = per_cpu(cpu_pcc_subspace_idx, cpu);
  	struct cpc_reg *reg = &reg_res->cpc_entry.reg;
  
@@ -522,10 +552,11 @@ index a85c351589be..003df9fba122 100644
 +		u32 width = 8 << (reg->access_width - 1);
 +		acpi_status status;
 +
-+		status = acpi_os_write_port((acpi_io_address)reg->address, (u32)val, width);
-+
-+		if (status != AE_OK) {
-+			pr_debug("Error: Failed to write SystemIO port %llx\n", reg->address);
++		status = acpi_os_write_port((acpi_io_address)reg->address,
++					    (u32)val, width);
++		if (ACPI_FAILURE(status)) {
++			pr_debug("Error: Failed to write SystemIO port %llx\n",
++				 reg->address);
 +			return -EFAULT;
 +		}
 +
@@ -534,7 +565,7 @@ index a85c351589be..003df9fba122 100644
  		vaddr = GET_PCC_VADDR(reg->address, pcc_ss_id);
  	else if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
  		vaddr = reg_res->sys_mem_vaddr;
-@@ -1222,6 +1262,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
+@@ -1222,6 +1268,51 @@ int cppc_get_perf_ctrs(int cpunum, struct cppc_perf_fb_ctrs *perf_fb_ctrs)
  }
  EXPORT_SYMBOL_GPL(cppc_get_perf_ctrs);
  
@@ -587,7 +618,7 @@ index a85c351589be..003df9fba122 100644
   * cppc_set_perf - Set a CPU's performance controls.
   * @cpu: CPU for which to set performance controls.
 diff --git a/drivers/cpufreq/Kconfig.x86 b/drivers/cpufreq/Kconfig.x86
-index 92701a18bdd9..21837eb1698b 100644
+index 92701a18bdd9..a951768c3ebb 100644
 --- a/drivers/cpufreq/Kconfig.x86
 +++ b/drivers/cpufreq/Kconfig.x86
 @@ -34,6 +34,23 @@ config X86_PCC_CPUFREQ
@@ -603,8 +634,8 @@ index 92701a18bdd9..21837eb1698b 100644
 +	help
 +	  This driver adds a CPUFreq driver which utilizes a fine grain
 +	  processor performance frequency control range instead of legacy
-+	  performance levels. This driver supports the AMD processors with
-+	  _CPC object in the SBIOS.
++	  performance levels. _CPC needs to be present in the ACPI tables
++	  of the system.
 +
 +	  For details, take a look at:
 +	  <file:Documentation/admin-guide/pm/amd-pstate.rst>.
@@ -730,10 +761,10 @@ index 000000000000..647505957d4f
 +#include <trace/define_trace.h>
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
 new file mode 100644
-index 000000000000..c70274ae4046
+index 000000000000..2471a311fb4d
 --- /dev/null
 +++ b/drivers/cpufreq/amd-pstate.c
-@@ -0,0 +1,609 @@
+@@ -0,0 +1,643 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later
 +/*
 + * amd-pstate.c - AMD Processor P-state Frequency Driver
@@ -741,6 +772,19 @@ index 000000000000..c70274ae4046
 + * Copyright (C) 2021 Advanced Micro Devices, Inc. All Rights Reserved.
 + *
 + * Author: Huang Rui <ray.huang@amd.com>
++ *
++ * AMD P-State introduces a new CPU performance scaling design for AMD
++ * processors using the ACPI Collaborative Performance and Power Control (CPPC)
++ * feature which works with the AMD SMU firmware providing a finer grained
++ * frequency control range. It is to replace the legacy ACPI P-States control,
++ * allows a flexible, low-latency interface for the Linux kernel to directly
++ * communicate the performance hints to hardware.
++ *
++ * AMD P-State is supported on recent AMD Zen base CPU series include some of
++ * Zen2 and Zen3 processors. _CPC needs to be present in the ACPI tables of AMD
++ * P-State supported system. And there are two types of hardware implementations
++ * for AMD P-State: 1) Full MSR Solution and 2) Shared Memory Solution.
++ * X86_FEATURE_CPPC CPU feature flag is used to distinguish the different types.
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -772,7 +816,8 @@ index 000000000000..c70274ae4046
 +#define AMD_PSTATE_TRANSITION_LATENCY	0x20000
 +#define AMD_PSTATE_TRANSITION_DELAY	500
 +
-+/* TODO: We need more time to fine tune processors with shared memory solution
++/*
++ * TODO: We need more time to fine tune processors with shared memory solution
 + * with community together.
 + *
 + * There are some performance drops on the CPU benchmarks which reports from
@@ -787,11 +832,29 @@ index 000000000000..c70274ae4046
 +
 +static struct cpufreq_driver amd_pstate_driver;
 +
++/**
++ * struct amd_cpudata - private CPU data for AMD P-State
++ * @cpu: CPU number
++ * @cppc_req_cached: cached performance request hints
++ * @highest_perf: the maximum performance an individual processor may reach,
++ *		  assuming ideal conditions
++ * @nominal_perf: the maximum sustained performance level of the processor,
++ *		  assuming ideal operating conditions
++ * @lowest_nonlinear_perf: the lowest performance level at which nonlinear power
++ *			   savings are achieved
++ * @lowest_perf: the absolute lowest performance level of the processor
++ * @max_freq: the frequency that mapped to highest_perf
++ * @min_freq: the frequency that mapped to lowest_perf
++ * @nominal_freq: the frequency that mapped to nominal_perf
++ * @lowest_nonlinear_freq: the frequency that mapped to lowest_nonlinear_perf
++ *
++ * The amd_cpudata is key private data for each CPU thread in AMD P-State, and
++ * represents all the attributes and goals that AMD P-State requests at runtime.
++ */
 +struct amd_cpudata {
 +	int	cpu;
 +
-+	struct freq_qos_request req[2];
-+
++	struct	freq_qos_request req[2];
 +	u64	cppc_req_cached;
 +
 +	u32	highest_perf;
@@ -816,7 +879,7 @@ index 000000000000..c70274ae4046
 +{
 +	int cpu, ret = 0;
 +
-+	for_each_online_cpu(cpu) {
++	for_each_present_cpu(cpu) {
 +		ret = cppc_set_enable(cpu, enable);
 +		if (ret)
 +			return ret;
@@ -1215,7 +1278,8 @@ index 000000000000..c70274ae4046
 +
 +/* Sysfs attributes */
 +
-+/* This frequency is to indicate the maximum hardware frequency.
++/*
++ * This frequency is to indicate the maximum hardware frequency.
 + * If boost is not active but supported, the frequency will be larger than the
 + * one in cpuinfo.
 + */
@@ -1249,7 +1313,8 @@ index 000000000000..c70274ae4046
 +	return sprintf(&buf[0], "%u\n", freq);
 +}
 +
-+/* In some of ASICs, the highest_perf is not the one in the _CPC table, so we
++/*
++ * In some of ASICs, the highest_perf is not the one in the _CPC table, so we
 + * need to expose it to sysfs.
 + */
 +static ssize_t show_amd_pstate_highest_perf(struct cpufreq_policy *policy,
@@ -1806,7 +1871,7 @@ index 72eb43593180..2a6dc104e76b 100644
  
  	if (cpu_info->vendor == X86_VENDOR_INTEL) {
 diff --git a/tools/power/cpupower/utils/helpers/helpers.h b/tools/power/cpupower/utils/helpers/helpers.h
-index 33ffacee7fcb..5f6862502dbf 100644
+index b4813efdfb00..5f6862502dbf 100644
 --- a/tools/power/cpupower/utils/helpers/helpers.h
 +++ b/tools/power/cpupower/utils/helpers/helpers.h
 @@ -11,6 +11,7 @@
@@ -1817,15 +1882,7 @@ index 33ffacee7fcb..5f6862502dbf 100644
  
  #include "helpers/bitmask.h"
  #include <cpupower.h>
-@@ -73,6 +74,7 @@ enum cpupower_cpu_vendor {X86_VENDOR_UNKNOWN = 0, X86_VENDOR_INTEL,
- #define CPUPOWER_CAP_AMD_HW_PSTATE	0x00000100
- #define CPUPOWER_CAP_AMD_PSTATEDEF	0x00000200
- #define CPUPOWER_CAP_AMD_CPB_MSR	0x00000400
-+#define CPUPOWER_CAP_AMD_PSTATE		0x00000800
- 
- #define CPUPOWER_AMD_CPBDIS		0x02000000
- 
-@@ -135,6 +137,16 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
+@@ -136,6 +137,16 @@ extern int decode_pstates(unsigned int cpu, int boost_states,
  
  extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
  				     int *active, int * states);
@@ -1842,7 +1899,7 @@ index 33ffacee7fcb..5f6862502dbf 100644
  /*
   * CPUID functions returning a single datum
   */
-@@ -167,6 +179,15 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
+@@ -168,6 +179,15 @@ static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
  					    int *active, int * states)
  { return -1; }
  
@@ -1858,7 +1915,7 @@ index 33ffacee7fcb..5f6862502dbf 100644
  /* cpuid and cpuinfo helpers  **************************/
  
  static inline unsigned int cpuid_eax(unsigned int op) { return 0; };
-@@ -184,5 +205,6 @@ extern struct bitmask *offline_cpus;
+@@ -185,5 +205,6 @@ extern struct bitmask *offline_cpus;
  void get_cpustate(void);
  void print_online_cpus(void);
  void print_offline_cpus(void);
@@ -1959,6 +2016,5 @@ index fc6e34511721..d693c96cd09c 100644
 +
 +	return;
 +}
--- 
+--
 2.34.1
-
