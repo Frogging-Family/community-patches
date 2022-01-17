@@ -443,7 +443,7 @@ index d5b5f2ab87a0..18de5f76f198 100644
  /* Thermal and Power Management Leaf, CPUID level 0x00000006 (EAX), word 14 */
  #define X86_FEATURE_DTHERM		(14*32+ 0) /* Digital Thermal Sensor */
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 01e2650b9585..e7945ef6a8df 100644
+index 01e2650b9585..3faf0f97edb1 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
 @@ -486,6 +486,23 @@
@@ -457,15 +457,15 @@ index 01e2650b9585..e7945ef6a8df 100644
 +#define MSR_AMD_CPPC_REQ		0xc00102b3
 +#define MSR_AMD_CPPC_STATUS		0xc00102b4
 +
-+#define CAP1_LOWEST_PERF(x)	(((x) >> 0) & 0xff)
-+#define CAP1_LOWNONLIN_PERF(x)	(((x) >> 8) & 0xff)
-+#define CAP1_NOMINAL_PERF(x)	(((x) >> 16) & 0xff)
-+#define CAP1_HIGHEST_PERF(x)	(((x) >> 24) & 0xff)
++#define AMD_CPPC_LOWEST_PERF(x)		(((x) >> 0) & 0xff)
++#define AMD_CPPC_LOWNONLIN_PERF(x)	(((x) >> 8) & 0xff)
++#define AMD_CPPC_NOMINAL_PERF(x)	(((x) >> 16) & 0xff)
++#define AMD_CPPC_HIGHEST_PERF(x)	(((x) >> 24) & 0xff)
 +
-+#define REQ_MAX_PERF(x)		(((x) & 0xff) << 0)
-+#define REQ_MIN_PERF(x)		(((x) & 0xff) << 8)
-+#define REQ_DES_PERF(x)		(((x) & 0xff) << 16)
-+#define REQ_ENERGY_PERF_PREF(x)	(((x) & 0xff) << 24)
++#define AMD_CPPC_MAX_PERF(x)		(((x) & 0xff) << 0)
++#define AMD_CPPC_MIN_PERF(x)		(((x) & 0xff) << 8)
++#define AMD_CPPC_DES_PERF(x)		(((x) & 0xff) << 16)
++#define AMD_CPPC_ENERGY_PERF_PREF(x)	(((x) & 0xff) << 24)
 +
  /* Fam 17h MSRs */
  #define MSR_F17H_IRPERF			0xc00000e9
@@ -761,7 +761,7 @@ index 000000000000..647505957d4f
 +#include <trace/define_trace.h>
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
 new file mode 100644
-index 000000000000..2471a311fb4d
+index 000000000000..40ceb031abf5
 --- /dev/null
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -0,0 +1,643 @@
@@ -911,9 +911,9 @@ index 000000000000..2471a311fb4d
 +	 */
 +	WRITE_ONCE(cpudata->highest_perf, amd_get_highest_perf());
 +
-+	WRITE_ONCE(cpudata->nominal_perf, CAP1_NOMINAL_PERF(cap1));
-+	WRITE_ONCE(cpudata->lowest_nonlinear_perf, CAP1_LOWNONLIN_PERF(cap1));
-+	WRITE_ONCE(cpudata->lowest_perf, CAP1_LOWEST_PERF(cap1));
++	WRITE_ONCE(cpudata->nominal_perf, AMD_CPPC_NOMINAL_PERF(cap1));
++	WRITE_ONCE(cpudata->lowest_nonlinear_perf, AMD_CPPC_LOWNONLIN_PERF(cap1));
++	WRITE_ONCE(cpudata->lowest_perf, AMD_CPPC_LOWEST_PERF(cap1));
 +
 +	return 0;
 +}
@@ -982,14 +982,14 @@ index 000000000000..2471a311fb4d
 +	u64 prev = READ_ONCE(cpudata->cppc_req_cached);
 +	u64 value = prev;
 +
-+	value &= ~REQ_MIN_PERF(~0L);
-+	value |= REQ_MIN_PERF(min_perf);
++	value &= ~AMD_CPPC_MIN_PERF(~0L);
++	value |= AMD_CPPC_MIN_PERF(min_perf);
 +
-+	value &= ~REQ_DES_PERF(~0L);
-+	value |= REQ_DES_PERF(des_perf);
++	value &= ~AMD_CPPC_DES_PERF(~0L);
++	value |= AMD_CPPC_DES_PERF(des_perf);
 +
-+	value &= ~REQ_MAX_PERF(~0L);
-+	value |= REQ_MAX_PERF(max_perf);
++	value &= ~AMD_CPPC_MAX_PERF(~0L);
++	value |= AMD_CPPC_MAX_PERF(max_perf);
 +
 +	trace_amd_pstate_perf(min_perf, des_perf, max_perf,
 +			      cpudata->cpu, (value != prev), fast_switch);
