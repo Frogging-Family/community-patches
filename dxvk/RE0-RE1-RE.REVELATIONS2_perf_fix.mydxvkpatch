@@ -1,0 +1,28 @@
+From 693e9cd7a7cc0304fc34d4ebe682274dd055645e Mon Sep 17 00:00:00 2001
+From: Robin Kertels <robin.kertels@gmail.com>
+Date: Wed, 26 Jan 2022 17:25:24 +0100
+Subject: [PATCH] [d3d9] Get rid of direct buffer map mode
+
+---
+ src/d3d9/d3d9_common_buffer.h | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/d3d9/d3d9_common_buffer.h b/src/d3d9/d3d9_common_buffer.h
+index 8f24d9c89..b7bc2375e 100644
+--- a/src/d3d9/d3d9_common_buffer.h
++++ b/src/d3d9/d3d9_common_buffer.h
+@@ -89,9 +89,11 @@ namespace dxvk {
+     * \brief Determine the mapping mode of the buffer, (ie. direct mapping or backed)
+     */
+     inline D3D9_COMMON_BUFFER_MAP_MODE GetMapMode() const {
+-      return (m_desc.Pool == D3DPOOL_DEFAULT && (m_desc.Usage & (D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY)))
++      /*return (m_desc.Pool == D3DPOOL_DEFAULT && (m_desc.Usage & (D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY)))
+         ? D3D9_COMMON_BUFFER_MAP_MODE_DIRECT
+-        : D3D9_COMMON_BUFFER_MAP_MODE_BUFFER;
++        : D3D9_COMMON_BUFFER_MAP_MODE_BUFFER;*/
++
++      return D3D9_COMMON_BUFFER_MAP_MODE_BUFFER;
+     }
+
+     /**
+
