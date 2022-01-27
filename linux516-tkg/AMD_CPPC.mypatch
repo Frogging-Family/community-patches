@@ -483,15 +483,6 @@ index a85c351589be..6c0a55a17dfc 100644
  #define define_one_cppc_ro(_name)		\
  static struct kobj_attribute _name =		\
  __ATTR(_name, 0444, show_##_name, NULL)
-@@ -411,7 +413,7 @@ bool acpi_cpc_valid(void)
- 	struct cpc_desc *cpc_ptr;
- 	int cpu;
- 
--	for_each_possible_cpu(cpu) {
-+	for_each_present_cpu(cpu) {
- 		cpc_ptr = per_cpu(cpc_desc_ptr, cpu);
- 		if (!cpc_ptr)
- 			return false;
 @@ -746,9 +748,26 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
  						goto out_free;
  					cpc_ptr->cpc_regs[i-2].sys_mem_vaddr = addr;
