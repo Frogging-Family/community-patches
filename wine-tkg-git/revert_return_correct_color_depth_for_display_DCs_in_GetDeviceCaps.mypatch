@@ -6,7 +6,7 @@ index 5e14c536a76..81057adf799 100644
              dm->dmDisplayFrequency, value);
  
      value = GetDeviceCaps(hdc, BITSPIXEL);
-+    toto_wine_if(dm->dmBitsPerPel != 32)
++    todo_wine_if(dm->dmBitsPerPel != 32)
      ok_(__FILE__, line)(value == dm->dmBitsPerPel, "Expected BITSPIXEL %d, got %d.\n",
              dm->dmBitsPerPel, value);
  
