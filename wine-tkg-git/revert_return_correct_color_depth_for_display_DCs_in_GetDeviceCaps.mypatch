@@ -1,50 +1,37 @@
 diff --git a/dlls/user32/tests/monitor.c b/dlls/user32/tests/monitor.c
-index bd348576726..e2c4dce30ac 100644
+index 5e14c536a76..81057adf799 100644
 --- a/dlls/user32/tests/monitor.c
 +++ b/dlls/user32/tests/monitor.c
-@@ -2150,6 +2150,7 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
+@@ -2162,6 +2162,7 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
              dm->dmDisplayFrequency, value);
  
      value = GetDeviceCaps(hdc, BITSPIXEL);
-+    todo_wine_if(dm->dmBitsPerPel != 32)
++    toto_wine_if(dm->dmBitsPerPel != 32)
      ok_(__FILE__, line)(value == dm->dmBitsPerPel, "Expected BITSPIXEL %d, got %d.\n",
              dm->dmBitsPerPel, value);
  
-diff --git a/dlls/winex11.drv/init.c b/dlls/winex11.drv/init.c
-index 0b4bede19e9..eaa8b99c751 100644
---- a/dlls/winex11.drv/init.c
-+++ b/dlls/winex11.drv/init.c
-@@ -162,6 +162,8 @@ static INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
- {
-     switch(cap)
-     {
-+    case BITSPIXEL:
-+        return screen_bpp;
-     case SIZEPALETTE:
-         return palette_size;
-     default:
 diff --git a/dlls/win32u/driver.c b/dlls/win32u/driver.c
-index 93c2ff1da4c..43a644d5f29 100644
+index b3a3e70f83f..399729b634f 100644
 --- a/dlls/win32u/driver.c
 +++ b/dlls/win32u/driver.c
-@@ -261,24 +261,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
-         ret = user_callbacks->pGetSystemMetrics( SM_CYSCREEN );
+@@ -229,24 +229,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
+         ret = get_system_metrics( SM_CYSCREEN );
          return ret ? ret : 480;
      }
 -    case BITSPIXEL:
 -    {
+-        UNICODE_STRING display;
 -        DEVMODEW devmode;
--        WCHAR *display;
 -        DC *dc;
 -
--        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
+-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
 -        {
 -            dc = get_nulldrv_dc( dev );
--            display = dc->display[0] ? dc->display : NULL;
 -            memset( &devmode, 0, sizeof(devmode) );
 -            devmode.dmSize = sizeof(devmode);
--            if (user_callbacks->pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode )
--                && devmode.dmFields & DM_BITSPERPEL && devmode.dmBitsPerPel)
+-            init_unicode_string( &display, dc->display );
+-            if (NtUserEnumDisplaySettings( &display, ENUM_CURRENT_SETTINGS, &devmode, 0 ) &&
+-                (devmode.dmFields & DM_BITSPERPEL) && devmode.dmBitsPerPel)
 -                return devmode.dmBitsPerPel;
 -        }
 -        return 32;
@@ -53,3 +40,16 @@ index 93c2ff1da4c..43a644d5f29 100644
      case PLANES:          return 1;
      case NUMBRUSHES:      return -1;
      case NUMPENS:         return -1;
+diff --git a/dlls/winex11.drv/init.c b/dlls/winex11.drv/init.c
+index 5b31c352a23..0ba19deaf0c 100644
+--- a/dlls/winex11.drv/init.c
++++ b/dlls/winex11.drv/init.c
+@@ -162,6 +162,8 @@ static INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
+ {
+     switch(cap)
+     {
++ 	 case BITSPIXEL:
++ 	     return screen_bpp;
+     case SIZEPALETTE:
+         return palette_size;
+     default:
