@@ -2624,11 +2624,14 @@ diff --git a/dlls/winex11.drv/fs.c b/dlls/winex11.drv/fs.c
 index 282d9dbe5ca..2a1242cb5c5 100644
 --- a/dlls/winex11.drv/fs.c
 +++ b/dlls/winex11.drv/fs.c
-@@ -67,11 +67,20 @@ static struct fs_monitor_size fs_monitor_sizes[] =
+@@ -67,11 +67,23 @@ static struct fs_monitor_size fs_monitor_sizes[] =
      {1024, 768},  /*  4:3 */
      {1600, 1200}, /*  4:3 */
      {960, 540},   /* 16:9 */
++    {1024, 576},  /* 16:9 */
++    {1024, 640},  /* 16:10 */
 +    {1130, 635},  /* 16:9 */
++    {1152, 720},  /* 16:10 */
      {1280, 720},  /* 16:9 */
 +    {1477, 831},  /* 16:9 */
 +    {1506, 847},  /* 16:9 */
