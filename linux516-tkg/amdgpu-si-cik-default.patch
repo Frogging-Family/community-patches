@@ -1,0 +1,79 @@
+From 9dba686dfc006716e1cea0e28a7918561cf8a664 Mon Sep 17 00:00:00 2001
+From: Jan200101 <sentrycraft123@gmail.com>
+Date: Tue, 22 Mar 2022 17:52:14 +0100
+Subject: [PATCH] drm/amdgpu: enable SI and CIK support by default
+
+Signed-off-by: Jan200101 <sentrycraft123@gmail.com>
+---
+ drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c | 14 ++------------
+ drivers/gpu/drm/radeon/radeon_drv.c     | 10 ++++++++++
+ 2 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
+index 8c7637233c81..d736cc1a663a 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
+@@ -573,15 +573,10 @@ module_param_named(timeout_period, amdgpu_watchdog_timer.period, uint, 0644);
+  */
+ #ifdef CONFIG_DRM_AMDGPU_SI
+ 
+-#if defined(CONFIG_DRM_RADEON) || defined(CONFIG_DRM_RADEON_MODULE)
+-int amdgpu_si_support = 0;
+-MODULE_PARM_DESC(si_support, "SI support (1 = enabled, 0 = disabled (default))");
+-#else
+ int amdgpu_si_support = 1;
+ MODULE_PARM_DESC(si_support, "SI support (1 = enabled (default), 0 = disabled)");
+-#endif
+-
+ module_param_named(si_support, amdgpu_si_support, int, 0444);
++
+ #endif
+ 
+ /**
+@@ -592,15 +587,10 @@ module_param_named(si_support, amdgpu_si_support, int, 0444);
+  */
+ #ifdef CONFIG_DRM_AMDGPU_CIK
+ 
+-#if defined(CONFIG_DRM_RADEON) || defined(CONFIG_DRM_RADEON_MODULE)
+-int amdgpu_cik_support = 0;
+-MODULE_PARM_DESC(cik_support, "CIK support (1 = enabled, 0 = disabled (default))");
+-#else
+ int amdgpu_cik_support = 1;
+ MODULE_PARM_DESC(cik_support, "CIK support (1 = enabled (default), 0 = disabled)");
+-#endif
+-
+ module_param_named(cik_support, amdgpu_cik_support, int, 0444);
++
+ #endif
+ 
+ /**
+diff --git a/drivers/gpu/drm/radeon/radeon_drv.c b/drivers/gpu/drm/radeon/radeon_drv.c
+index b74cebca1f89..5208d50da643 100644
+--- a/drivers/gpu/drm/radeon/radeon_drv.c
++++ b/drivers/gpu/drm/radeon/radeon_drv.c
+@@ -273,12 +273,22 @@ module_param_named(uvd, radeon_uvd, int, 0444);
+ MODULE_PARM_DESC(vce, "vce enable/disable vce support (1 = enable, 0 = disable)");
+ module_param_named(vce, radeon_vce, int, 0444);
+ 
++#ifdef CONFIG_DRM_AMDGPU_SI
++int radeon_si_support = 0;
++MODULE_PARM_DESC(si_support, "SI support (1 = enabled, 0 = disabled (default))");
++#else
+ int radeon_si_support = 1;
+ MODULE_PARM_DESC(si_support, "SI support (1 = enabled (default), 0 = disabled)");
++#endif
+ module_param_named(si_support, radeon_si_support, int, 0444);
+ 
++#ifdef CONFIG_DRM_AMDGPU_CIK
++int radeon_cik_support = 0;
++MODULE_PARM_DESC(cik_support, "CIK support (1 = enabled, 0 = disabled (default))");
++#else
+ int radeon_cik_support = 1;
+ MODULE_PARM_DESC(cik_support, "CIK support (1 = enabled (default), 0 = disabled)");
++#endif
+ module_param_named(cik_support, radeon_cik_support, int, 0444);
+ 
+ static struct pci_device_id pciidlist[] = {
+-- 
+2.35.1
+
