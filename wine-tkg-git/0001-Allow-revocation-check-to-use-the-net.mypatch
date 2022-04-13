@@ -1,0 +1,47 @@
+From 6feb798afe9787cd31f7bf8ee34019453c0571f6 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Sat, 26 Feb 2022 23:17:41 +0100
+Subject: [PATCH] Allow revocation check to use the net
+
+---
+ dlls/cryptnet/cryptnet_main.c | 2 +-
+ dlls/wininet/internet.c       | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/dlls/cryptnet/cryptnet_main.c b/dlls/cryptnet/cryptnet_main.c
+index 8aec76e9b81..b0bd9dc7715 100644
+--- a/dlls/cryptnet/cryptnet_main.c
++++ b/dlls/cryptnet/cryptnet_main.c
+@@ -1658,7 +1658,7 @@ static const CRL_CONTEXT *retrieve_crl_from_dist_points(const CRYPT_URL_ARRAY *a
+     const CRL_CONTEXT *crl;
+     DWORD i;
+ 
+-    if (verify_flags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
++    if (verify_flags == CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
+         retrieve_flags |= CRYPT_CACHE_ONLY_RETRIEVAL;
+ 
+     /* Yes, this is a weird algorithm, but the documentation for
+diff --git a/dlls/wininet/internet.c b/dlls/wininet/internet.c
+index 4d512e4ef39..f4ff3422f30 100644
+--- a/dlls/wininet/internet.c
++++ b/dlls/wininet/internet.c
+@@ -1441,14 +1441,14 @@ static BOOL set_url_component(WCHAR **component, DWORD *component_length, const
+ {
+     TRACE("%s (%ld)\n", debugstr_wn(value, len), len);
+ 
+-    if (!*component_length)
++    if (!component_length)
+         return TRUE;
+-
+     if (!*component) {
+         *(const WCHAR**)component = value;
+         *component_length = len;
+         return TRUE;
+     }
++    if(!*component_length) return TRUE;
+ 
+     if (*component_length < len+1) {
+         SetLastError(ERROR_INSUFFICIENT_BUFFER);
+-- 
+2.35.1
+

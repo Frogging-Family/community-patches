@@ -61,3 +61,7 @@
 - proton_winex11_Let_the_WM_focus_our_windows_by_default.mypatch : Proton patch that is supposed to fix game windows not being in focus when first started and when exiting, which can cause surprising keyboard behavior (e.g. accidentally Alt-F4ing Steam itself, which is in the background). However, it breaks some apps (see https://github.com/Frogging-Family/wine-tkg-git/issues/466) while being seemingly not needed with most DEs.
 - revert_return_correct_color_depth_for_display_DCs_in_GetDeviceCaps.mypatch : Fixes issue where some users with Nvidia GPUs and multi-monitor setups using DVI see Xorg pin their CPU to 100% usage whenever using Wine after upstream commit d171d11 - https://bugs.winehq.org/show_bug.cgi?id=51420
 - server-Enable-link-time-optimization.mypatch : Enables LTO for wineserver
+- 0001-actctx-Use-build_assembly_dir-to-assign-a-directory.mypatch : Allow some applications to properly find some assemblies.
+- 0001-Allow-revocation-check-to-use-the-net.mypatch : Some application that use CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION in bitwise OR with other flags need a full net revocation check. Rustup is affected
+- 0001-Revert-server-Handle-the-entire-IOCTL_AFD_POLL-ioctl.mypatch : Revert the commit that moved IOCTL_AFD_POLL serverside. Rustup (and possible other application that use this routine) need this revert to properly park/unpark the thread.
+- 0001-Execute-hooks-callbacks-even-when-init_window_call_p.mypatch : Execute WH_CALLWNDPROC and WH_CALLWNDPROCRET even if the widget doesn't have  a WinProc associated

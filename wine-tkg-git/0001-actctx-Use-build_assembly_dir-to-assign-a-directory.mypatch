@@ -1,0 +1,28 @@
+From 05a5f1c26f7bf19d2c1cea667b2c77b9f86cc97d Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Tue, 22 Feb 2022 14:42:29 +0100
+Subject: [PATCH] actctx : Use build_assembly_dir to assign  a directory in
+ assembly->dir
+
+---
+ dlls/ntdll/actctx.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/dlls/ntdll/actctx.c b/dlls/ntdll/actctx.c
+index b5588b065cc..4023a2352d1 100644
+--- a/dlls/ntdll/actctx.c
++++ b/dlls/ntdll/actctx.c
+@@ -2664,6 +2664,10 @@ static void parse_assembly_elem( xmlbuf_t *xmlbuf, struct assembly* assembly,
+         {
+             parse_assembly_identity_elem(xmlbuf, acl->actctx, &assembly->id, &elem);
+ 
++            if (!assembly->directory && (assembly->type == ASSEMBLY_MANIFEST || assembly->type == ASSEMBLY_SHARED_MANIFEST ) ){
++                assembly->directory = build_assembly_dir(&assembly->id);
++                TRACE("Assembly directory generated  %ls \n", assembly->directory);
++            }
+             if (!xmlbuf->error && expected_ai)
+             {
+                 /* FIXME: more tests */
+-- 
+2.35.1
+
