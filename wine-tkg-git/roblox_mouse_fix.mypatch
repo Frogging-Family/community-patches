@@ -6,7 +6,7 @@ index 06c5f7a4981..a2e7e66f977 100644
      Window clip_window;
      HWND msg_hwnd = 0;
      POINT pos;
-+    RECT virtual_rect = get_virtual_screen_rect();
++    RECT virtual_rect = NtUserGetVirtualScreenRect();
 +    if (!EqualRect(clip, &virtual_rect)) reset_clipping_window();
  
      if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
