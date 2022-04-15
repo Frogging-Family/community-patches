@@ -1,0 +1,778 @@
+From 33bfea189b7884ef180e99eb8b63e209e9b8c7e5 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Sat, 26 Feb 2022 17:02:56 +0100
+Subject: [PATCH] Revert "server: Handle the entire IOCTL_AFD_POLL ioctl on the
+ server side."
+
+This reverts commit 4b00dd097de79be0a548f7d80b4c98ce8d9dbd20.
+---
+ dlls/ntdll/unix/socket.c       | 153 ++++++++++++++++++++++++++-
+ include/wine/afd.h             |  31 +-----
+ include/wine/server_protocol.h |  33 ++++++
+ server/protocol.def            |  25 +++++
+ server/request.h               |   9 ++
+ server/sock.c                  | 182 +++++++++------------------------
+ server/trace.c                 |  50 +++++++++
+ 7 files changed, 317 insertions(+), 166 deletions(-)
+
+diff --git a/dlls/ntdll/unix/socket.c b/dlls/ntdll/unix/socket.c
+index 23059e3cff8..27367a78623 100644
+--- a/dlls/ntdll/unix/socket.c
++++ b/dlls/ntdll/unix/socket.c
+@@ -773,6 +773,151 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
+ }
+ 
+ 
++struct async_poll_ioctl
++{
++    struct async_fileio io;
++    unsigned int count;
++    struct afd_poll_params *input, *output;
++    struct poll_socket_output sockets[1];
++};
++
++static ULONG_PTR fill_poll_output( struct async_poll_ioctl *async, NTSTATUS status )
++{
++    struct afd_poll_params *input = async->input, *output = async->output;
++    unsigned int i, count = 0;
++
++    memcpy( output, input, offsetof( struct afd_poll_params, sockets[0] ) );
++
++    if (!status)
++    {
++        for (i = 0; i < async->count; ++i)
++        {
++            if (async->sockets[i].flags)
++            {
++                output->sockets[count].socket = input->sockets[i].socket;
++                output->sockets[count].flags = async->sockets[i].flags;
++                output->sockets[count].status = async->sockets[i].status;
++                ++count;
++            }
++        }
++    }
++    output->count = count;
++    return offsetof( struct afd_poll_params, sockets[count] );
++}
++
++static BOOL async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
++{
++    struct async_poll_ioctl *async = user;
++
++    if (*status == STATUS_ALERTED)
++    {
++        SERVER_START_REQ( get_async_result )
++        {
++            req->user_arg = wine_server_client_ptr( async );
++            wine_server_set_reply( req, async->sockets, async->count * sizeof(async->sockets[0]) );
++            *status = wine_server_call( req );
++        }
++        SERVER_END_REQ;
++
++        *info = fill_poll_output( async, *status );
++    }
++
++    free( async->input );
++    release_fileio( &async->io );
++    return TRUE;
++}
++
++
++/* we could handle this ioctl entirely on the server side, but the differing
++ * structure size makes it painful */
++static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
++                           void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
++{
++    const struct afd_poll_params *params = in_buffer;
++    struct poll_socket_input *input;
++    struct async_poll_ioctl *async;
++    HANDLE wait_handle;
++    DWORD async_size;
++    NTSTATUS status;
++    unsigned int i;
++    ULONG options;
++
++    if (in_size < sizeof(*params) || out_size < in_size || !params->count
++            || in_size < offsetof( struct afd_poll_params, sockets[params->count] ))
++        return STATUS_INVALID_PARAMETER;
++
++    TRACE( "timeout %s, count %u, exclusive %#x, padding (%#x, %#x, %#x), sockets[0] {%04lx, %#x}\n",
++            wine_dbgstr_longlong(params->timeout), params->count, params->exclusive,
++            params->padding[0], params->padding[1], params->padding[2],
++            params->sockets[0].socket, params->sockets[0].flags );
++
++    if (params->padding[0]) FIXME( "padding[0] is %#x\n", params->padding[0] );
++    if (params->padding[1]) FIXME( "padding[1] is %#x\n", params->padding[1] );
++    if (params->padding[2]) FIXME( "padding[2] is %#x\n", params->padding[2] );
++    for (i = 0; i < params->count; ++i)
++    {
++        if (params->sockets[i].flags & ~0x1ff)
++            FIXME( "unknown socket flags %#x\n", params->sockets[i].flags );
++    }
++
++    if (!(input = malloc( params->count * sizeof(*input) )))
++        return STATUS_NO_MEMORY;
++
++    async_size = offsetof( struct async_poll_ioctl, sockets[params->count] );
++
++    if (!(async = (struct async_poll_ioctl *)alloc_fileio( async_size, async_poll_proc, handle )))
++    {
++        free( input );
++        return STATUS_NO_MEMORY;
++    }
++
++    if (!(async->input = malloc( in_size )))
++    {
++        release_fileio( &async->io );
++        free( input );
++        return STATUS_NO_MEMORY;
++    }
++    memcpy( async->input, in_buffer, in_size );
++
++    async->count = params->count;
++    async->output = out_buffer;
++
++    for (i = 0; i < params->count; ++i)
++    {
++        input[i].socket = params->sockets[i].socket;
++        input[i].flags = params->sockets[i].flags;
++    }
++
++    SERVER_START_REQ( poll_socket )
++    {
++        req->async = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
++        req->exclusive = !!params->exclusive;
++        req->timeout = params->timeout;
++        wine_server_add_data( req, input, params->count * sizeof(*input) );
++        wine_server_set_reply( req, async->sockets, params->count * sizeof(async->sockets[0]) );
++        status = wine_server_call( req );
++        wait_handle = wine_server_ptr_handle( reply->wait );
++        options = reply->options;
++        if (wait_handle && status != STATUS_PENDING)
++        {
++            io->Status = status;
++            io->Information = fill_poll_output( async, status );
++        }
++    }
++    SERVER_END_REQ;
++
++    free( input );
++
++    if (status != STATUS_PENDING)
++    {
++        free( async->input );
++        release_fileio( &async->io );
++    }
++
++    if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT) );
++    return status;
++}
++
+ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
+ {
+     union unix_sockaddr unix_addr;
+@@ -1239,10 +1384,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
+             status = STATUS_BAD_DEVICE_TYPE;
+             break;
+ 
+-        case IOCTL_AFD_POLL:
+-            status = STATUS_BAD_DEVICE_TYPE;
+-            break;
+-
+         case IOCTL_AFD_RECV:
+         {
+             struct afd_recv_params params;
+@@ -1385,6 +1526,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
+             return status;
+         }
+ 
++        case IOCTL_AFD_POLL:
++            status = sock_poll( handle, event, apc, apc_user, io, in_buffer, in_size, out_buffer, out_size );
++            break;
++
+         case IOCTL_AFD_WINE_FIONREAD:
+         {
+             int value, ret;
+diff --git a/include/wine/afd.h b/include/wine/afd.h
+index 993730cacdb..9d0e3fdfb29 100644
+--- a/include/wine/afd.h
++++ b/include/wine/afd.h
+@@ -122,41 +122,14 @@ struct afd_poll_params
+     unsigned int count;
+     BOOLEAN exclusive;
+     BOOLEAN padding[3];
+-    struct afd_poll_socket
++    struct
+     {
+         SOCKET socket;
+         int flags;
+-        int status;
++        NTSTATUS status;
+     } sockets[1];
+ };
+ 
+-struct afd_poll_params_64
+-{
+-    LONGLONG timeout;
+-    unsigned int count;
+-    BOOLEAN exclusive;
+-    BOOLEAN padding[3];
+-    struct afd_poll_socket_64
+-    {
+-        ULONGLONG socket;
+-        int flags;
+-        int status;
+-    } sockets[1];
+-};
+-
+-struct afd_poll_params_32
+-{
+-    LONGLONG timeout;
+-    unsigned int count;
+-    BOOLEAN exclusive;
+-    BOOLEAN padding[3];
+-    struct afd_poll_socket_32
+-    {
+-        ULONG socket;
+-        int flags;
+-        int status;
+-    } sockets[1];
+-};
+ #include <poppack.h>
+ 
+ struct afd_event_select_params
+diff --git a/include/wine/server_protocol.h b/include/wine/server_protocol.h
+index e32ef8e1479..c5b8097dd3c 100644
+--- a/include/wine/server_protocol.h
++++ b/include/wine/server_protocol.h
+@@ -1777,6 +1777,36 @@ struct recv_socket_reply
+ };
+ 
+ 
++struct poll_socket_input
++{
++    obj_handle_t socket;
++    int flags;
++};
++
++struct poll_socket_output
++{
++    int flags;
++    unsigned int status;
++};
++
++
++struct poll_socket_request
++{
++    struct request_header __header;
++    int          exclusive;
++    async_data_t async;
++    timeout_t    timeout;
++    /* VARARG(sockets,poll_socket_input); */
++};
++struct poll_socket_reply
++{
++    struct reply_header __header;
++    obj_handle_t wait;
++    unsigned int options;
++    /* VARARG(sockets,poll_socket_output); */
++};
++
++
+ 
+ struct send_socket_request
+ {
+@@ -5498,6 +5528,7 @@ enum request
+     REQ_lock_file,
+     REQ_unlock_file,
+     REQ_recv_socket,
++    REQ_poll_socket,
+     REQ_send_socket,
+     REQ_get_next_console_request,
+     REQ_read_directory_changes,
+@@ -5780,6 +5811,7 @@ union generic_request
+     struct lock_file_request lock_file_request;
+     struct unlock_file_request unlock_file_request;
+     struct recv_socket_request recv_socket_request;
++    struct poll_socket_request poll_socket_request;
+     struct send_socket_request send_socket_request;
+     struct get_next_console_request_request get_next_console_request_request;
+     struct read_directory_changes_request read_directory_changes_request;
+@@ -6060,6 +6092,7 @@ union generic_reply
+     struct lock_file_reply lock_file_reply;
+     struct unlock_file_reply unlock_file_reply;
+     struct recv_socket_reply recv_socket_reply;
++    struct poll_socket_reply poll_socket_reply;
+     struct send_socket_reply send_socket_reply;
+     struct get_next_console_request_reply get_next_console_request_reply;
+     struct read_directory_changes_reply read_directory_changes_reply;
+diff --git a/server/protocol.def b/server/protocol.def
+index 9d90544fa41..b1c2255829c 100644
+--- a/server/protocol.def
++++ b/server/protocol.def
+@@ -1459,6 +1459,31 @@ enum server_fd_type
+ @END
+ 
+ 
++struct poll_socket_input
++{
++    obj_handle_t socket;        /* socket handle */
++    int flags;                  /* events to poll for */
++};
++
++struct poll_socket_output
++{
++    int flags;                  /* events signaled */
++    unsigned int status;        /* socket status */
++};
++
++/* Perform an async poll on a socket */
++@REQ(poll_socket)
++    int          exclusive;     /* is the poll exclusive? */
++    async_data_t async;         /* async I/O parameters */
++    timeout_t    timeout;       /* timeout */
++    VARARG(sockets,poll_socket_input); /* list of sockets to poll */
++@REPLY
++    obj_handle_t wait;          /* handle to wait on for blocking poll */
++    unsigned int options;       /* file open options */
++    VARARG(sockets,poll_socket_output); /* data returned */
++@END
++
++
+ /* Perform a send on a socket */
+ @REQ(send_socket)
+     async_data_t async;         /* async I/O parameters */
+diff --git a/server/request.h b/server/request.h
+index 2c7889bd197..5fb61caaf3d 100644
+--- a/server/request.h
++++ b/server/request.h
+@@ -174,6 +174,7 @@ DECL_HANDLER(get_volume_info);
+ DECL_HANDLER(lock_file);
+ DECL_HANDLER(unlock_file);
+ DECL_HANDLER(recv_socket);
++DECL_HANDLER(poll_socket);
+ DECL_HANDLER(send_socket);
+ DECL_HANDLER(get_next_console_request);
+ DECL_HANDLER(read_directory_changes);
+@@ -455,6 +456,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
+     (req_handler)req_lock_file,
+     (req_handler)req_unlock_file,
+     (req_handler)req_recv_socket,
++    (req_handler)req_poll_socket,
+     (req_handler)req_send_socket,
+     (req_handler)req_get_next_console_request,
+     (req_handler)req_read_directory_changes,
+@@ -1050,6 +1052,13 @@ C_ASSERT( FIELD_OFFSET(struct recv_socket_reply, wait) == 8 );
+ C_ASSERT( FIELD_OFFSET(struct recv_socket_reply, options) == 12 );
+ C_ASSERT( FIELD_OFFSET(struct recv_socket_reply, nonblocking) == 16 );
+ C_ASSERT( sizeof(struct recv_socket_reply) == 24 );
++C_ASSERT( FIELD_OFFSET(struct poll_socket_request, exclusive) == 12 );
++C_ASSERT( FIELD_OFFSET(struct poll_socket_request, async) == 16 );
++C_ASSERT( FIELD_OFFSET(struct poll_socket_request, timeout) == 56 );
++C_ASSERT( sizeof(struct poll_socket_request) == 64 );
++C_ASSERT( FIELD_OFFSET(struct poll_socket_reply, wait) == 8 );
++C_ASSERT( FIELD_OFFSET(struct poll_socket_reply, options) == 12 );
++C_ASSERT( sizeof(struct poll_socket_reply) == 16 );
+ C_ASSERT( FIELD_OFFSET(struct send_socket_request, async) == 16 );
+ C_ASSERT( FIELD_OFFSET(struct send_socket_request, status) == 56 );
+ C_ASSERT( FIELD_OFFSET(struct send_socket_request, total) == 60 );
+diff --git a/server/sock.c b/server/sock.c
+index 91f98556552..0d8e6ea6e3e 100644
+--- a/server/sock.c
++++ b/server/sock.c
+@@ -122,16 +122,13 @@ struct poll_req
+     struct async *async;
+     struct iosb *iosb;
+     struct timeout_user *timeout;
+-    timeout_t orig_timeout;
+     int exclusive;
+     unsigned int count;
++    struct poll_socket_output *output;
+     struct
+     {
+         struct sock *sock;
+         int mask;
+-        obj_handle_t handle;
+-        int flags;
+-        unsigned int status;
+     } sockets[1];
+ };
+ 
+@@ -238,8 +235,6 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock );
+ static struct sock *accept_socket( struct sock *sock );
+ static int sock_get_ntstatus( int err );
+ static unsigned int sock_get_error( int err );
+-static void poll_socket( struct sock *poll_sock, struct async *async, int exclusive, timeout_t timeout,
+-                         unsigned int count, const struct afd_poll_socket_64 *sockets );
+ 
+ static const struct object_ops sock_ops =
+ {
+@@ -795,6 +790,7 @@ static void free_poll_req( void *private )
+     release_object( req->async );
+     release_object( req->iosb );
+     list_remove( &req->entry );
++    free( req->output );
+     free( req );
+ }
+ 
+@@ -837,7 +833,8 @@ static int get_poll_flags( struct sock *sock, int event )
+ 
+ static void complete_async_poll( struct poll_req *req, unsigned int status )
+ {
+-    unsigned int i, signaled_count = 0;
++    struct poll_socket_output *output = req->output;
++    unsigned int i;
+ 
+     for (i = 0; i < req->count; ++i)
+     {
+@@ -847,65 +844,9 @@ static void complete_async_poll( struct poll_req *req, unsigned int status )
+             sock->main_poll = NULL;
+     }
+ 
+-    if (!status)
+-    {
+-        for (i = 0; i < req->count; ++i)
+-        {
+-            if (req->sockets[i].flags)
+-                ++signaled_count;
+-        }
+-    }
+-
+-    if (is_machine_64bit( async_get_thread( req->async )->process->machine ))
+-    {
+-        size_t output_size = offsetof( struct afd_poll_params_64, sockets[signaled_count] );
+-        struct afd_poll_params_64 *output;
+-
+-        if (!(output = mem_alloc( output_size )))
+-        {
+-            async_terminate( req->async, get_error() );
+-            return;
+-        }
+-        memset( output, 0, output_size );
+-        output->timeout = req->orig_timeout;
+-        output->exclusive = req->exclusive;
+-        for (i = 0; i < req->count; ++i)
+-        {
+-            if (!req->sockets[i].flags) continue;
+-            output->sockets[output->count].socket = req->sockets[i].handle;
+-            output->sockets[output->count].flags = req->sockets[i].flags;
+-            output->sockets[output->count].status = req->sockets[i].status;
+-            ++output->count;
+-        }
+-        assert( output->count == signaled_count );
+-
+-        async_request_complete( req->async, status, output_size, output_size, output );
+-    }
+-    else
+-    {
+-        size_t output_size = offsetof( struct afd_poll_params_32, sockets[signaled_count] );
+-        struct afd_poll_params_32 *output;
+-
+-        if (!(output = mem_alloc( output_size )))
+-        {
+-            async_terminate( req->async, get_error() );
+-            return;
+-        }
+-        memset( output, 0, output_size );
+-        output->timeout = req->orig_timeout;
+-        output->exclusive = req->exclusive;
+-        for (i = 0; i < req->count; ++i)
+-        {
+-            if (!req->sockets[i].flags) continue;
+-            output->sockets[output->count].socket = req->sockets[i].handle;
+-            output->sockets[output->count].flags = req->sockets[i].flags;
+-            output->sockets[output->count].status = req->sockets[i].status;
+-            ++output->count;
+-        }
+-        assert( output->count == signaled_count );
+-
+-        async_request_complete( req->async, status, output_size, output_size, output );
+-    }
++    /* pass 0 as result; client will set actual result size */
++    req->output = NULL;
++    async_request_complete( req->async, status, 0, req->count * sizeof(*output), output );
+ }
+ 
+ static void complete_async_polls( struct sock *sock, int event, int error )
+@@ -928,8 +869,8 @@ static void complete_async_polls( struct sock *sock, int event, int error )
+                 fprintf( stderr, "completing poll for socket %p, wanted %#x got %#x\n",
+                          sock, req->sockets[i].mask, flags );
+ 
+-            req->sockets[i].flags = req->sockets[i].mask & flags;
+-            req->sockets[i].status = sock_get_ntstatus( error );
++            req->output[i].flags = req->sockets[i].mask & flags;
++            req->output[i].status = sock_get_ntstatus( error );
+ 
+             complete_async_poll( req, STATUS_SUCCESS );
+             break;
+@@ -1413,8 +1354,8 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
+                 if (poll_req->sockets[i].sock == sock)
+                 {
+                     signaled = TRUE;
+-                    poll_req->sockets[i].flags = AFD_POLL_CLOSE;
+-                    poll_req->sockets[i].status = 0;
++                    poll_req->output[i].flags = AFD_POLL_CLOSE;
++                    poll_req->output[i].status = 0;
+                 }
+             }
+ 
+@@ -2915,55 +2856,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+         return;
+     }
+ 
+-    case IOCTL_AFD_POLL:
+-    {
+-        if (get_reply_max_size() < get_req_data_size())
+-        {
+-            set_error( STATUS_INVALID_PARAMETER );
+-            return;
+-        }
+-
+-        if (is_machine_64bit( current->process->machine ))
+-        {
+-            const struct afd_poll_params_64 *params = get_req_data();
+-
+-            if (get_req_data_size() < sizeof(struct afd_poll_params_64) ||
+-                get_req_data_size() < offsetof( struct afd_poll_params_64, sockets[params->count] ))
+-            {
+-                set_error( STATUS_INVALID_PARAMETER );
+-                return;
+-            }
+-
+-            poll_socket( sock, async, params->exclusive, params->timeout, params->count, params->sockets );
+-        }
+-        else
+-        {
+-            const struct afd_poll_params_32 *params = get_req_data();
+-            struct afd_poll_socket_64 *sockets;
+-            unsigned int i;
+-
+-            if (get_req_data_size() < sizeof(struct afd_poll_params_32) ||
+-                get_req_data_size() < offsetof( struct afd_poll_params_32, sockets[params->count] ))
+-            {
+-                set_error( STATUS_INVALID_PARAMETER );
+-                return;
+-            }
+-
+-            if (!(sockets = mem_alloc( params->count * sizeof(*sockets) ))) return;
+-            for (i = 0; i < params->count; ++i)
+-            {
+-                sockets[i].socket = params->sockets[i].socket;
+-                sockets[i].flags = params->sockets[i].flags;
+-                sockets[i].status = params->sockets[i].status;
+-            }
+-
+-            poll_socket( sock, async, params->exclusive, params->timeout, params->count, sockets );
+-            free( sockets );
+-        }
+-
+-        return;
+-    }
+-
+     default:
+         set_error( STATUS_NOT_SUPPORTED );
+         return;
+@@ -3017,49 +2909,51 @@ static void handle_exclusive_poll(struct poll_req *req)
+ }
+ 
+ static void poll_socket( struct sock *poll_sock, struct async *async, int exclusive, timeout_t timeout,
+-                         unsigned int count, const struct afd_poll_socket_64 *sockets )
++                         unsigned int count, const struct poll_socket_input *input )
+ {
++    struct poll_socket_output *output;
+     BOOL signaled = FALSE;
+     struct poll_req *req;
+     unsigned int i, j;
+ 
+-    if (!count)
+-    {
+-        set_error( STATUS_INVALID_PARAMETER );
++    if (!(output = mem_alloc( count * sizeof(*output) )))
+         return;
+-    }
++    memset( output, 0, count * sizeof(*output) );
+ 
+     if (!(req = mem_alloc( offsetof( struct poll_req, sockets[count] ) )))
++    {
++        free( output );
+         return;
++    }
+ 
+     req->timeout = NULL;
+     if (timeout && timeout != TIMEOUT_INFINITE &&
+         !(req->timeout = add_timeout_user( timeout, async_poll_timeout, req )))
+     {
+         free( req );
++        free( output );
+         return;
+     }
+-    req->orig_timeout = timeout;
+ 
+     for (i = 0; i < count; ++i)
+     {
+-        req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, sockets[i].socket, 0, &sock_ops );
++        req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, input[i].socket, 0, &sock_ops );
+         if (!req->sockets[i].sock)
+         {
+             for (j = 0; j < i; ++j) release_object( req->sockets[j].sock );
+             if (req->timeout) remove_timeout_user( req->timeout );
+             free( req );
++            free( output );
+             return;
+         }
+-        req->sockets[i].handle = sockets[i].socket;
+-        req->sockets[i].mask = sockets[i].flags;
+-        req->sockets[i].flags = 0;
++        req->sockets[i].mask = input[i].flags;
+     }
+ 
+     req->exclusive = exclusive;
+     req->count = count;
+     req->async = (struct async *)grab_object( async );
+     req->iosb = async_get_iosb( async );
++    req->output = output;
+ 
+     handle_exclusive_poll(req);
+ 
+@@ -3076,16 +2970,16 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
+         if (flags)
+         {
+             signaled = TRUE;
+-            req->sockets[i].flags = flags;
+-            req->sockets[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
++            output[i].flags = flags;
++            output[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+         }
+ 
+         /* FIXME: do other error conditions deserve a similar treatment? */
+         if (sock->state != SOCK_CONNECTING && sock->errors[AFD_POLL_BIT_CONNECT_ERR] && (mask & AFD_POLL_CONNECT_ERR))
+         {
+             signaled = TRUE;
+-            req->sockets[i].flags |= AFD_POLL_CONNECT_ERR;
+-            req->sockets[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
++            output[i].flags |= AFD_POLL_CONNECT_ERR;
++            output[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
+         }
+     }
+ 
+@@ -3454,6 +3348,28 @@ DECL_HANDLER(recv_socket)
+     release_object( sock );
+ }
+ 
++DECL_HANDLER(poll_socket)
++{
++    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
++    const struct poll_socket_input *input = get_req_data();
++    struct async *async;
++    unsigned int count;
++
++    if (!sock) return;
++
++    count = get_req_data_size() / sizeof(*input);
++
++    if ((async = create_request_async( sock->fd, get_fd_comp_flags( sock->fd ), &req->async )))
++    {
++        poll_socket( sock, async, req->exclusive, req->timeout, count, input );
++        reply->wait = async_handoff( async, NULL, 0 );
++        reply->options = get_fd_options( sock->fd );
++        release_object( async );
++    }
++
++    release_object( sock );
++}
++
+ DECL_HANDLER(send_socket)
+ {
+     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
+diff --git a/server/trace.c b/server/trace.c
+index 61e592b0ffa..1e44cb7d949 100644
+--- a/server/trace.c
++++ b/server/trace.c
+@@ -1349,6 +1349,38 @@ static void dump_varargs_handle_infos( const char *prefix, data_size_t size )
+     fputc( '}', stderr );
+ }
+ 
++static void dump_varargs_poll_socket_input( const char *prefix, data_size_t size )
++{
++    const struct poll_socket_input *input;
++
++    fprintf( stderr, "%s{", prefix );
++    while (size >= sizeof(*input))
++    {
++        input = cur_data;
++        fprintf( stderr, "{socket=%04x,flags=%08x}", input->socket, input->flags );
++        size -= sizeof(*input);
++        remove_data( sizeof(*input) );
++        if (size) fputc( ',', stderr );
++    }
++    fputc( '}', stderr );
++}
++
++static void dump_varargs_poll_socket_output( const char *prefix, data_size_t size )
++{
++    const struct poll_socket_output *output;
++
++    fprintf( stderr, "%s{", prefix );
++    while (size >= sizeof(*output))
++    {
++        output = cur_data;
++        fprintf( stderr, "{flags=%08x,status=%s}", output->flags, get_status_name( output->status ) );
++        size -= sizeof(*output);
++        remove_data( sizeof(*output) );
++        if (size) fputc( ',', stderr );
++    }
++    fputc( '}', stderr );
++}
++
+ typedef void (*dump_func)( const void *req );
+ 
+ /* Everything below this line is generated automatically by tools/make_requests */
+@@ -2042,6 +2074,21 @@ static void dump_recv_socket_reply( const struct recv_socket_reply *req )
+     fprintf( stderr, ", nonblocking=%d", req->nonblocking );
+ }
+ 
++static void dump_poll_socket_request( const struct poll_socket_request *req )
++{
++    fprintf( stderr, " exclusive=%d", req->exclusive );
++    dump_async_data( ", async=", &req->async );
++    dump_timeout( ", timeout=", &req->timeout );
++    dump_varargs_poll_socket_input( ", sockets=", cur_size );
++}
++
++static void dump_poll_socket_reply( const struct poll_socket_reply *req )
++{
++    fprintf( stderr, " wait=%04x", req->wait );
++    fprintf( stderr, ", options=%08x", req->options );
++    dump_varargs_poll_socket_output( ", sockets=", cur_size );
++}
++
+ static void dump_send_socket_request( const struct send_socket_request *req )
+ {
+     dump_async_data( " async=", &req->async );
+@@ -4539,6 +4586,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
+     (dump_func)dump_lock_file_request,
+     (dump_func)dump_unlock_file_request,
+     (dump_func)dump_recv_socket_request,
++    (dump_func)dump_poll_socket_request,
+     (dump_func)dump_send_socket_request,
+     (dump_func)dump_get_next_console_request_request,
+     (dump_func)dump_read_directory_changes_request,
+@@ -4817,6 +4865,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
+     (dump_func)dump_lock_file_reply,
+     NULL,
+     (dump_func)dump_recv_socket_reply,
++    (dump_func)dump_poll_socket_reply,
+     (dump_func)dump_send_socket_reply,
+     (dump_func)dump_get_next_console_request_reply,
+     NULL,
+@@ -5095,6 +5144,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
+     "lock_file",
+     "unlock_file",
+     "recv_socket",
++    "poll_socket",
+     "send_socket",
+     "get_next_console_request",
+     "read_directory_changes",
+-- 
+2.35.1
+

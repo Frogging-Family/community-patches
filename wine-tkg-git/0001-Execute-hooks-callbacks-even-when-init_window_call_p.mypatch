@@ -1,0 +1,65 @@
+From 3a10dee2d48e214b8eb533f101c60e8fccc54f67 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Wed, 13 Apr 2022 00:14:17 +0200
+Subject: [PATCH] Execute hooks callbacks even when init_window_call_params
+ fail (No window procedure? ) .
+
+---
+ dlls/win32u/message.c | 21 +++++++++------------
+ 1 file changed, 9 insertions(+), 12 deletions(-)
+
+diff --git a/dlls/win32u/message.c b/dlls/win32u/message.c
+index 9479595ae53..bac9d250d31 100644
+--- a/dlls/win32u/message.c
++++ b/dlls/win32u/message.c
+@@ -1179,30 +1179,27 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
+     LRESULT result = 0;
+     CWPSTRUCT cwp;
+     CWPRETSTRUCT cwpret;
+-
++    HWND win;
+     if (msg & 0x80000000)
+         return handle_internal_message( hwnd, msg, wparam, lparam );
+ 
+     if (!needs_unpack) size = 0;
+     if (!is_current_thread_window( hwnd )) return 0;
+     if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
+-    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, &result, !unicode, mapping ))
+-    {
+-        if (params != &p) free( params );
+-        return 0;
+-    }
+-
+-    params->needs_unpack = needs_unpack;
+-    if (size) memcpy( params + 1, buffer, size );
++    win = get_full_window_handle( hwnd );
+ 
+     /* first the WH_CALLWNDPROC hook */
+     cwp.lParam  = lparam;
+     cwp.wParam  = wparam;
+     cwp.message = msg;
+-    cwp.hwnd    = params->hwnd;
++    cwp.hwnd    = win;
+     call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
+ 
+-    dispatch_win_proc_params( params, sizeof(*params) + size );
++    if (init_window_call_params( params, hwnd, msg, wparam, lparam, &result, !unicode, mapping )){
++        params->needs_unpack = needs_unpack;
++        if (size) memcpy( params + 1, buffer, size );
++        dispatch_win_proc_params( params, sizeof(*params) + size );
++    }
+     if (params != &p) free( params );
+ 
+     /* and finally the WH_CALLWNDPROCRET hook */
+@@ -1210,7 +1207,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
+     cwpret.lParam  = lparam;
+     cwpret.wParam  = wparam;
+     cwpret.message = msg;
+-    cwpret.hwnd    = params->hwnd;
++    cwpret.hwnd    = win;
+     call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
+     return result;
+ }
+-- 
+2.35.1
+
