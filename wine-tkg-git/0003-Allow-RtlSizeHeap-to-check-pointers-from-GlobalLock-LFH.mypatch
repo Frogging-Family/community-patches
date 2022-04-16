@@ -1,0 +1,43 @@
+From 80b70a6b9ee48a1673fde730cb7bb0ddc6cea458 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Sat, 16 Apr 2022 16:27:33 +0200
+Subject: [PATCH] Allow RtlSizeHeap to check pointers from GlobalLock/LocalLock
+  GMEM_MOVEABLE handles.  for LFH patchset
+
+---
+ dlls/ntdll/heap.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/dlls/ntdll/heap.c b/dlls/ntdll/heap.c
+index 1b0f0e8a748..96bf3856580 100644
+--- a/dlls/ntdll/heap.c
++++ b/dlls/ntdll/heap.c
+@@ -2061,7 +2061,25 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
+         if (!(flags & HEAP_NO_SERIALIZE)) leave_critical_section( &heapPtr->critSection );
+         break;
+     }
++    if(status != STATUS_SUCCESS){
++        /*Retry with retroceded pointer*/
++        switch (heapPtr->extended_type)
++        {
++        case HEAP_LFH:
++            if (!(status = HEAP_lfh_get_allocated_size( heap, flags, ptr - sizeof(HGLOBAL)*2, &size ))) break;
++            /* fallthrough */
++        default:
++            if (!(flags & HEAP_NO_SERIALIZE)) enter_critical_section( &heapPtr->critSection );
++            status = HEAP_std_get_allocated_size( heap, flags, ptr - sizeof(HGLOBAL)*2, &size );
++            if (!(flags & HEAP_NO_SERIALIZE)) leave_critical_section( &heapPtr->critSection );
++            break;
++        }
+ 
++        if(status == STATUS_SUCCESS){
++            size -= sizeof(HGLOBAL)*2;
++            FIXME("GMEM_MOVEABLE GlobalMemory workaround\n");
++        }
++    }
+     TRACE("(%p,%08x,%p): status %#x, size %08lx\n", heapPtr, flags, ptr, status, size );
+     if (!status) return size;
+     RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
+-- 
+2.35.3
+
