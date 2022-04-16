@@ -1,0 +1,26 @@
+From 870f358286849744384adefdeee6dd5488b2bb45 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Fri, 15 Apr 2022 20:59:42 +0200
+Subject: [PATCH] Force full erase when WM_PAINT in LVS_EX_DOUBLEBUFFER
+ listviews
+
+---
+ dlls/comctl32/listview.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/dlls/comctl32/listview.c b/dlls/comctl32/listview.c
+index 730bf4aaddd..3665e41473d 100644
+--- a/dlls/comctl32/listview.c
++++ b/dlls/comctl32/listview.c
+@@ -10694,6 +10694,8 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
+ 
+ 	hdc = BeginPaint(infoPtr->hwndSelf, &ps);
+ 	if (!hdc) return 1;
++	/* for double buffered controls force erase */
++	if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) ps.fErase = 1;
+ 	LISTVIEW_Refresh(infoPtr, hdc, ps.fErase ? &ps.rcPaint : NULL);
+ 	EndPaint(infoPtr->hwndSelf, &ps);
+     }
+-- 
+2.35.3
+

@@ -116,13 +116,13 @@ index 690332dbdc..2d434233d6 100644
  static HRESULT WINAPI d3d_device1_Pick(IDirect3DDevice *iface, IDirect3DExecuteBuffer *buffer,
          IDirect3DViewport *viewport, DWORD flags, D3DRECT *rect)
  {
--    FIXME("iface %p, buffer %p, viewport %p, flags %#x, rect %s stub!\n",
+-    FIXME("iface %p, buffer %p, viewport %p, flags %#lx, rect %s stub!\n",
 +    struct d3d_device *device = impl_from_IDirect3DDevice(iface);
 +    struct d3d_execute_buffer *buffer_impl = unsafe_impl_from_IDirect3DExecuteBuffer(buffer);
 +    struct d3d_viewport *viewport_impl = unsafe_impl_from_IDirect3DViewport(viewport);
 +    HRESULT hr;
 +
-+    TRACE("iface %p, buffer %p, viewport %p, flags %#x, rect %s.\n",
++    TRACE("iface %p, buffer %p, viewport %p, flags %#lx, rect %s.\n",
              iface, buffer, viewport, flags, wine_dbgstr_rect((RECT *)rect));
 
 -    return D3D_OK;
