@@ -1,12 +1,26 @@
+From 253d0a7475dfb651ffa5dc8bf6b32ba2d2787bd7 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Sat, 16 Apr 2022 14:21:32 +0200
+Subject: [PATCH] Don't Set the ABOVE state for FullScreeen Windows, allowing
+ Alt-Tab
+
+---
+ dlls/winex11.drv/window.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
+index dd5c298c7a6..460413e0edf 100644
 --- a/dlls/winex11.drv/window.c
 +++ b/dlls/winex11.drv/window.c
-@@ -983,7 +983,8 @@
+@@ -999,7 +999,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
          new_state |= (1 << NET_WM_STATE_MAXIMIZED);
-
-     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+ 
+     ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
 -    if (ex_style & WS_EX_TOPMOST)
-+    if ((ex_style & WS_EX_TOPMOST) &&
-+            !(new_state & (1 << NET_WM_STATE_FULLSCREEN)))
++    if (ex_style & WS_EX_TOPMOST && !(new_state & (1 << NET_WM_STATE_FULLSCREEN)))  /*TODO make behaviour configurable by registry,envar or by app*/
          new_state |= (1 << NET_WM_STATE_ABOVE);
-     if (ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE))
-         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
+     if (!data->add_taskbar)
+     {
+-- 
+2.35.3
+

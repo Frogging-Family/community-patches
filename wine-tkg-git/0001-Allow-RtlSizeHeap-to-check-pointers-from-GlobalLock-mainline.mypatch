@@ -5,26 +5,9 @@ Subject: [PATCH] Allow RtlSizeHeap to check pointers from GlobalLock/LocalLock
  GMEM_MOVEABLE handles
 
 ---
- dlls/kernel32/tests/heap.c |  3 ++-
  dlls/ntdll/heap.c          | 18 ++++++++++++++----
- 2 files changed, 16 insertions(+), 5 deletions(-)
+ 1 files changed, 16 insertions(+), 5 deletions(-)
 
-diff --git a/dlls/kernel32/tests/heap.c b/dlls/kernel32/tests/heap.c
-index 8558bd7f1b3..2ebb8f84279 100644
---- a/dlls/kernel32/tests/heap.c
-+++ b/dlls/kernel32/tests/heap.c
-@@ -495,9 +495,10 @@ static void test_heap(void)
- 
-     size = GlobalSize(gbl);
-     size2 = GlobalSize(mem);
-+    size_t size3 = HeapSize(GetProcessHeap(), 0 , mem);
-     ok(size == 0x123, "got %lu\n", size);
-     ok(size2 == 0x123, "got %lu\n", size2);
--
-+    ok(size3 == 0x123, "got %lu\n", size3);
-     GlobalFree(gbl);
- 
-     /* trying to get size from data pointer (GMEM_FIXED) */
 diff --git a/dlls/ntdll/heap.c b/dlls/ntdll/heap.c
 index be75aa87b00..53c638abb4f 100644
 --- a/dlls/ntdll/heap.c
@@ -40,7 +23,7 @@ index be75aa87b00..53c638abb4f 100644
      {
          RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
 @@ -2024,8 +2025,18 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
-     if (!(flags & HEAP_NO_SERIALIZE)) enter_critical_section( &heapPtr->critSection );
+     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
  
      pArena = (const ARENA_INUSE *)ptr - 1;
 -    if (!validate_block_pointer( heapPtr, &subheap, pArena ))
@@ -62,7 +45,7 @@ index be75aa87b00..53c638abb4f 100644
 @@ -2039,8 +2050,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
          ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
      }
-     if (!(flags & HEAP_NO_SERIALIZE)) leave_critical_section( &heapPtr->critSection );
+     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 -
 -    TRACE("(%p,%08x,%p): returning %08lx\n", heap, flags, ptr, ret );
 +    if(GMEM_Work) ret -= sizeof(HGLOBAL)*2;
