@@ -1,4 +1,4 @@
-From 5d574a46b9a9dd0c133d1a326b13a82a5a6f11a6 Mon Sep 17 00:00:00 2001
+From 36fe72f7997f18eb8586e8ec8c2d6f9dbc7109f2 Mon Sep 17 00:00:00 2001
 From: llde <lorenzofer@live.it>
 Date: Thu, 19 Mar 2020 17:28:30 +0100
 Subject: [PATCH] ID3DXEffectCompiler partial implementation
@@ -10,10 +10,10 @@ Fix wine bug: https://bugs.winehq.org/show_bug.cgi?id=46779
  2 files changed, 305 insertions(+), 33 deletions(-)
 
 diff --git a/dlls/d3dx9_36/effect.c b/dlls/d3dx9_36/effect.c
-index 88168df1e1..5f2f369ef1 100644
+index 7719edd4f25..81c6bbe3238 100644
 --- a/dlls/d3dx9_36/effect.c
 +++ b/dlls/d3dx9_36/effect.c
-@@ -218,6 +218,8 @@ struct ID3DXEffectCompilerImpl
+@@ -222,6 +222,8 @@ struct ID3DXEffectCompilerImpl
  {
      ID3DXEffectCompiler ID3DXEffectCompiler_iface;
      LONG ref;
@@ -21,8 +21,8 @@ index 88168df1e1..5f2f369ef1 100644
 +    unsigned int flags;
  };
  
- static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
-@@ -4460,6 +4462,7 @@ static ULONG WINAPI ID3DXEffectCompilerImpl_Release(ID3DXEffectCompiler *iface)
+ static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
+@@ -4582,6 +4584,7 @@ static ULONG WINAPI ID3DXEffectCompilerImpl_Release(ID3DXEffectCompiler *iface)
  
      if (!refcount)
      {
@@ -30,11 +30,11 @@ index 88168df1e1..5f2f369ef1 100644
          heap_free(compiler);
      }
  
-@@ -4905,9 +4908,26 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetLiteral(ID3DXEffectCompiler *if
+@@ -5027,9 +5030,26 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetLiteral(ID3DXEffectCompiler *if
  static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileEffect(ID3DXEffectCompiler *iface, DWORD flags,
          ID3DXBuffer **effect, ID3DXBuffer **error_msgs)
  {
--    FIXME("iface %p, flags %#x, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
+-    FIXME("iface %p, flags %#lx, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
 -
 -    return E_NOTIMPL;
 +    struct ID3DXEffectCompilerImpl* compiler;
@@ -42,7 +42,7 @@ index 88168df1e1..5f2f369ef1 100644
 +    SIZE_T effect_len;
 +    HRESULT hr;
 +    
-+    TRACE("iface %p, flags %#x, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
++    TRACE("iface %p, flags %#lx, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
 +    
 +    if(effect == NULL)
 +    {
@@ -60,25 +60,25 @@ index 88168df1e1..5f2f369ef1 100644
  }
  
  static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileShader(ID3DXEffectCompiler *iface, D3DXHANDLE function,
-@@ -6600,19 +6620,32 @@ HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *src
-     return D3DXCreateEffectEx(device, srcdata, srcdatalen, defines, include, NULL, flags, pool, effect, compilation_errors);
+@@ -6779,19 +6799,32 @@ HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *dat
+     return D3DXCreateEffectEx(device, data, data_size, defines, include, NULL, flags, pool, effect, messages);
  }
  
 -static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compiler,
 -        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
--        UINT eflags, ID3DBlob **error_messages)
+-        UINT eflags, ID3DBlob **messages)
 +static HRESULT d3dx9_effect_compiler_init(const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines,
 +    ID3DInclude *include, UINT eflags, char* src_path, struct ID3DXEffectCompilerImpl** out_compiler,
-+    ID3DBlob **error_messages)
++    ID3DBlob **messages)
  {
 +    struct ID3DXEffectCompilerImpl* compiler;
 +    ID3DBlob* buf;
 +    HRESULT hr;
 +    
-     TRACE("compiler %p, data %p, data_size %lu, defines %p, include %p, eflags %#x, error_messages %p.\n",
--            compiler, data, data_size, defines, include, eflags, error_messages);
+     TRACE("compiler %p, data %p, data_size %Iu, defines %p, include %p, eflags %#x, messages %p.\n",
+-            compiler, data, data_size, defines, include, eflags, messages);
 -
-+            out_compiler, data, data_size, defines, include, eflags, error_messages);
++            out_compiler, data, data_size, defines, include, eflags, messages);
 +    if(!out_compiler) return D3DERR_INVALIDCALL;
 +    compiler = heap_alloc_zero(sizeof(struct ID3DXEffectCompilerImpl));
 +    if(!compiler) return E_OUTOFMEMORY;
@@ -87,7 +87,7 @@ index 88168df1e1..5f2f369ef1 100644
 +        eflags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
 +    #endif
 +    /*Most of the flags seems to be directly mapped between d3dx and d3dcompiler*/
-+    hr = D3DPreprocess(data, data_size, src_path, defines, include,  &buf , error_messages);
++    hr = D3DPreprocess(data, data_size, src_path, defines, include,  &buf , messages);
      compiler->ID3DXEffectCompiler_iface.lpVtbl = &ID3DXEffectCompiler_Vtbl;
      compiler->ref = 1;
 -
@@ -101,8 +101,8 @@ index 88168df1e1..5f2f369ef1 100644
 +    return hr;
  }
  
- HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, const D3DXMACRO *defines,
-@@ -6630,16 +6663,11 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
+ HRESULT WINAPI D3DXCreateEffectCompiler(const char *data, UINT data_size, const D3DXMACRO *defines,
+@@ -6809,16 +6842,11 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *data, UINT data_size, const
          return D3DERR_INVALIDCALL;
      }
  
@@ -110,9 +110,9 @@ index 88168df1e1..5f2f369ef1 100644
 -    if (!object)
 -        return E_OUTOFMEMORY;
 -
--    hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
--            (ID3DInclude *)include, flags, (ID3DBlob **)parse_errors);
-+    hr = d3dx9_effect_compiler_init(srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,(ID3DInclude *)include, flags,  NULL , &object,(ID3DBlob **)parse_errors);
+-    hr = d3dx9_effect_compiler_init(object, data, data_size, (const D3D_SHADER_MACRO *)defines,
+-            (ID3DInclude *)include, flags, (ID3DBlob **)messages);
++    hr = d3dx9_effect_compiler_init(data, data_size, (const D3D_SHADER_MACRO *)defines,(ID3DInclude *)include, flags,  NULL , &object,(ID3DBlob **)messages);
 +    
      if (FAILED(hr))
      {
@@ -121,13 +121,13 @@ index 88168df1e1..5f2f369ef1 100644
          return hr;
      }
  
-@@ -6917,24 +6945,61 @@ HRESULT WINAPI D3DXCreateEffectFromResourceA(struct IDirect3DDevice9 *device, HM
+@@ -7101,24 +7129,61 @@ HRESULT WINAPI D3DXCreateEffectFromResourceA(struct IDirect3DDevice9 *device, HM
  HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(const WCHAR *srcfile, const D3DXMACRO *defines,
-         ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+         ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
  {
 -    void *buffer;
 -    HRESULT ret;
-+    struct ID3DXEffectCompilerImpl* compiler;
++    struct ID3DXEffectCompilerImpl* compiler_impl;
      DWORD size;
 -
 +    char* filename_a;
@@ -136,13 +136,13 @@ index 88168df1e1..5f2f369ef1 100644
 +    struct d3dx_include_from_file* include_from_file = NULL;
 +    HRESULT ret;
 + 
-     TRACE("srcfile %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
--            debugstr_w(srcfile), defines, include, flags, effectcompiler, parseerrors);
+     TRACE("srcfile %s, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+-            debugstr_w(srcfile), defines, include, flags, compiler, messages);
 -
 -    if (!srcfile)
-+             debugstr_w(srcfile), defines, include, flags, effectcompiler, parseerrors);  
++             debugstr_w(srcfile), defines, include, flags, compiler, messages);
 +     
-+    if (!srcfile || !effectcompiler)
++    if (!srcfile || !compiler)
          return D3DERR_INVALIDCALL;
  
 -    ret = map_view_of_file(srcfile, &buffer, &size);
@@ -150,7 +150,7 @@ index 88168df1e1..5f2f369ef1 100644
 -    if (FAILED(ret))
 -        return D3DXERR_INVALIDDATA;
 -
--    ret = D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
+-    ret = D3DXCreateEffectCompiler(buffer, size, defines, include, flags, compiler, messages);
 -    UnmapViewOfFile(buffer);
 -
 +    size = WideCharToMultiByte(CP_ACP, 0,srcfile, -1 , NULL, 0,NULL,NULL);
@@ -182,7 +182,7 @@ index 88168df1e1..5f2f369ef1 100644
 +    }
 +    
 +    ret = d3dx9_effect_compiler_init(buffer, buffer_size, (const D3D_SHADER_MACRO *)defines,
-+            (ID3DInclude *)include, flags,  filename_a , &compiler,(ID3DBlob **)parseerrors);
++            (ID3DInclude *)include, flags,  filename_a , &compiler_impl,(ID3DBlob **)messages);
 +    
 +    ID3DXInclude_Close(include, buffer);  
 +    if(include_from_file) heap_free(include_from_file);
@@ -190,18 +190,18 @@ index 88168df1e1..5f2f369ef1 100644
 +    if(FAILED(ret)){
 +        return D3DERR_INVALIDCALL;
 +    }
-+    *effectcompiler = &compiler->ID3DXEffectCompiler_iface;
++    *compiler = &compiler_impl->ID3DXEffectCompiler_iface;
 + 
-+    TRACE("Created ID3DXEffectCompiler %p\n", compiler);
++    TRACE("Created ID3DXEffectCompiler %p\n", compiler_impl);
 +    
      return ret;
  }
  
 diff --git a/dlls/d3dx9_36/tests/effect.c b/dlls/d3dx9_36/tests/effect.c
-index c72049d553..33d8caccfc 100644
+index 12af35cb8d8..9ffec7347ab 100644
 --- a/dlls/d3dx9_36/tests/effect.c
 +++ b/dlls/d3dx9_36/tests/effect.c
-@@ -8349,6 +8349,210 @@ static void test_effect_parameter_block(void)
+@@ -8703,6 +8703,210 @@ static void test_effect_parameter_block(void)
      DestroyWindow(window);
  }
  
@@ -412,7 +412,7 @@ index c72049d553..33d8caccfc 100644
  START_TEST(effect)
  {
      IDirect3DDevice9 *device;
-@@ -8389,4 +8593,7 @@ START_TEST(effect)
+@@ -8743,4 +8947,7 @@ START_TEST(effect)
      test_create_effect_from_file();
      test_effect_find_next_valid_technique();
      test_effect_parameter_block();
@@ -421,5 +421,5 @@ index c72049d553..33d8caccfc 100644
 +
  }
 -- 
-2.25.1
+2.36.1
 
