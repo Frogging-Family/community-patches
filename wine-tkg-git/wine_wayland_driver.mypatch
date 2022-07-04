@@ -1,15 +1,15 @@
 diff --git a/configure b/configure
-index faf7e0e1a8e..de9fa073e03 100755
+index 50c23800f62..e2a2781f8bf 100755
 --- a/configure
 +++ b/configure
 @@ -701,6 +701,20 @@ DBUS_CFLAGS
  INOTIFY_LIBS
  INOTIFY_CFLAGS
  PCAP_LIBS
-+GBM_LIBS
-+GBM_CFLAGS
 +DRM_LIBS
 +DRM_CFLAGS
++GBM_LIBS
++GBM_CFLAGS
 +XKBCOMMON_LIBS
 +XKBCOMMON_CFLAGS
 +WAYLAND_CURSOR_LIBS
@@ -31,7 +31,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  with_system_dllpath
  with_wine_tools
  with_wine64
-@@ -1435,6 +1450,7 @@ enable_wineps_drv
+@@ -1436,6 +1451,7 @@ enable_wineps_drv
  enable_winepulse_drv
  enable_wineusb_sys
  enable_winevulkan
@@ -39,7 +39,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  enable_winex11_drv
  enable_winexinput_sys
  enable_wing32
-@@ -1697,6 +1713,18 @@ ZLIB_PE_CFLAGS
+@@ -1698,6 +1714,18 @@ ZLIB_PE_CFLAGS
  ZLIB_PE_LIBS
  XMKMF
  CPP
@@ -58,7 +58,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  INOTIFY_CFLAGS
  INOTIFY_LIBS
  DBUS_CFLAGS
-@@ -2423,6 +2451,7 @@ Optional Packages:
+@@ -2424,6 +2452,7 @@ Optional Packages:
    --without-xshape        do not use the Xshape extension
    --without-xshm          do not use XShm (shared memory extension)
    --without-xxf86vm       do not use XFree video mode extension
@@ -66,7 +66,7 @@ index faf7e0e1a8e..de9fa073e03 100755
    --with-system-dllpath=PATH
                            load external PE dependencies from colon-separated
                            path PATH
-@@ -2493,6 +2522,26 @@ Some influential environment variables:
+@@ -2494,6 +2523,26 @@ Some influential environment variables:
                Linker flags for the PE zlib, overriding the bundled version
    XMKMF       Path to xmkmf, Makefile generator for X Window System
    CPP         C preprocessor
@@ -93,7 +93,7 @@ index faf7e0e1a8e..de9fa073e03 100755
    INOTIFY_CFLAGS
                C compiler flags for libinotify, overriding pkg-config
    INOTIFY_LIBS
-@@ -4444,6 +4493,13 @@ then :
+@@ -4445,6 +4494,13 @@ then :
  fi
  
  
@@ -107,7 +107,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  
  # Check whether --with-system-dllpath was given.
  if test ${with_system_dllpath+y}
-@@ -15744,6 +15800,619 @@ enable_winex11_drv=${enable_winex11_drv:-no}
+@@ -15745,6 +15801,619 @@ enable_winex11_drv=${enable_winex11_drv:-no}
  fi
  fi
  
@@ -727,7 +727,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
-@@ -21996,6 +22665,7 @@ wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
+@@ -21998,6 +22667,7 @@ wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
  wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
  wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
  wine_fn_config_makefile dlls/winevulkan enable_winevulkan
@@ -735,7 +735,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
  wine_fn_config_makefile dlls/winexinput.sys enable_winexinput_sys
  wine_fn_config_makefile dlls/wing.dll16 enable_win16
-@@ -23256,6 +23926,20 @@ X_CFLAGS = $X_CFLAGS
+@@ -23258,6 +23928,20 @@ X_CFLAGS = $X_CFLAGS
  X_PRE_LIBS = $X_PRE_LIBS
  X_LIBS = $X_LIBS
  X_EXTRA_LIBS = $X_EXTRA_LIBS
@@ -757,7 +757,7 @@ index faf7e0e1a8e..de9fa073e03 100755
  INOTIFY_CFLAGS = $INOTIFY_CFLAGS
  INOTIFY_LIBS = $INOTIFY_LIBS
 diff --git a/configure.ac b/configure.ac
-index fbdfbb05b3b..41fc7817961 100644
+index 9ad1b19164c..fdb2d36340a 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -86,6 +86,7 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared
@@ -813,7 +813,7 @@ index fbdfbb05b3b..41fc7817961 100644
  dnl **** Check for OpenCL ****
  if test "$ac_cv_header_CL_cl_h" = "yes"
  then
-@@ -3165,6 +3204,7 @@ WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16,enable_win16)
+@@ -3166,6 +3205,7 @@ WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16,enable_win16)
  WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
  WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
  WINE_CONFIG_MAKEFILE(dlls/winevulkan)
@@ -852,22 +852,22 @@ index 7c60466d9ee..434b0cbf778 100644
  
  static void CDECL unlock_bits_surface( struct gdi_image_bits *bits )
 diff --git a/dlls/win32u/gdiobj.c b/dlls/win32u/gdiobj.c
-index edb21456d8d..d3df08316b1 100644
+index 9d95d3cf94a..459bfe9fa5c 100644
 --- a/dlls/win32u/gdiobj.c
 +++ b/dlls/win32u/gdiobj.c
-@@ -1249,6 +1249,7 @@ static struct unix_funcs unix_funcs =
+@@ -1259,6 +1259,7 @@ static struct unix_funcs unix_funcs =
      __wine_get_vulkan_driver,
      __wine_get_wgl_driver,
      __wine_send_input,
 +    __wine_send_internal_message_timeout,
-     __wine_set_user_driver,
  };
  
+ NTSTATUS gdi_init(void)
 diff --git a/dlls/win32u/message.c b/dlls/win32u/message.c
-index bc6db20d164..4d6440bfada 100644
+index 0603a248f60..8e172315490 100644
 --- a/dlls/win32u/message.c
 +++ b/dlls/win32u/message.c
-@@ -2827,6 +2827,20 @@ static BOOL send_message_callback( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
+@@ -2826,6 +2826,20 @@ static BOOL send_message_callback( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
      return process_message( &info, NULL, ansi );
  }
  
@@ -889,10 +889,10 @@ index bc6db20d164..4d6440bfada 100644
   *           NtUserPostMessage  (win32u.@)
   */
 diff --git a/dlls/win32u/win32u.spec b/dlls/win32u/win32u.spec
-index 48c10fd45d3..7440306069d 100644
+index 68201f763ab..654e0071d55 100644
 --- a/dlls/win32u/win32u.spec
 +++ b/dlls/win32u/win32u.spec
-@@ -1335,3 +1335,6 @@
+@@ -1334,3 +1334,6 @@
  @ cdecl __wine_get_brush_bitmap_info(long ptr ptr ptr)
  @ cdecl __wine_get_icm_profile(long long ptr ptr)
  @ cdecl __wine_get_file_outline_text_metric(wstr ptr)
@@ -900,24 +900,24 @@ index 48c10fd45d3..7440306069d 100644
 +# message
 +@ cdecl __wine_send_internal_message_timeout(long long long long long long long ptr)
 diff --git a/dlls/win32u/win32u_private.h b/dlls/win32u/win32u_private.h
-index 053fb25fe36..cf6a54eed8b 100644
+index d3f359fd4ee..871278bb901 100644
 --- a/dlls/win32u/win32u_private.h
 +++ b/dlls/win32u/win32u_private.h
-@@ -328,6 +328,9 @@ struct unix_funcs
+@@ -343,6 +343,9 @@ struct unix_funcs
      const struct vulkan_funcs * (CDECL *get_vulkan_driver)( UINT version );
      struct opengl_funcs * (CDECL *get_wgl_driver)( HDC hdc, UINT version );
      BOOL (CDECL *wine_send_input)( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
 +    LRESULT (CDECL *wine_send_internal_message_timeout)( DWORD dest_pid, DWORD dest_tid,
 +                                                         UINT msg, WPARAM wparam, LPARAM lparam,
 +                                                         UINT flags, UINT timeout, PDWORD_PTR res_ptr );
-     void (CDECL *set_user_driver)( const struct user_driver_funcs *funcs, UINT version );
  };
  
+ /* clipboard.c */
 diff --git a/dlls/win32u/wrappers.c b/dlls/win32u/wrappers.c
-index 13b4b7164ab..0cb70302de7 100644
+index b451e57e3b1..5cb6ee83987 100644
 --- a/dlls/win32u/wrappers.c
 +++ b/dlls/win32u/wrappers.c
-@@ -1408,6 +1408,15 @@ BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *raw
+@@ -1474,6 +1474,15 @@ BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *raw
      return unix_funcs->wine_send_input( hwnd, input, rawinput );
  }
  
@@ -930,32 +930,28 @@ index 13b4b7164ab..0cb70302de7 100644
 +                                                           flags, timeout, res_ptr );
 +}
 +
- /***********************************************************************
-  *           __wine_set_user_driver    (win32u.@)
-  */
+ extern void wrappers_init( unixlib_handle_t handle )
+ {
+     const void *args;
 diff --git a/dlls/winewayland.drv/Makefile.in b/dlls/winewayland.drv/Makefile.in
 new file mode 100644
-index 00000000000..df52ad2d9ac
+index 00000000000..d1dfa4b9a7a
 --- /dev/null
 +++ b/dlls/winewayland.drv/Makefile.in
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,53 @@
 +EXTRADEFS = -DWINE_NO_LONG_TYPES
 +MODULE = winewayland.drv
-+IMPORTS = gdi32 user32 uuid win32u
++UNIXLIB = winewayland.so
++IMPORTS = gdi32 user32 uuid
 +DELAYIMPORTS = comctl32 ole32 shell32
-+EXTRAINCL = $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_CURSOR_CFLAGS) $(XKBCOMMON_CFLAGS) \
-+            $(GBM_CFLAGS) $(UDEV_CFLAGS) $(DRM_CFLAGS)
-+EXTRALIBS = $(WAYLAND_CLIENT_LIBS) $(WAYLAND_CURSOR_LIBS) $(XKBCOMMON_LIBS) \
-+            $(GBM_LIBS) $(UDEV_LIBS) $(DRM_LIBS) $(PTHREAD_LIBS)
-+CFLAGS = -std=c11 -Wno-declaration-after-statement
-+EXTRACFLAGS = -std=c11 -Wno-declaration-after-statement
-+CPPFLAGS = -std=c11 -Wno-declaration-after-statement
-+EXTRACROSSCFLAGS = -std=c11 -Wno-declaration-after-statement
-+
-+EXTRADLLFLAGS = -mcygwin
++UNIX_CFLAGS = $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_CURSOR_CFLAGS) $(XKBCOMMON_CFLAGS) \
++              $(GBM_CFLAGS) $(UDEV_CFLAGS) $(DRM_CFLAGS)
++UNIX_LIBS = -lwin32u -lm $(WAYLAND_CLIENT_LIBS) $(WAYLAND_CURSOR_LIBS) \
++            $(XKBCOMMON_LIBS) $(GBM_LIBS) $(UDEV_LIBS) $(DRM_LIBS) $(PTHREAD_LIBS)
 +
 +C_SRCS = \
 +	display.c \
++	dllmain.c \
 +	dump_pixels.c \
 +	gbm.c \
 +	gdi.c \
@@ -969,6 +965,7 @@ index 00000000000..df52ad2d9ac
 +	wayland_buffer_queue.c \
 +	wayland_cursor.c \
 +	wayland_data_device.c \
++	wayland_data_device_dll.c \
 +	wayland_data_device_format.c \
 +	wayland_dmabuf.c \
 +	wayland_keyboard.c \
@@ -997,10 +994,10 @@ index 00000000000..df52ad2d9ac
 +RC_SRCS = version.rc
 diff --git a/dlls/winewayland.drv/display.c b/dlls/winewayland.drv/display.c
 new file mode 100644
-index 00000000000..dde64ee536c
+index 00000000000..4578d031aa8
 --- /dev/null
 +++ b/dlls/winewayland.drv/display.c
-@@ -0,0 +1,619 @@
+@@ -0,0 +1,622 @@
 +/*
 + * WAYLAND display device functions
 + *
@@ -1022,6 +1019,10 @@ index 00000000000..dde64ee536c
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#define NONAMELESSUNION
 +#define NONAMELESSSTRUCT
 +
@@ -1030,7 +1031,6 @@ index 00000000000..dde64ee536c
 +#include "waylanddrv.h"
 +
 +#include "wine/debug.h"
-+#include "wine/unicode.h"
 +
 +#include "ntuser.h"
 +
@@ -1233,11 +1233,11 @@ index 00000000000..dde64ee536c
 +    HKEY hkey;
 +
 +    /* Device name has to be \\.\DISPLAY%d */
-+    if (strncmpiW(device_name, display, ARRAY_SIZE(display)))
++    if (wcsnicmp(device_name, display, ARRAY_SIZE(display)))
 +        return FALSE;
 +
 +    /* Parse \\.\DISPLAY* */
-+    adapter_index = strtolW(device_name + ARRAY_SIZE(display), &end_ptr, 10) - 1;
++    adapter_index = wcstol(device_name + ARRAY_SIZE(display), &end_ptr, 10) - 1;
 +    if (*end_ptr)
 +        return FALSE;
 +
@@ -1620,12 +1620,93 @@ index 00000000000..dde64ee536c
 +        wayland_broadcast_wm_display_change();
 +    return ret;
 +}
+diff --git a/dlls/winewayland.drv/dllmain.c b/dlls/winewayland.drv/dllmain.c
+new file mode 100644
+index 00000000000..535bae28375
+--- /dev/null
++++ b/dlls/winewayland.drv/dllmain.c
+@@ -0,0 +1,75 @@
++/*
++ * winewayland.drv entry points
++ *
++ * Copyright 2022 Alexandros Frantzis for Collabora Ltd
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#include "waylanddrv_dll.h"
++
++static unixlib_handle_t waylanddrv_handle;
++NTSTATUS (CDECL *waylanddrv_unix_call)(enum waylanddrv_unix_func func, void *params);
++BOOL option_show_systray;
++
++typedef NTSTATUS (WINAPI *kernel_callback)(void *params, ULONG size);
++static const kernel_callback kernel_callbacks[] =
++{
++    waylanddrv_client_create_clipboard_window,
++    waylanddrv_client_dnd,
++};
++
++C_ASSERT(NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == waylanddrv_client_func_last);
++
++static DWORD WINAPI wayland_read_events_thread(void *arg)
++{
++    WAYLANDDRV_UNIX_CALL(read_events, NULL);
++    /* This thread terminates only if an unrecoverable error occured during
++     * event reading. */
++    TerminateProcess(GetCurrentProcess(), 1);
++    return 0;
++}
++
++BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
++{
++    struct waylanddrv_unix_init_params init_params =
++    {
++        .pNtWaitForMultipleObjects = NtWaitForMultipleObjects,
++    };
++    DWORD tid;
++    void **callback_table;
++
++    if (reason != DLL_PROCESS_ATTACH) return TRUE;
++
++    DisableThreadLibraryCalls(instance);
++    if (NtQueryVirtualMemory(GetCurrentProcess(), instance, MemoryWineUnixFuncs,
++                             &waylanddrv_handle, sizeof(waylanddrv_handle), NULL))
++        return FALSE;
++
++    callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
++    memcpy(callback_table + NtUserDriverCallbackFirst, kernel_callbacks,
++           sizeof(kernel_callbacks));
++
++    if (__wine_unix_call(waylanddrv_handle, waylanddrv_unix_func_init, &init_params))
++        return FALSE;
++
++    waylanddrv_unix_call = init_params.unix_call;
++    option_show_systray = init_params.option_show_systray;
++
++    /* Read wayland events from a dedicated thread. */
++    CreateThread(NULL, 0, wayland_read_events_thread, NULL, 0, &tid);
++
++    return TRUE;
++}
 diff --git a/dlls/winewayland.drv/dump_pixels.c b/dlls/winewayland.drv/dump_pixels.c
 new file mode 100644
-index 00000000000..a077c0124f1
+index 00000000000..5c3904b6b3d
 --- /dev/null
 +++ b/dlls/winewayland.drv/dump_pixels.c
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,174 @@
 +/*
 + * Debugging functions for pixel buffer contents
 + *
@@ -1645,6 +1726,10 @@ index 00000000000..a077c0124f1
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -1798,10 +1883,10 @@ index 00000000000..a077c0124f1
 +}
 diff --git a/dlls/winewayland.drv/gbm.c b/dlls/winewayland.drv/gbm.c
 new file mode 100644
-index 00000000000..95baa47d8a9
+index 00000000000..66278bd94bf
 --- /dev/null
 +++ b/dlls/winewayland.drv/gbm.c
-@@ -0,0 +1,367 @@
+@@ -0,0 +1,371 @@
 +/*
 + * Wayland GBM support
 + *
@@ -1821,6 +1906,10 @@ index 00000000000..95baa47d8a9
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -2171,10 +2260,10 @@ index 00000000000..95baa47d8a9
 +}
 diff --git a/dlls/winewayland.drv/gdi.c b/dlls/winewayland.drv/gdi.c
 new file mode 100644
-index 00000000000..439331cddb0
+index 00000000000..8397b6b39d7
 --- /dev/null
 +++ b/dlls/winewayland.drv/gdi.c
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,233 @@
 +/*
 + * Wayland gdi functions
 + *
@@ -2194,6 +2283,10 @@ index 00000000000..439331cddb0
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -2369,7 +2462,7 @@ index 00000000000..439331cddb0
 +
 +    shm_size = native.strides[0] * native.height;
 +    shm_data = mmap(NULL, shm_size, PROT_WRITE, MAP_SHARED, native.fds[0], 0);
-+    if (!shm_data)
++    if (shm_data == MAP_FAILED)
 +    {
 +        TRACE("Failed to mmap shm buffer size=%zu\n", shm_size);
 +        ret = ERROR_OUTOFMEMORY;
@@ -2406,10 +2499,10 @@ index 00000000000..439331cddb0
 +}
 diff --git a/dlls/winewayland.drv/opengl.c b/dlls/winewayland.drv/opengl.c
 new file mode 100644
-index 00000000000..f0700f51333
+index 00000000000..1012ed0085e
 --- /dev/null
 +++ b/dlls/winewayland.drv/opengl.c
-@@ -0,0 +1,1850 @@
+@@ -0,0 +1,1909 @@
 +/*
 + * Wayland OpenGL functions
 + *
@@ -2436,6 +2529,10 @@ index 00000000000..f0700f51333
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -2619,6 +2716,17 @@ index 00000000000..f0700f51333
 +    free(gl_buffer);
 +}
 +
++static void wayland_gl_buffer_release(struct wayland_gl_buffer *gl_buffer)
++{
++    TRACE("gl_buffer=%p bo=%p\n", gl_buffer, gl_buffer->gbm_bo);
++    if (gl_buffer->remote_buffer_released_event)
++    {
++        NtClose(gl_buffer->remote_buffer_released_event);
++        gl_buffer->remote_buffer_released_event = 0;
++    }
++    gbm_surface_release_buffer(gl_buffer->gbm_surface, gl_buffer->gbm_bo);
++}
++
 +static void wayland_gl_drawable_clear_buffers(struct wayland_gl_drawable *gl)
 +{
 +    struct wayland_gl_buffer *gl_buffer, *tmp;
@@ -2706,7 +2814,6 @@ index 00000000000..f0700f51333
 +
 +static void wayland_gl_drawable_update(struct wayland_gl_drawable *gl)
 +{
-+    EGLint attribs[] = { EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB, EGL_NONE };
 +    RECT client_rect;
 +
 +    TRACE("hwnd=%p\n", gl->hwnd);
@@ -2725,11 +2832,31 @@ index 00000000000..f0700f51333
 +    if (!gl->gbm_surface)
 +        ERR("Failed to create GBM surface\n");
 +
-+    gl->surface = p_eglCreateWindowSurface(egl_display, pixel_formats[gl->format - 1].config,
-+                                           (EGLNativeWindowType) gl->gbm_surface,
-+                                           has_gl_colorspace ? attribs : NULL);
++    /* First try to create a surface with an SRGB colorspace, if supported. */
++    if (has_gl_colorspace)
++    {
++        EGLint attribs[] = { EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB, EGL_NONE };
++        gl->surface = p_eglCreateWindowSurface(egl_display,
++                                               pixel_formats[gl->format - 1].config,
++                                               (EGLNativeWindowType) gl->gbm_surface,
++                                               attribs);
++        if (!gl->surface)
++        {
++            TRACE("Failed to create EGL surface with SRGB colorspace, "
++                  "trying with default colorspace\n");
++        }
++    }
++
++    /* Try to create a surface with the default colorspace. */
 +    if (!gl->surface)
-+        ERR("Failed to create EGL surface\n");
++    {
++        gl->surface = p_eglCreateWindowSurface(egl_display,
++                                               pixel_formats[gl->format - 1].config,
++                                               (EGLNativeWindowType) gl->gbm_surface,
++                                               NULL);
++        if (!gl->surface)
++            ERR("Failed to create EGL surface\n");
++    }
 +
 +    if (gl->surface)
 +    {
@@ -2783,7 +2910,7 @@ index 00000000000..f0700f51333
 +    struct wayland_gl_buffer *gl_buffer = (struct wayland_gl_buffer *) data;
 +
 +    TRACE("bo=%p\n", gl_buffer->gbm_bo);
-+    gbm_surface_release_buffer(gl_buffer->gbm_surface, gl_buffer->gbm_bo);
++    wayland_gl_buffer_release(gl_buffer);
 +}
 +
 +static const struct wl_buffer_listener dmabuf_buffer_listener = {
@@ -2892,11 +3019,20 @@ index 00000000000..f0700f51333
 +    return committed;
 +}
 +
++/* Convert timeout in ms to the timeout format used by ntdll which is:
++ * 100ns units, negative for monotonic time. */
++static inline LARGE_INTEGER *get_nt_timeout(LARGE_INTEGER *time, int timeout_ms)
++{
++    if (timeout_ms == -1) return NULL;
++    time->QuadPart = (ULONGLONG)timeout_ms * -10000;
++    return time;
++}
++
 +static DWORD wayland_gl_drawable_wait_remote_throttle(struct wayland_gl_drawable *gl,
 +                                                      int timeout_ms)
 +{
 +    DWORD ret;
-+    LARGE_INTEGER timeout = { .QuadPart = timeout_ms };
++    LARGE_INTEGER timeout;
 +
 +    TRACE("gl->remote_throttle_event=%p timeout_ms=%d\n", gl->remote_throttle_event, timeout_ms);
 +    if (!wayland_remote_surface_proxy_dispatch_events(gl->remote_surface_proxy))
@@ -2905,7 +3041,8 @@ index 00000000000..f0700f51333
 +        return WAIT_FAILED;
 +    }
 +
-+    ret = NtWaitForSingleObject(gl->remote_throttle_event, FALSE, &timeout);
++    ret = NtWaitForSingleObject(gl->remote_throttle_event, FALSE,
++                                get_nt_timeout(&timeout, timeout_ms));
 +    if (ret == WAIT_OBJECT_0)
 +    {
 +        NtClose(gl->remote_throttle_event);
@@ -2914,6 +3051,16 @@ index 00000000000..f0700f51333
 +
 +    TRACE("=> ret=%d\n", ret);
 +    return ret;
++}
++
++static DWORD get_tick_count_since(DWORD start)
++{
++    DWORD now = NtGetTickCount();
++    /* Handle tick count wrap around to zero. */
++    if (now < start)
++        return 0xffffffff - start + now + 1;
++    else
++        return now - start;
 +}
 +
 +static void wayland_gl_drawable_throttle(struct wayland_gl_drawable *gl)
@@ -2939,12 +3086,7 @@ index 00000000000..f0700f51333
 +            (gl->remote_throttle_event &&
 +             wayland_gl_drawable_wait_remote_throttle(gl, 10) != WAIT_FAILED)))
 +    {
-+        DWORD now = NtGetTickCount();
-+        /* Handle tick count wrap around to zero. */
-+        if (now < start)
-+            elapsed = 0xffffffff - start + now + 1;
-+        else
-+            elapsed = now - start;
++        elapsed = get_tick_count_since(start);
 +    }
 +
 +    TRACE("throttle_callback=%p throttle_event=%p => elapsed=%d\n",
@@ -2971,7 +3113,7 @@ index 00000000000..f0700f51333
 +    HANDLE handles[8];
 +    struct wayland_gl_buffer *gl_buffers[8];
 +    int count = 0;
-+    LARGE_INTEGER timeout = { .QuadPart = timeout_ms };
++    LARGE_INTEGER timeout;
 +    DWORD ret;
 +
 +    if (!wayland_remote_surface_proxy_dispatch_events(gl->remote_surface_proxy))
@@ -2987,16 +3129,11 @@ index 00000000000..f0700f51333
 +
 +    TRACE("count=%d handles=%p,%p,%p,%p\n",
 +         count, handles[0], handles[1], handles[2], handles[3]);
-+    ret = NtWaitForMultipleObjects(count, handles, TRUE, FALSE, &timeout);
++    ret = NtWaitForMultipleObjects(count, handles, TRUE, FALSE,
++                                   get_nt_timeout(&timeout, timeout_ms));
 +    TRACE("count=%d => ret=%d\n", count, ret);
 +    if (ret < WAIT_OBJECT_0 + count)
-+    {
-+        int index = ret - WAIT_OBJECT_0;
-+        NtClose(gl_buffers[index]->remote_buffer_released_event);
-+        gl_buffers[index]->remote_buffer_released_event = 0;
-+        gbm_surface_release_buffer(gl_buffers[index]->gbm_surface,
-+                                   gl_buffers[index]->gbm_bo);
-+    }
++        wayland_gl_buffer_release(gl_buffers[ret - WAIT_OBJECT_0]);
 +
 +    return ret;
 +}
@@ -3493,20 +3630,36 @@ index 00000000000..f0700f51333
 +        if (!wayland_gl_drawable_commit(draw_gl, gl_buffer))
 +            gbm_surface_release_buffer(gl_buffer->gbm_surface, gl_buffer->gbm_bo);
 +
++        /* Wait until we have a free buffer for the application to render into
++         * before we continue. */
 +        if (draw_gl->wayland_surface)
 +        {
 +            while (!gbm_surface_has_free_buffers(draw_gl->gbm_surface) &&
 +                   wayland_dispatch_queue(draw_gl->wl_event_queue, -1) != -1)
 +            {
-+                  continue;
++                continue;
 +            }
 +        }
 +        else if (draw_gl->remote_surface_proxy)
 +        {
++            static const DWORD wait_timeout = 100;
++            DWORD wait_start = NtGetTickCount();
++            /* If we don't get a free buffer within the specified timeout, drop
++             * one of the previous buffers to ensure we can continue and avoid
++             * potential cross-process deadlocks (e.g., the render process
++             * waiting for the window process to dispatch buffer release messages,
++             * while the window process is waiting for the render process to finish
++             * rendering). */
 +            while (!gbm_surface_has_free_buffers(draw_gl->gbm_surface) &&
 +                   wayland_gl_drawable_wait_remote(draw_gl, 10) != WAIT_FAILED)
 +            {
-+                continue;
++                if (get_tick_count_since(wait_start) > wait_timeout)
++                {
++                    struct wayland_gl_buffer *to_release;
++                    wl_list_for_each(to_release, &draw_gl->buffer_list, link)
++                        if (to_release != gl_buffer) break;
++                    wayland_gl_buffer_release(to_release);
++                }
 +            }
 +        }
 +    }
@@ -4077,8 +4230,7 @@ index 00000000000..f0700f51333
 +
 +            /* Ignore formats not supported by the compositor. */
 +            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_NATIVE_VISUAL_ID, &visual_id);
-+            if (wayland_dmabuf_has_format_list(dmabuf) &&
-+                !wayland_dmabuf_find_format(dmabuf, visual_id))
++            if (!wayland_dmabuf_find_format(dmabuf, visual_id))
 +                continue;
 +
 +            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_RENDERABLE_TYPE, &render);
@@ -4262,10 +4414,10 @@ index 00000000000..f0700f51333
 +#endif
 diff --git a/dlls/winewayland.drv/options.c b/dlls/winewayland.drv/options.c
 new file mode 100644
-index 00000000000..729284f1456
+index 00000000000..cbcf0a2d54a
 --- /dev/null
 +++ b/dlls/winewayland.drv/options.c
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,120 @@
 +/*
 + * winewayland.drv options
 + *
@@ -4290,11 +4442,13 @@ index 00000000000..729284f1456
 +
 +/* Code to read options from the registry, adapted from the X11 driver */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#include "config.h"
 +
 +#include "waylanddrv.h"
-+
-+#include "wine/unicode.h"
 +
 +#include "winuser.h"
 +
@@ -4343,8 +4497,8 @@ index 00000000000..729284f1456
 +
 +    /* open the app-specific key */
 +    appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
-+    if ((p = strrchrW(appname, '/'))) appname = p + 1;
-+    if ((p = strrchrW(appname, '\\'))) appname = p + 1;
++    if ((p = wcsrchr(appname, '/'))) appname = p + 1;
++    if ((p = wcsrchr(appname, '\\'))) appname = p + 1;
 +    len = lstrlenW(appname);
 +
 +    if (len && len < MAX_PATH)
@@ -4386,10 +4540,10 @@ index 00000000000..729284f1456
 +}
 diff --git a/dlls/winewayland.drv/registry.c b/dlls/winewayland.drv/registry.c
 new file mode 100644
-index 00000000000..b1f219f8339
+index 00000000000..66812b5b4f8
 --- /dev/null
 +++ b/dlls/winewayland.drv/registry.c
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,218 @@
 +/*
 + * Registry helpers
 + *
@@ -4410,9 +4564,15 @@ index 00000000000..b1f219f8339
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#include "config.h"
 +
 +#include "waylanddrv.h"
++
++#include <stdio.h>
 +
 +/**********************************************************************
 + *          reg_open_key_a
@@ -4604,10 +4764,10 @@ index 00000000000..b1f219f8339
 +}
 diff --git a/dlls/winewayland.drv/systray.c b/dlls/winewayland.drv/systray.c
 new file mode 100644
-index 00000000000..5a5dbe1f668
+index 00000000000..f72f0089fd9
 --- /dev/null
 +++ b/dlls/winewayland.drv/systray.c
-@@ -0,0 +1,746 @@
+@@ -0,0 +1,744 @@
 +/*
 + * Wayland system tray management
 + *
@@ -4633,8 +4793,6 @@ index 00000000000..5a5dbe1f668
 +
 +/* Adapted from winex11.drv/systray.c */
 +
-+#include "config.h"
-+
 +#include <assert.h>
 +#include <stdarg.h>
 +#include <stdlib.h>
@@ -4649,7 +4807,7 @@ index 00000000000..5a5dbe1f668
 +#include "commctrl.h"
 +#include "shellapi.h"
 +
-+#include "waylanddrv.h"
++#include "waylanddrv_dll.h"
 +#include "wine/list.h"
 +#include "wine/debug.h"
 +
@@ -5356,10 +5514,10 @@ index 00000000000..5a5dbe1f668
 +}
 diff --git a/dlls/winewayland.drv/unicode.c b/dlls/winewayland.drv/unicode.c
 new file mode 100644
-index 00000000000..acba6c368c7
+index 00000000000..7cce78573a7
 --- /dev/null
 +++ b/dlls/winewayland.drv/unicode.c
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,105 @@
 +/*
 + * Wayland driver unicode helpers
 + *
@@ -5379,6 +5537,10 @@ index 00000000000..acba6c368c7
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -5461,6 +5623,119 @@ index 00000000000..acba6c368c7
 +    dst[len] = 0;
 +    return len + 1;
 +}
+diff --git a/dlls/winewayland.drv/unixlib.h b/dlls/winewayland.drv/unixlib.h
+new file mode 100644
+index 00000000000..afc08d58a58
+--- /dev/null
++++ b/dlls/winewayland.drv/unixlib.h
+@@ -0,0 +1,107 @@
++/*
++ * Copyright 2022 Alexandros Frantzis for Collabora Ltd
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#ifndef __WINE_WAYLANDDRV_UNIXLIB_H
++#define __WINE_WAYLANDDRV_UNIXLIB_H
++
++#include "windef.h"
++#include "ntuser.h"
++#include "wine/unixlib.h"
++
++/* A pointer to memory that is guaranteed to be usable by both 32-bit and
++ * 64-bit processes. */
++typedef UINT PTR32;
++/* A handle value that is guaranteed to be usable by both 32-bit and 64-bit
++ * processes. */
++typedef UINT HANDLE32;
++
++enum waylanddrv_unix_func
++{
++    waylanddrv_unix_func_init,
++    waylanddrv_unix_func_read_events,
++    waylanddrv_unix_func_clipboard_message,
++    waylanddrv_unix_func_data_offer_accept_format,
++    waylanddrv_unix_func_data_offer_enum_formats,
++    waylanddrv_unix_func_data_offer_import_format,
++    waylanddrv_unix_func_count,
++};
++
++struct waylanddrv_unix_init_params
++{
++    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
++    NTSTATUS (CDECL *unix_call)(enum waylanddrv_unix_func func, void *params);
++    BOOL option_show_systray;
++};
++
++struct waylanddrv_unix_clipboard_message_params
++{
++    HWND hwnd;
++    UINT msg;
++    WPARAM wparam;
++    LPARAM lparam;
++};
++
++struct waylanddrv_unix_data_offer_accept_format_params
++{
++    PTR32 data_offer;
++    UINT format;
++};
++
++struct waylanddrv_unix_data_offer_enum_formats_params
++{
++    PTR32 data_offer;
++    UINT *formats;
++    UINT num_formats;
++};
++
++struct waylanddrv_unix_data_offer_import_format_params
++{
++    PTR32 data_offer;
++    UINT format;
++    PTR32 data;
++    UINT size;
++};
++
++/* driver client callbacks exposed with KernelCallbackTable interface */
++enum waylanddrv_client_func
++{
++    waylanddrv_client_func_create_clipboard_window = NtUserDriverCallbackFirst,
++    waylanddrv_client_func_dnd,
++    waylanddrv_client_func_last
++};
++
++C_ASSERT(waylanddrv_client_func_last <= NtUserDriverCallbackLast + 1);
++
++enum waylanddrv_client_dnd_event
++{
++    CLIENT_DND_EVENT_ENTER,
++    CLIENT_DND_EVENT_LEAVE,
++    CLIENT_DND_EVENT_MOTION,
++    CLIENT_DND_EVENT_DROP,
++};
++
++struct waylanddrv_client_dnd_params
++{
++    UINT event;
++    HANDLE32 hwnd;
++    POINT point;
++    DWORD drop_effect;
++    PTR32 data_object;
++};
++
++#endif /* __WINE_WAYLANDDRV_UNIXLIB_H */
 diff --git a/dlls/winewayland.drv/version.rc b/dlls/winewayland.drv/version.rc
 new file mode 100644
 index 00000000000..2d99c24f99c
@@ -5491,10 +5766,10 @@ index 00000000000..2d99c24f99c
 +#include "wine/wine_common_ver.rc"
 diff --git a/dlls/winewayland.drv/vulkan.c b/dlls/winewayland.drv/vulkan.c
 new file mode 100644
-index 00000000000..dd7fd8235da
+index 00000000000..6400f91453d
 --- /dev/null
 +++ b/dlls/winewayland.drv/vulkan.c
-@@ -0,0 +1,938 @@
+@@ -0,0 +1,942 @@
 +/* WAYLANDDRV Vulkan implementation
 + *
 + * Copyright 2017 Roderick Colenbrander
@@ -5514,6 +5789,10 @@ index 00000000000..dd7fd8235da
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -6435,10 +6714,10 @@ index 00000000000..dd7fd8235da
 +#endif /* SONAME_LIBVULKAN */
 diff --git a/dlls/winewayland.drv/wayland.c b/dlls/winewayland.drv/wayland.c
 new file mode 100644
-index 00000000000..b8baa3d7108
+index 00000000000..e6ac2571537
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland.c
-@@ -0,0 +1,682 @@
+@@ -0,0 +1,696 @@
 +/*
 + * Wayland core handling
 + *
@@ -6458,6 +6737,10 @@ index 00000000000..b8baa3d7108
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -6574,9 +6857,10 @@ index 00000000000..b8baa3d7108
 +    }
 +    else if (strcmp(interface, "zwp_linux_dmabuf_v1") == 0)
 +    {
++        /* TODO: Enable v4 when dmabuf feedback support is working properly. */
 +        struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf_v1 =
 +            wl_registry_bind(registry, id, &zwp_linux_dmabuf_v1_interface,
-+                             version < 4 ? version : 4);
++                             version < 3 ? version : 3);
 +        wayland_dmabuf_init(&wayland->dmabuf, zwp_linux_dmabuf_v1);
 +    }
 +
@@ -6596,8 +6880,11 @@ index 00000000000..b8baa3d7108
 +    }
 +    else if (strcmp(interface, "xdg_wm_base") == 0)
 +    {
-+        wayland->xdg_wm_base = wl_registry_bind(registry, id,
-+                &xdg_wm_base_interface, 1);
++        /* Bind version 2 so that compositors (e.g., sway) can properly send tiled
++         * states, instead of falling back to (ab)using the maximized state. */
++        wayland->xdg_wm_base =
++            wl_registry_bind(registry, id, &xdg_wm_base_interface,
++                             version < 2 ? version : 2);
 +        xdg_wm_base_add_listener(wayland->xdg_wm_base, &xdg_wm_base_listener, wayland);
 +    }
 +    else if (strcmp(interface, "wl_seat") == 0)
@@ -6963,7 +7250,7 @@ index 00000000000..b8baa3d7108
 +    struct pollfd pfd = {0};
 +    int ret;
 +
-+    TRACE("waiting for events...\n");
++    TRACE("waiting for events with timeout=%d ...\n", timeout_ms);
 +
 +    pfd.fd = wl_display_get_fd(process_wl_display);
 +
@@ -7002,10 +7289,16 @@ index 00000000000..b8baa3d7108
 +    pfd.events = POLLIN;
 +    while ((ret = poll(&pfd, 1, timeout_ms)) == -1 && errno == EINTR) continue;
 +
-+    if (ret == -1 || !(pfd.revents & POLLIN))
++    if (ret == 0)
 +    {
-+        TRACE("... failed poll errno=%d revents=0x%x\n",
-+              ret == -1 ? errno : 0, pfd.revents);
++        TRACE("... done => 0 events (timeout)\n");
++        wl_display_cancel_read(process_wl_display);
++        return 0;
++    }
++
++    if (ret == -1)
++    {
++        TRACE("... failed poll errno=%d\n", errno);
 +        wl_display_cancel_read(process_wl_display);
 +        return -1;
 +    }
@@ -7026,7 +7319,7 @@ index 00000000000..b8baa3d7108
 +     * one, so we need to notify threads (see wayland_read_events). */
 +    wayland_notify_threads();
 +
-+    TRACE("... done\n");
++    TRACE("... done => %d events\n", ret);
 +
 +    return ret;
 +}
@@ -7116,17 +7409,17 @@ index 00000000000..b8baa3d7108
 +    if (process_wayland_events(mask))
 +        return count - 1;
 +
-+    ret = NtWaitForMultipleObjects(count, handles, !(flags & MWMO_WAITALL),
-+                                   !!(flags & MWMO_ALERTABLE), timeout);
++    ret = pNtWaitForMultipleObjects(count, handles, !(flags & MWMO_WAITALL),
++                                    !!(flags & MWMO_ALERTABLE), timeout);
 +
 +    return ret;
 +}
 diff --git a/dlls/winewayland.drv/wayland_buffer_queue.c b/dlls/winewayland.drv/wayland_buffer_queue.c
 new file mode 100644
-index 00000000000..6ebd07822fa
+index 00000000000..c2a424e947a
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_buffer_queue.c
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,216 @@
 +/*
 + * Wayland buffer queue
 + *
@@ -7146,6 +7439,10 @@ index 00000000000..6ebd07822fa
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -7341,10 +7638,10 @@ index 00000000000..6ebd07822fa
 +}
 diff --git a/dlls/winewayland.drv/wayland_cursor.c b/dlls/winewayland.drv/wayland_cursor.c
 new file mode 100644
-index 00000000000..567110586d9
+index 00000000000..23cf6f5db86
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_cursor.c
-@@ -0,0 +1,709 @@
+@@ -0,0 +1,714 @@
 +/*
 + * Wayland cursor handling
 + *
@@ -7367,6 +7664,10 @@ index 00000000000..567110586d9
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -7672,7 +7973,8 @@ index 00000000000..567110586d9
 +    unsigned int *pixels, *row, p, x, y;
 +    int first_non_empty_line = -1, last_non_empty_line = -1;
 +
-+    handle = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
++    handle = LoadImageW(0, (const WCHAR *)IDC_ARROW, IMAGE_CURSOR, 0, 0,
++                        LR_SHARED | LR_DEFAULTSIZE);
 +    if (!handle)
 +        goto out;
 +
@@ -8056,10 +8358,10 @@ index 00000000000..567110586d9
 +}
 diff --git a/dlls/winewayland.drv/wayland_data_device.c b/dlls/winewayland.drv/wayland_data_device.c
 new file mode 100644
-index 00000000000..c3f51861def
+index 00000000000..755e21215a4
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_data_device.c
-@@ -0,0 +1,1200 @@
+@@ -0,0 +1,908 @@
 +/*
 + * Wayland data device (clipboard and DnD) handling
 + *
@@ -8080,18 +8382,21 @@ index 00000000000..c3f51861def
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#include "config.h"
 +
++#include "ntstatus.h"
++#define WIN32_NO_STATUS
 +#define NONAMELESSUNION
 +
 +#include "waylanddrv.h"
 +
 +#include "wine/debug.h"
 +
-+#define COBJMACROS
 +#include "objidl.h"
-+#include "shlobj.h"
-+#include "winuser.h"
 +
 +#include <assert.h>
 +#include <errno.h>
@@ -8104,17 +8409,15 @@ index 00000000000..c3f51861def
 +
 +#define WINEWAYLAND_TAG_MIME_TYPE "application/x.winewayland.tag"
 +
-+static IDataObjectVtbl dataOfferDataObjectVtbl;
-+
 +struct wayland_data_offer
 +{
++    IDataObject data_object;
 +    struct wayland *wayland;
 +    struct wl_data_offer *wl_data_offer;
 +    struct wl_array types;
 +    uint32_t source_actions;
 +    uint32_t action;
 +    const char *accepted_mime_type;
-+    IDataObject data_object;
 +};
 +
 +/* Normalize the mime type by skipping inconsequential characters, such as
@@ -8164,106 +8467,6 @@ index 00000000000..c3f51861def
 +}
 +
 +/**********************************************************************
-+ *          IDropTarget discovery
-+ *
-+ * Based on functions in dlls/ole32/ole2.c
-+ */
-+
-+static HANDLE get_drop_target_local_handle(HWND hwnd)
-+{
-+    static const WCHAR prop_marshalleddrop_target[] =
-+        {'W','i','n','e','M','a','r','s','h','a','l','l','e','d',
-+         'D','r','o','p','T','a','r','g','e','t',0};
-+    HANDLE handle;
-+    HANDLE local_handle = 0;
-+
-+    handle = NtUserGetProp(hwnd, prop_marshalleddrop_target);
-+    if (handle)
-+    {
-+        DWORD pid;
-+        HANDLE process;
-+
-+        NtUserGetWindowThread(hwnd, &pid);
-+        process = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid);
-+        if (process)
-+        {
-+            DuplicateHandle(process, handle, GetCurrentProcess(), &local_handle,
-+                            0, FALSE, DUPLICATE_SAME_ACCESS);
-+            CloseHandle(process);
-+        }
-+    }
-+    return local_handle;
-+}
-+
-+static HRESULT create_stream_from_map(HANDLE map, IStream **stream)
-+{
-+    HRESULT hr = E_OUTOFMEMORY;
-+    HGLOBAL hmem;
-+    void *data;
-+    MEMORY_BASIC_INFORMATION info;
-+
-+    data = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
-+    if(!data) return hr;
-+
-+    VirtualQuery(data, &info, sizeof(info));
-+
-+    hmem = GlobalAlloc(GMEM_MOVEABLE, info.RegionSize);
-+    if(hmem)
-+    {
-+        memcpy(GlobalLock(hmem), data, info.RegionSize);
-+        GlobalUnlock(hmem);
-+        hr = CreateStreamOnHGlobal(hmem, TRUE, stream);
-+    }
-+    UnmapViewOfFile(data);
-+    return hr;
-+}
-+
-+static IDropTarget* get_drop_target_pointer(HWND hwnd)
-+{
-+    IDropTarget *drop_target = NULL;
-+    HANDLE map;
-+    IStream *stream;
-+
-+    map = get_drop_target_local_handle(hwnd);
-+    if(!map) return NULL;
-+
-+    if(SUCCEEDED(create_stream_from_map(map, &stream)))
-+    {
-+        CoUnmarshalInterface(stream, &IID_IDropTarget, (void**)&drop_target);
-+        IStream_Release(stream);
-+    }
-+    CloseHandle(map);
-+    return drop_target;
-+}
-+
-+static IDropTarget *drop_target_from_window_point(HWND hwnd, POINT point)
-+{
-+    HWND child;
-+    IDropTarget *drop_target;
-+    HWND orig_hwnd = hwnd;
-+    POINT orig_point = point;
-+
-+    /* Find the deepest child window. */
-+    NtUserScreenToClient(hwnd, &point);
-+    while ((child = NtUserChildWindowFromPointEx(hwnd, point.x, point.y, CWP_SKIPDISABLED | CWP_SKIPINVISIBLE)) &&
-+            child != hwnd)
-+    {
-+        NtUserMapWindowPoints(hwnd, child, &point, 1);
-+        hwnd = child;
-+    }
-+
-+    /* Ascend the children hierarchy until we find one that accepts drops. */
-+    do
-+    {
-+        drop_target = get_drop_target_pointer(hwnd);
-+    } while (drop_target == NULL && (hwnd = NtUserGetParent(hwnd)) != NULL);
-+
-+    TRACE("hwnd=%p point=(%d,%d) => dnd_hwnd=%p drop_target=%p\n",
-+          orig_hwnd, orig_point.x, orig_point.y, hwnd, drop_target);
-+    return drop_target;
-+}
-+
-+/**********************************************************************
 + *          wl_data_offer handling
 + */
 +
@@ -8300,13 +8503,26 @@ index 00000000000..c3f51861def
 +    data_offer_action
 +};
 +
++static ULONG_PTR zero_bits(void)
++{
++#ifdef _WIN64
++    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
++#else
++    return 0;
++#endif
++}
++
 +static void wayland_data_offer_create(struct wayland *wayland,
 +                                      struct wl_data_offer *wl_data_offer)
 +{
-+    struct wayland_data_offer *data_offer;
++    struct wayland_data_offer *data_offer = NULL;
++    SIZE_T size = sizeof(*data_offer);
 +
-+    data_offer = calloc(1, sizeof(*data_offer));
-+    if (!data_offer)
++    /* Ensure that the PE side can access the 'data_object' member, by
++     * allocating wayland_data_offer in Windows virtual memory. */
++    if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&data_offer,
++                                zero_bits(), &size, MEM_COMMIT, PAGE_READWRITE) ||
++        !data_offer)
 +    {
 +        ERR("Failed to allocate memory for data offer\n");
 +        return;
@@ -8315,7 +8531,6 @@ index 00000000000..c3f51861def
 +    data_offer->wayland = wayland;
 +    data_offer->wl_data_offer = wl_data_offer;
 +    wl_array_init(&data_offer->types);
-+    data_offer->data_object.lpVtbl = &dataOfferDataObjectVtbl;
 +    wl_data_offer_add_listener(data_offer->wl_data_offer,
 +                               &data_offer_listener, data_offer);
 +}
@@ -8323,13 +8538,14 @@ index 00000000000..c3f51861def
 +static void wayland_data_offer_destroy(struct wayland_data_offer *data_offer)
 +{
 +    char **p;
++    SIZE_T size = 0;
 +
 +    wl_data_offer_destroy(data_offer->wl_data_offer);
 +    wl_array_for_each(p, &data_offer->types)
 +        free(*p);
 +    wl_array_release(&data_offer->types);
 +
-+    free(data_offer);
++    NtFreeVirtualMemory(GetCurrentProcess(), (void **)&data_offer, &size, MEM_RELEASE);
 +}
 +
 +static void *wayland_data_offer_receive_data(struct wayland_data_offer *data_offer,
@@ -8437,11 +8653,6 @@ index 00000000000..c3f51861def
 +    return ret;
 +}
 +
-+static struct wayland_data_offer *wayland_data_offer_from_data_object(struct IDataObject *data_object)
-+{
-+    return CONTAINING_RECORD(data_object, struct wayland_data_offer, data_object);
-+}
-+
 +/**********************************************************************
 + *          wl_data_device handling
 + */
@@ -8482,13 +8693,11 @@ index 00000000000..c3f51861def
 +                              wl_fixed_t x_w, wl_fixed_t y_w,
 +                              struct wl_data_offer *wl_data_offer)
 +{
++    struct waylanddrv_client_dnd_params params;
 +    struct wayland_data_device *data_device = data;
 +    struct wayland_data_offer *data_offer;
 +    struct wayland_surface *wayland_surface;
-+    IDropTarget *drop_target;
 +    POINT point;
-+    DWORD drop_effect;
-+    HRESULT hr;
 +
 +    /* Any previous dnd offer should have been freed by a drop or leave event. */
 +    assert(data_device->dnd_wl_data_offer == NULL);
@@ -8518,20 +8727,17 @@ index 00000000000..c3f51861def
 +          data_device->dnd_surface, data_device->dnd_surface->hwnd,
 +          data_offer->source_actions, data_offer->action);
 +
-+    drop_target = drop_target_from_window_point(data_device->dnd_surface->hwnd,
-+                                                point);
-+    if (!drop_target)
-+        return;
-+
 +    /* Clear accepted_mime_type here. It should be eventually set by
-+     * IDropTarget_DragEnter, when it internally calls
-+     * IDataObject::QueryGetData on our data offer's IDataObject. */
++     * the DnD client call below. */
 +    data_offer->accepted_mime_type = NULL;
-+    drop_effect = dnd_actions_to_drop_effect(data_offer->source_actions);
-+    hr = IDropTarget_DragEnter(drop_target, &data_offer->data_object, MK_LBUTTON,
-+                               *(POINTL*)&point, &drop_effect);
-+    IDropTarget_Release(drop_target);
-+    if (FAILED(hr))
++
++    params.event = CLIENT_DND_EVENT_ENTER;
++    params.hwnd = HandleToULong(data_device->dnd_surface->hwnd);
++    params.point = point;
++    params.drop_effect = dnd_actions_to_drop_effect(data_offer->source_actions);
++    params.data_object = PtrToUint(data_offer);
++
++    if (WAYLANDDRV_CLIENT_CALL(dnd, &params, sizeof(params)) != 0)
 +        return;
 +
 +    wl_data_offer_set_actions(wl_data_offer, data_offer->source_actions,
@@ -8543,8 +8749,8 @@ index 00000000000..c3f51861def
 +
 +static void data_device_leave(void *data, struct wl_data_device *wl_data_device)
 +{
++    struct waylanddrv_client_dnd_params params;
 +    struct wayland_data_device *data_device = data;
-+    IDropTarget *drop_target;
 +    POINT point;
 +
 +    TRACE("surface=%p hwnd=%p\n",
@@ -8558,13 +8764,13 @@ index 00000000000..c3f51861def
 +                                     data_device->dnd_x, data_device->dnd_y,
 +                                     &point.x, &point.y);
 +
-+    drop_target = drop_target_from_window_point(data_device->dnd_surface->hwnd,
-+                                                point);
-+    if (drop_target)
-+    {
-+        IDropTarget_DragLeave(drop_target);
-+        IDropTarget_Release(drop_target);
-+    }
++    params.event = CLIENT_DND_EVENT_LEAVE;
++    params.hwnd = HandleToULong(data_device->dnd_surface->hwnd);
++    params.point = point;
++    params.drop_effect = 0;
++    params.data_object = 0;
++
++    WAYLANDDRV_CLIENT_CALL(dnd, &params, sizeof(params));
 +
 +out:
 +    wayland_data_device_destroy_dnd_data_offer(data_device);
@@ -8573,12 +8779,10 @@ index 00000000000..c3f51861def
 +static void data_device_motion(void *data, struct wl_data_device *wl_data_device,
 +                               uint32_t time, wl_fixed_t x_w, wl_fixed_t y_w)
 +{
++    struct waylanddrv_client_dnd_params params;
 +    struct wayland_data_device *data_device = data;
 +    struct wayland_data_offer *data_offer;
-+    IDropTarget *drop_target;
 +    POINT point;
-+    DWORD drop_effect;
-+    HRESULT hr;
 +
 +    if (!data_device->dnd_wl_data_offer || !data_device->dnd_surface)
 +        return;
@@ -8596,15 +8800,13 @@ index 00000000000..c3f51861def
 +          data_device->dnd_surface, data_device->dnd_surface->hwnd,
 +          data_offer->source_actions, data_offer->action);
 +
-+    drop_target = drop_target_from_window_point(data_device->dnd_surface->hwnd,
-+                                                point);
-+    if (!drop_target)
-+        return;
++    params.event = CLIENT_DND_EVENT_MOTION;
++    params.hwnd = HandleToULong(data_device->dnd_surface->hwnd);
++    params.point = point;
++    params.drop_effect = dnd_actions_to_drop_effect(data_offer->source_actions);
++    params.data_object = PtrToUint(data_offer);
 +
-+    drop_effect = dnd_actions_to_drop_effect(data_offer->source_actions);
-+    hr = IDropTarget_DragOver(drop_target, MK_LBUTTON, *(POINTL*)&point, &drop_effect);
-+    IDropTarget_Release(drop_target);
-+    if (FAILED(hr))
++    if (WAYLANDDRV_CLIENT_CALL(dnd, &params, sizeof(params)) != 0)
 +        return;
 +
 +    wl_data_offer_set_actions(data_device->dnd_wl_data_offer,
@@ -8617,12 +8819,10 @@ index 00000000000..c3f51861def
 +
 +static void data_device_drop(void *data, struct wl_data_device *wl_data_device)
 +{
++    struct waylanddrv_client_dnd_params params;
 +    struct wayland_data_device *data_device = data;
 +    struct wayland_data_offer *data_offer;
-+    IDropTarget *drop_target;
 +    POINT point;
-+    DWORD drop_effect;
-+    HRESULT hr;
 +
 +    if (!data_device->dnd_wl_data_offer || !data_device->dnd_surface)
 +        goto out;
@@ -8637,17 +8837,14 @@ index 00000000000..c3f51861def
 +          data_device->dnd_surface, data_device->dnd_surface->hwnd,
 +          data_offer->source_actions, data_offer->action);
 +
-+    drop_target = drop_target_from_window_point(data_device->dnd_surface->hwnd,
-+                                                point);
-+    if (drop_target)
-+    {
-+        drop_effect = dnd_actions_to_drop_effect(data_offer->action);
-+        hr = IDropTarget_Drop(drop_target, &data_offer->data_object, MK_LBUTTON,
-+                              *(POINTL*)&point, &drop_effect);
-+        IDropTarget_Release(drop_target);
-+        if (SUCCEEDED(hr) && drop_effect != DROPEFFECT_NONE)
-+            wl_data_offer_finish(data_device->dnd_wl_data_offer);
-+    }
++    params.event = CLIENT_DND_EVENT_DROP;
++    params.hwnd = HandleToULong(data_device->dnd_surface->hwnd);
++    params.point = point;
++    params.drop_effect = dnd_actions_to_drop_effect(data_offer->source_actions);
++    params.data_object = PtrToUint(data_offer);
++
++    if (WAYLANDDRV_CLIENT_CALL(dnd, &params, sizeof(params)) == 0)
++        wl_data_offer_finish(data_device->dnd_wl_data_offer);
 +
 +out:
 +    wayland_data_device_destroy_dnd_data_offer(data_device);
@@ -8948,30 +9145,193 @@ index 00000000000..c3f51861def
 +    wayland_data_device_destroy_clipboard_data_offer(data_device);
 +}
 +
-+static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
++/**********************************************************************
++ *          waylanddrv_unix_clipboard_message
++ */
++NTSTATUS waylanddrv_unix_clipboard_message(void *arg)
 +{
-+    switch (msg)
++    struct waylanddrv_unix_clipboard_message_params *params = arg;
++
++    switch (params->msg)
 +    {
 +    case WM_NCCREATE:
 +        return TRUE;
 +    case WM_CLIPBOARDUPDATE:
 +        TRACE("WM_CLIPBOARDUPDATE\n");
 +        /* Ignore our own updates */
-+        if (NtUserGetClipboardOwner() != hwnd) clipboard_update();
++        if (NtUserGetClipboardOwner() != params->hwnd) clipboard_update();
 +        break;
 +    case WM_RENDERFORMAT:
-+        TRACE("WM_RENDERFORMAT: %ld\n", wp);
-+        clipboard_render_format(wp);
++        TRACE("WM_RENDERFORMAT: %ld\n", params->wparam);
++        clipboard_render_format(params->wparam);
 +        break;
 +    case WM_DESTROYCLIPBOARD:
-+        TRACE("WM_DESTROYCLIPBOARD: lost ownership clipboard_hwnd=%p\n", hwnd);
++        TRACE("WM_DESTROYCLIPBOARD: clipboard_hwnd=%p\n", params->hwnd);
 +        clipboard_destroy();
 +        break;
 +    }
-+    return DefWindowProcW( hwnd, msg, wp, lp );
++
++    return NtUserMessageCall(params->hwnd, params->msg, params->wparam,
++                             params->lparam, NULL, NtUserDefWindowProc, FALSE);
 +}
 +
-+static HWND wayland_data_device_create_clipboard_window(void)
++/**********************************************************************
++ *          wayland_data_device_ensure_clipboard_window
++ *
++ * Creates (if not already created) the window which handles clipboard
++ * messages for the specified wayland instance.
++ */
++void wayland_data_device_ensure_clipboard_window(struct wayland *wayland)
++{
++    if (!wayland->clipboard_hwnd)
++    {
++        wayland->clipboard_hwnd =
++            ULongToHandle(WAYLANDDRV_CLIENT_CALL(create_clipboard_window, NULL, 0));
++    }
++}
++
++NTSTATUS waylanddrv_unix_data_offer_accept_format(void *arg)
++{
++    struct waylanddrv_unix_data_offer_accept_format_params *p = arg;
++    struct wayland_data_offer *data_offer = UIntToPtr(p->data_offer);
++    struct wayland_data_device_format *format;
++
++    TRACE("data_offer=%p clipboard_format=%d\n", data_offer, p->format);
++
++    format = wayland_data_device_format_for_clipboard_format(p->format,
++                                                             &data_offer->types);
++    if (format)
++    {
++        TRACE("found offer %s for clipboard format %u\n",
++              format->mime_type, format->clipboard_format);
++        data_offer->accepted_mime_type = format->mime_type;
++        return STATUS_SUCCESS;
++    }
++
++    return STATUS_UNSUCCESSFUL;
++}
++
++NTSTATUS waylanddrv_unix_data_offer_enum_formats(void *arg)
++{
++    struct waylanddrv_unix_data_offer_enum_formats_params *p = arg;
++    struct wayland_data_offer *data_offer = UIntToPtr(p->data_offer);
++    char **mime;
++    UINT count = 0;
++
++    wl_array_for_each(mime, &data_offer->types)
++    {
++        struct wayland_data_device_format *format =
++            wayland_data_device_format_for_mime_type(*mime);
++        if (format)
++        {
++            if (p->formats && p->num_formats < count)
++                p->formats[count] = format->clipboard_format;
++            count++;
++        }
++    }
++
++    p->num_formats = count;
++
++    return STATUS_SUCCESS;
++}
++
++NTSTATUS waylanddrv_unix_data_offer_import_format(void *arg)
++{
++    struct waylanddrv_unix_data_offer_import_format_params *p = arg;
++    struct wayland_data_offer *data_offer = UIntToPtr(p->data_offer);
++    struct wayland_data_device_format *format;
++
++    TRACE("data_offer=%p clipboard_format=%d\n", data_offer, p->format);
++
++    format = wayland_data_device_format_for_clipboard_format(p->format,
++                                                             &data_offer->types);
++    if (format)
++    {
++        void *data, *vdata = NULL;
++        size_t size;
++        SIZE_T vsize;
++
++        if (!(data = wayland_data_offer_import_format(data_offer, format, &size)))
++            return STATUS_UNSUCCESSFUL;
++        vsize = size;
++        if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&vdata,
++                                    zero_bits(), &vsize, MEM_COMMIT, PAGE_READWRITE) ||
++            !vdata)
++        {
++            free(data);
++            return STATUS_UNSUCCESSFUL;
++        }
++        memcpy(vdata, data, size);
++        p->data = PtrToUint(vdata);
++        p->size = size;
++        free(data);
++        return STATUS_SUCCESS;
++    }
++
++    return STATUS_UNSUCCESSFUL;
++}
+diff --git a/dlls/winewayland.drv/wayland_data_device_dll.c b/dlls/winewayland.drv/wayland_data_device_dll.c
+new file mode 100644
+index 00000000000..5bac8125bac
+--- /dev/null
++++ b/dlls/winewayland.drv/wayland_data_device_dll.c
+@@ -0,0 +1,526 @@
++/*
++ * Wayland data device (clipboard and DnD) handling (DLL code)
++ *
++ * Copyright (c) 2020 Alexandros Frantzis for Collabora Ltd
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#include "ntstatus.h"
++#define WIN32_NO_STATUS
++
++#include "waylanddrv_dll.h"
++
++#define COBJMACROS
++#include "objidl.h"
++#include "shlobj.h"
++
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
++
++static IDataObjectVtbl dataOfferDataObjectVtbl;
++
++static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
++{
++    struct waylanddrv_unix_clipboard_message_params params;
++
++    switch (msg)
++    {
++    case WM_NCCREATE:
++    case WM_CLIPBOARDUPDATE:
++    case WM_RENDERFORMAT:
++    case WM_DESTROYCLIPBOARD:
++        params.hwnd = hwnd;
++        params.msg = msg;
++        params.wparam = wp;
++        params.lparam = lp;
++        return WAYLANDDRV_UNIX_CALL(clipboard_message, &params);
++    }
++
++    return DefWindowProcW(hwnd, msg, wp, lp);
++}
++
++NTSTATUS WINAPI waylanddrv_client_create_clipboard_window(void *arg, ULONG size)
 +{
 +    static const WCHAR clipboard_classname[] = {
 +        '_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d',
@@ -8997,25 +9357,215 @@ index 00000000000..c3f51861def
 +        return 0;
 +    }
 +
-+    wayland_data_device_init_formats();
-+
 +    if (!AddClipboardFormatListener(clipboard_hwnd))
 +        ERR("failed to set clipboard listener %u\n", GetLastError());
 +
 +    TRACE("clipboard_hwnd=%p\n", clipboard_hwnd);
-+    return clipboard_hwnd;
++    return HandleToUlong(clipboard_hwnd);
 +}
 +
 +/**********************************************************************
-+ *          wayland_data_device_ensure_clipboard_window
++ *          IDropTarget discovery
 + *
-+ * Creates (if not already created) the window which handles clipboard
-+ * messages for the specified wayland instance.
++ * Based on functions in dlls/ole32/ole2.c
 + */
-+void wayland_data_device_ensure_clipboard_window(struct wayland *wayland)
++
++static HANDLE get_drop_target_local_handle(HWND hwnd)
 +{
-+    if (!wayland->clipboard_hwnd)
-+        wayland->clipboard_hwnd = wayland_data_device_create_clipboard_window();
++    static const WCHAR prop_marshalleddrop_target[] =
++        {'W','i','n','e','M','a','r','s','h','a','l','l','e','d',
++         'D','r','o','p','T','a','r','g','e','t',0};
++    HANDLE handle;
++    HANDLE local_handle = 0;
++
++    handle = GetPropW(hwnd, prop_marshalleddrop_target);
++    if (handle)
++    {
++        DWORD pid;
++        HANDLE process;
++
++        GetWindowThreadProcessId(hwnd, &pid);
++        process = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid);
++        if (process)
++        {
++            DuplicateHandle(process, handle, GetCurrentProcess(), &local_handle,
++                            0, FALSE, DUPLICATE_SAME_ACCESS);
++            CloseHandle(process);
++        }
++    }
++    return local_handle;
++}
++
++static HRESULT create_stream_from_map(HANDLE map, IStream **stream)
++{
++    HRESULT hr = E_OUTOFMEMORY;
++    HGLOBAL hmem;
++    void *data;
++    MEMORY_BASIC_INFORMATION info;
++
++    data = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
++    if(!data) return hr;
++
++    VirtualQuery(data, &info, sizeof(info));
++
++    hmem = GlobalAlloc(GMEM_MOVEABLE, info.RegionSize);
++    if(hmem)
++    {
++        memcpy(GlobalLock(hmem), data, info.RegionSize);
++        GlobalUnlock(hmem);
++        hr = CreateStreamOnHGlobal(hmem, TRUE, stream);
++    }
++    UnmapViewOfFile(data);
++    return hr;
++}
++
++static IDropTarget* get_drop_target_pointer(HWND hwnd)
++{
++    IDropTarget *drop_target = NULL;
++    HANDLE map;
++    IStream *stream;
++
++    map = get_drop_target_local_handle(hwnd);
++    if(!map) return NULL;
++
++    if(SUCCEEDED(create_stream_from_map(map, &stream)))
++    {
++        CoUnmarshalInterface(stream, &IID_IDropTarget, (void**)&drop_target);
++        IStream_Release(stream);
++    }
++    CloseHandle(map);
++    return drop_target;
++}
++
++static IDropTarget *drop_target_from_window_point(HWND hwnd, POINT point)
++{
++    HWND child;
++    IDropTarget *drop_target;
++    HWND orig_hwnd = hwnd;
++    POINT orig_point = point;
++
++    /* Find the deepest child window. */
++    ScreenToClient(hwnd, &point);
++    while ((child = ChildWindowFromPointEx(hwnd, point, CWP_SKIPDISABLED | CWP_SKIPINVISIBLE)) &&
++            child != hwnd)
++    {
++        MapWindowPoints(hwnd, child, &point, 1);
++        hwnd = child;
++    }
++
++    /* Ascend the children hierarchy until we find one that accepts drops. */
++    do
++    {
++        drop_target = get_drop_target_pointer(hwnd);
++    } while (drop_target == NULL && (hwnd = GetParent(hwnd)) != NULL);
++
++    TRACE("hwnd=%p point=(%d,%d) => dnd_hwnd=%p drop_target=%p\n",
++          orig_hwnd, orig_point.x, orig_point.y, hwnd, drop_target);
++    return drop_target;
++}
++
++static NTSTATUS WINAPI waylanddrv_client_dnd_enter(void *params, ULONG size)
++{
++    struct waylanddrv_client_dnd_params *p = params;
++    IDropTarget *drop_target;
++    DWORD drop_effect = p->drop_effect;
++    IDataObject *data_object = UIntToPtr(p->data_object);
++    HRESULT hr;
++
++    /* If unixlib is 64 bits and PE is 32 bits, this will write a 32 bit
++     * pointer value to the bottom of 64 bit pointer variable, which works out
++     * fine due to little-endianness and the fact that lpVtbl has been zero
++     * initialized. */
++    data_object->lpVtbl = &dataOfferDataObjectVtbl;
++
++    drop_target = drop_target_from_window_point(ULongToHandle(p->hwnd), p->point);
++    if (!drop_target)
++        return STATUS_UNSUCCESSFUL;
++
++    hr = IDropTarget_DragEnter(drop_target, data_object, MK_LBUTTON,
++                               *(POINTL*)&p->point, &drop_effect);
++    IDropTarget_Release(drop_target);
++    if (FAILED(hr))
++        return STATUS_UNSUCCESSFUL;
++
++    return STATUS_SUCCESS;
++}
++
++static NTSTATUS WINAPI waylanddrv_client_dnd_leave(void *params, ULONG size)
++{
++    struct waylanddrv_client_dnd_params *p = params;
++    IDropTarget *drop_target;
++    HRESULT hr;
++
++    drop_target = drop_target_from_window_point(ULongToHandle(p->hwnd), p->point);
++    if (!drop_target)
++        return STATUS_UNSUCCESSFUL;
++
++    hr = IDropTarget_DragLeave(drop_target);
++    IDropTarget_Release(drop_target);
++    if (FAILED(hr))
++        return STATUS_UNSUCCESSFUL;
++
++    return STATUS_SUCCESS;
++}
++
++static NTSTATUS WINAPI waylanddrv_client_dnd_motion(void *params, ULONG size)
++{
++    struct waylanddrv_client_dnd_params *p = params;
++    IDropTarget *drop_target;
++    DWORD drop_effect = p->drop_effect;
++    HRESULT hr;
++
++    drop_target = drop_target_from_window_point(ULongToHandle(p->hwnd), p->point);
++    if (!drop_target)
++        return STATUS_UNSUCCESSFUL;
++
++    hr = IDropTarget_DragOver(drop_target, MK_LBUTTON, *(POINTL*)&p->point,
++                              &drop_effect);
++    IDropTarget_Release(drop_target);
++    if (FAILED(hr))
++        return STATUS_UNSUCCESSFUL;
++
++    return STATUS_SUCCESS;
++}
++
++static NTSTATUS WINAPI waylanddrv_client_dnd_drop(void *params, ULONG size)
++{
++    struct waylanddrv_client_dnd_params *p = params;
++    IDropTarget *drop_target;
++    DWORD drop_effect = p->drop_effect;
++    IDataObject *data_object = UIntToPtr(p->data_object);
++    HRESULT hr;
++
++    drop_target = drop_target_from_window_point(ULongToHandle(p->hwnd), p->point);
++    if (drop_target)
++    {
++        hr = IDropTarget_Drop(drop_target, data_object, MK_LBUTTON,
++                              *(POINTL*)&p->point, &drop_effect);
++        IDropTarget_Release(drop_target);
++        if (SUCCEEDED(hr) && drop_effect != DROPEFFECT_NONE)
++            return STATUS_SUCCESS;
++    }
++
++    return STATUS_UNSUCCESSFUL;
++}
++
++NTSTATUS WINAPI waylanddrv_client_dnd(void *params, ULONG size)
++{
++    struct waylanddrv_client_dnd_params *p = params;
++
++    switch (p->event) {
++    case CLIENT_DND_EVENT_ENTER:
++        return waylanddrv_client_dnd_enter(params, size);
++    case CLIENT_DND_EVENT_LEAVE:
++        return waylanddrv_client_dnd_leave(params, size);
++    case CLIENT_DND_EVENT_MOTION:
++        return waylanddrv_client_dnd_motion(params, size);
++    case CLIENT_DND_EVENT_DROP:
++        return waylanddrv_client_dnd_drop(params, size);
++    }
++
++    return STATUS_UNSUCCESSFUL;
 +}
 +
 +/*********************************************************
@@ -9058,8 +9608,8 @@ index 00000000000..c3f51861def
 +                                                  STGMEDIUM *medium)
 +{
 +    HRESULT hr;
-+    struct wayland_data_offer *data_offer;
-+    struct wayland_data_device_format *format;
++    struct waylanddrv_unix_data_offer_import_format_params params;
++    void *data;
 +
 +    TRACE("(%p, %p, %p)\n", data_object, format_etc, medium);
 +
@@ -9067,34 +9617,28 @@ index 00000000000..c3f51861def
 +    if (!SUCCEEDED(hr))
 +        return hr;
 +
-+    data_offer = wayland_data_offer_from_data_object(data_object);
++    params.data_offer = PtrToUint(data_object);
++    params.format = format_etc->cfFormat;
++    params.data = 0;
++    params.size = 0;
 +
-+    /* A successful QueryGetData invocation sets a valid accepted_mime_type */
-+    assert(data_offer->accepted_mime_type);
++    if (WAYLANDDRV_UNIX_CALL(data_offer_import_format, &params) != 0 || !params.data)
++        return E_UNEXPECTED;
 +
-+    format = wayland_data_device_format_for_mime_type(data_offer->accepted_mime_type);
-+    if (format)
-+    {
-+        void *data;
-+        size_t size;
++    data = UIntToPtr(params.data);
 +
-+        if (!(data = wayland_data_offer_import_format(data_offer, format, &size)))
-+            return E_UNEXPECTED;
++    medium->hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, params.size);
++    if (medium->hGlobal == NULL)
++        return E_OUTOFMEMORY;
++    memcpy(GlobalLock(medium->hGlobal), data, params.size);
++    GlobalUnlock(medium->hGlobal);
 +
-+        medium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, size);
-+        if (medium->u.hGlobal == NULL)
-+            return E_OUTOFMEMORY;
-+        memcpy(GlobalLock(medium->u.hGlobal), data, size);
-+        GlobalUnlock(medium->u.hGlobal);
++    medium->tymed = TYMED_HGLOBAL;
++    medium->pUnkForRelease = 0;
 +
-+        medium->tymed = TYMED_HGLOBAL;
-+        medium->pUnkForRelease = 0;
++    VirtualFree(data, params.size, MEM_RELEASE);
 +
-+        free(data);
-+        return S_OK;
-+    }
-+
-+    return E_UNEXPECTED;
++    return S_OK;
 +}
 +
 +static HRESULT WINAPI dataOfferDataObject_GetDataHere(IDataObject *data_object,
@@ -9108,8 +9652,7 @@ index 00000000000..c3f51861def
 +static HRESULT WINAPI dataOfferDataObject_QueryGetData(IDataObject *data_object,
 +                                                       FORMATETC *format_etc)
 +{
-+    struct wayland_data_offer *data_offer;
-+    struct wayland_data_device_format *format;
++    struct waylanddrv_unix_data_offer_accept_format_params params;
 +
 +    TRACE("(%p, %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%d}\n",
 +          data_object, format_etc, format_etc->tymed, format_etc->dwAspect,
@@ -9121,16 +9664,11 @@ index 00000000000..c3f51861def
 +        return DV_E_TYMED;
 +    }
 +
-+    data_offer = wayland_data_offer_from_data_object(data_object);
-+    format = wayland_data_device_format_for_clipboard_format(format_etc->cfFormat,
-+                                                             &data_offer->types);
-+    if (format)
-+    {
-+        TRACE("found offer %s for clipboard format %u\n",
-+              format->mime_type, format->clipboard_format);
-+        data_offer->accepted_mime_type = format->mime_type;
++    params.data_offer = PtrToUint(data_object);
++    params.format = format_etc->cfFormat;
++
++    if (WAYLANDDRV_UNIX_CALL(data_offer_accept_format, &params) == 0)
 +        return S_OK;
-+    }
 +
 +    TRACE("didn't find offer for clipboard format %u\n", format_etc->cfFormat);
 +    return DV_E_FORMATETC;
@@ -9161,10 +9699,7 @@ index 00000000000..c3f51861def
 +    size_t i;
 +
 +    for (i = 0; i < formats_etc_count; i++)
-+    {
-+        if (formats_etc[i].cfFormat == clipboard_format)
-+            return TRUE;
-+    }
++        if (formats_etc[i].cfFormat == clipboard_format) return TRUE;
 +
 +    return FALSE;
 +}
@@ -9176,8 +9711,7 @@ index 00000000000..c3f51861def
 +    HRESULT hr;
 +    FORMATETC *formats_etc;
 +    size_t formats_etc_count = 0;
-+    struct wayland_data_offer *data_offer;
-+    char **p;
++    struct waylanddrv_unix_data_offer_enum_formats_params params;
 +
 +    TRACE("(%p, %u, %p)\n", data_object, direction, enum_format_etc);
 +
@@ -9187,25 +9721,32 @@ index 00000000000..c3f51861def
 +        return E_NOTIMPL;
 +    }
 +
-+    data_offer = wayland_data_offer_from_data_object(data_object);
++    params.data_offer = PtrToUint(data_object);
++    params.formats = NULL;
++    params.num_formats = 0;
 +
-+    /* Allocate space for all offered mime types, although we may not use them all */
-+    formats_etc = HeapAlloc(GetProcessHeap(), 0,
-+                            (data_offer->types.size / sizeof(char *)) * sizeof(FORMATETC));
-+    if (!formats_etc)
++    WAYLANDDRV_UNIX_CALL(data_offer_enum_formats, &params);
++    params.formats = HeapAlloc(GetProcessHeap(), 0, params.num_formats * sizeof(UINT));
++    WAYLANDDRV_UNIX_CALL(data_offer_enum_formats, &params);
++    if (!params.formats)
 +        return E_OUTOFMEMORY;
 +
-+    wl_array_for_each(p, &data_offer->types)
++    /* Allocate space for all offered mime types, although we may not use them all */
++    formats_etc = HeapAlloc(GetProcessHeap(), 0, params.num_formats * sizeof(FORMATETC));
++    if (!formats_etc)
 +    {
-+        struct wayland_data_device_format *format =
-+            wayland_data_device_format_for_mime_type(*p);
-+        if (format &&
-+            !formats_etc_contains_clipboard_format(formats_etc, formats_etc_count,
-+                                                   format->clipboard_format))
++        HeapFree(GetProcessHeap(), 0, params.formats);
++        return E_OUTOFMEMORY;
++    }
++
++    for (int i = 0; i < params.num_formats; i++)
++    {
++        if (!formats_etc_contains_clipboard_format(formats_etc, formats_etc_count,
++                                                   params.formats[i]))
 +        {
 +            FORMATETC *current= &formats_etc[formats_etc_count];
 +
-+            current->cfFormat = format->clipboard_format;
++            current->cfFormat = params.formats[i];
 +            current->ptd = NULL;
 +            current->dwAspect = DVASPECT_CONTENT;
 +            current->lindex = -1;
@@ -9216,6 +9757,7 @@ index 00000000000..c3f51861def
 +    }
 +
 +    hr = SHCreateStdEnumFmtEtc(formats_etc_count, formats_etc, enum_format_etc);
++    HeapFree(GetProcessHeap(), 0, params.formats);
 +    HeapFree(GetProcessHeap(), 0, formats_etc);
 +
 +    return hr;
@@ -9262,10 +9804,10 @@ index 00000000000..c3f51861def
 +};
 diff --git a/dlls/winewayland.drv/wayland_data_device_format.c b/dlls/winewayland.drv/wayland_data_device_format.c
 new file mode 100644
-index 00000000000..678d399d05b
+index 00000000000..732ce905026
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_data_device_format.c
-@@ -0,0 +1,595 @@
+@@ -0,0 +1,599 @@
 +/*
 + * Wayland data device format handling
 + *
@@ -9285,6 +9827,10 @@ index 00000000000..678d399d05b
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -9863,10 +10409,10 @@ index 00000000000..678d399d05b
 +}
 diff --git a/dlls/winewayland.drv/wayland_dmabuf.c b/dlls/winewayland.drv/wayland_dmabuf.c
 new file mode 100644
-index 00000000000..5e904c853e8
+index 00000000000..2511dfc55ce
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_dmabuf.c
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,429 @@
 +/*
 + * Wayland dmabuf buffers
 + *
@@ -9887,6 +10433,10 @@ index 00000000000..5e904c853e8
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#include "config.h"
 +
 +#include "waylanddrv.h"
@@ -9894,28 +10444,16 @@ index 00000000000..5e904c853e8
 +
 +#include <drm_fourcc.h>
 +#include <stdlib.h>
++#include <unistd.h>
++#include <sys/mman.h>
 +
 +WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 +
-+BOOL wayland_dmabuf_has_format_list(struct wayland_dmabuf *dmabuf)
-+{
-+    return !wl_list_empty(&dmabuf->formats);
-+}
++/**********************************************************************
++ *          dmabuf private helpers
++ */
 +
-+struct wayland_dmabuf_format *wayland_dmabuf_find_format(struct wayland_dmabuf *dmabuf,
-+                                                         uint32_t format)
-+{
-+    struct wayland_dmabuf_format *dmabuf_format;
-+
-+    wl_list_for_each(dmabuf_format, &dmabuf->formats, link)
-+        if (dmabuf_format->format == format) break;
-+
-+    if (&dmabuf_format->link == &dmabuf->formats) dmabuf_format = NULL;
-+
-+    return dmabuf_format;
-+}
-+
-+static BOOL wayland_dmabuf_format_find_modifier(struct wayland_dmabuf_format *format, uint64_t modifier)
++static BOOL dmabuf_format_has_modifier(struct wayland_dmabuf_format *format, uint64_t modifier)
 +{
 +    uint64_t *mod;
 +
@@ -9925,17 +10463,31 @@ index 00000000000..5e904c853e8
 +    return FALSE;
 +}
 +
-+static void *wayland_dmabuf_add_format_modifier(struct wayland_dmabuf *dmabuf,
-+                                                uint32_t format, uint64_t modifier)
++static struct wayland_dmabuf_format *dmabuf_format_list_find_format(struct wl_list *formats,
++                                                                    uint32_t format)
++{
++    struct wayland_dmabuf_format *dmabuf_format;
++
++    wl_list_for_each(dmabuf_format, formats, link)
++        if (dmabuf_format->format == format) break;
++
++    if (&dmabuf_format->link == formats) dmabuf_format = NULL;
++
++    return dmabuf_format;
++}
++
++static struct wayland_dmabuf_format *dmabuf_format_list_add_format_modifier(struct wl_list *formats,
++                                                                            uint32_t format,
++                                                                            uint64_t modifier)
 +{
 +    struct wayland_dmabuf_format *dmabuf_format;
 +    uint64_t *mod;
 +
-+    if ((dmabuf_format = wayland_dmabuf_find_format(dmabuf, format)))
++    if ((dmabuf_format = dmabuf_format_list_find_format(formats, format)))
 +    {
 +        /* Avoid a possible duplicate, e.g., if compositor sends both format and
 +         * modifier event with a DRM_FORMAT_MOD_INVALID. */
-+        if (wayland_dmabuf_format_find_modifier(dmabuf_format, modifier))
++        if (dmabuf_format_has_modifier(dmabuf_format, modifier))
 +            goto out;
 +    }
 +    else
@@ -9944,7 +10496,7 @@ index 00000000000..5e904c853e8
 +            return NULL;
 +        dmabuf_format->format = format;
 +        wl_array_init(&dmabuf_format->modifiers);
-+        wl_list_insert(&dmabuf->formats, &dmabuf_format->link);
++        wl_list_insert(formats, &dmabuf_format->link);
 +    }
 +
 +    mod = wl_array_add(&dmabuf_format->modifiers, sizeof(uint64_t));
@@ -9955,15 +10507,43 @@ index 00000000000..5e904c853e8
 +    return dmabuf_format;
 +}
 +
++static void dmabuf_format_list_release(struct wl_list *formats)
++{
++    struct wayland_dmabuf_format *format, *tmp;
++
++    wl_list_for_each_safe(format, tmp, formats, link)
++    {
++        wl_array_release(&format->modifiers);
++        wl_list_remove(&format->link);
++        free(format);
++    }
++}
++
++static void dmabuf_feedback_tranche_init(struct wayland_dmabuf_feedback_tranche *tranche)
++{
++    memset(tranche, 0, sizeof(*tranche));
++    wl_list_init(&tranche->formats);
++}
++
++/* Moves src tranche to dst, and resets src. */
++static void dmabuf_feedback_tranche_move(struct wayland_dmabuf_feedback_tranche *dst,
++                                         struct wayland_dmabuf_feedback_tranche *src)
++{
++    memcpy(dst, src, sizeof(*dst));
++    wl_list_init(&dst->formats);
++    wl_list_insert_list(&dst->formats, &src->formats);
++    dmabuf_feedback_tranche_init(src);
++}
++
 +/**********************************************************************
-+ *          zwp_linux_dmabuf_v1 implementation
++ *          zwp_linux_dmabuf_v1 handling
 + */
 +
 +static void dmabuf_format(void *data, struct zwp_linux_dmabuf_v1 *zwp_dmabuf, uint32_t format)
 +{
 +    struct wayland_dmabuf *dmabuf = data;
 +
-+    if (!wayland_dmabuf_add_format_modifier(dmabuf, format, DRM_FORMAT_MOD_INVALID))
++    if (!dmabuf_format_list_add_format_modifier(&dmabuf->formats, format, DRM_FORMAT_MOD_INVALID))
 +        WARN("Could not add format 0x%08x\n", format);
 +}
 +
@@ -9973,8 +10553,8 @@ index 00000000000..5e904c853e8
 +    struct wayland_dmabuf *dmabuf = data;
 +    const uint64_t modifier = (uint64_t)mod_hi << 32 | mod_lo;
 +
-+    if (!wayland_dmabuf_add_format_modifier(dmabuf, format, modifier))
-+        WARN("Could not add format/modifier 0x%08x/0x%llx\n", format, modifier);
++    if (!dmabuf_format_list_add_format_modifier(&dmabuf->formats, format, modifier))
++        WARN("Could not add format/modifier 0x%08x/0x%" PRIx64 "\n", format, modifier);
 +}
 +
 +static const struct zwp_linux_dmabuf_v1_listener dmabuf_listener = {
@@ -9985,6 +10565,7 @@ index 00000000000..5e904c853e8
 +/**********************************************************************
 + *          zwp_linux_dmabuf_feedback_v1 handling
 + */
++
 +static void dmabuf_feedback_main_device(void *data,
 +                                        struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
 +                                        struct wl_array *device)
@@ -10001,34 +10582,82 @@ index 00000000000..5e904c853e8
 +                                         struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
 +                                         int32_t fd, uint32_t size)
 +{
-+    /* ignore for now */
++    struct wayland_dmabuf_feedback *feedback = data;
++
++    feedback->format_table_entries = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
++    if (feedback->format_table_entries == MAP_FAILED)
++    {
++        WARN("Failed to mmap format table entries. fd %d size %u.\n", fd, size);
++        feedback->format_table_entries = NULL;
++        close(fd);
++        return;
++    }
++
++    feedback->format_table_size = size;
++    close(fd);
 +}
 +
 +static void dmabuf_feedback_tranche_target_device(void *data,
 +                                                  struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
 +                                                  struct wl_array *device)
 +{
-+    /* ignore for now */
++    struct wayland_dmabuf_feedback *feedback = data;
++
++    memcpy(&feedback->pending_tranche.device, device->data, sizeof(dev_t));
 +}
 +
 +static void dmabuf_feedback_tranche_formats(void *data,
 +                                            struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
 +                                            struct wl_array *indices)
 +{
-+    /* ignore for now */
++    struct wayland_dmabuf_feedback *feedback = data;
++    struct wayland_dmabuf_feedback_format_table_entry *table_entries = feedback->format_table_entries;
++    uint16_t *index;
++
++    if (!table_entries)
++    {
++        WARN("Could not add formats/modifiers to tranche due to missing format table\n");
++        return;
++    }
++
++    wl_array_for_each(index, indices)
++    {
++        if (!dmabuf_format_list_add_format_modifier(&feedback->pending_tranche.formats,
++                                                    table_entries[*index].format,
++                                                    table_entries[*index].modifier))
++        {
++            WARN("Could not add format/modifier 0x%08x/0x%" PRIx64 "\n",
++                 table_entries[*index].format,
++                 table_entries[*index].modifier);
++        }
++    }
 +}
 +
 +static void dmabuf_feedback_tranche_flags(void *data,
 +                                          struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
 +                                          uint32_t flags)
 +{
-+    /* ignore for now */
++    struct wayland_dmabuf_feedback *feedback = data;
++
++    feedback->pending_tranche.flags = flags;
 +}
 +
 +static void dmabuf_feedback_tranche_done(void *data,
 +                                         struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1)
 +{
-+    /* ignore for now */
++    struct wayland_dmabuf_feedback *feedback = data;
++    struct wayland_dmabuf_feedback_tranche *tranche;
++
++    if (wl_list_empty(&feedback->pending_tranche.formats) ||
++        !(tranche = wl_array_add(&feedback->tranches, sizeof(*tranche))))
++    {
++        WARN("Failed to add tranche with target device %ju\n",
++             (uintmax_t)feedback->pending_tranche.device);
++        dmabuf_format_list_release(&feedback->pending_tranche.formats);
++        dmabuf_feedback_tranche_init(&feedback->pending_tranche);
++        return;
++    }
++    dmabuf_feedback_tranche_move(tranche, &feedback->pending_tranche);
 +}
 +
 +static void dmabuf_feedback_done(void *data,
@@ -10054,6 +10683,8 @@ index 00000000000..5e904c853e8
 +static void wayland_dmabuf_feedback_init(struct wayland_dmabuf_feedback *feedback,
 +                                         struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf_v1)
 +{
++    wl_array_init(&feedback->tranches);
++    dmabuf_feedback_tranche_init(&feedback->pending_tranche);
 +    feedback->zwp_linux_dmabuf_feedback_v1 =
 +        zwp_linux_dmabuf_v1_get_default_feedback(zwp_linux_dmabuf_v1);
 +    zwp_linux_dmabuf_feedback_v1_add_listener(feedback->zwp_linux_dmabuf_feedback_v1,
@@ -10062,8 +10693,15 @@ index 00000000000..5e904c853e8
 +
 +static void wayland_dmabuf_feedback_deinit(struct wayland_dmabuf_feedback *feedback)
 +{
-+    if (feedback->zwp_linux_dmabuf_feedback_v1)
-+        zwp_linux_dmabuf_feedback_v1_destroy(feedback->zwp_linux_dmabuf_feedback_v1);
++    struct wayland_dmabuf_feedback_tranche *tranche;
++
++    dmabuf_format_list_release(&feedback->pending_tranche.formats);
++
++    wl_array_for_each(tranche, &feedback->tranches)
++        dmabuf_format_list_release(&tranche->formats);
++    wl_array_release(&feedback->tranches);
++
++    zwp_linux_dmabuf_feedback_v1_destroy(feedback->zwp_linux_dmabuf_feedback_v1);
 +}
 +
 +/***********************************************************************
@@ -10078,8 +10716,8 @@ index 00000000000..5e904c853e8
 +    dmabuf->zwp_linux_dmabuf_v1 = zwp_linux_dmabuf_v1;
 +    wl_list_init(&dmabuf->formats);
 +
-+    /* If the compositor supports dmabuf feedback events, it must not send
-+     * format and modifier events, so don't even listen for them in that case. */
++    /* linux-dmabuf feedback events deprecate format/modifier events from
++     * previous versions. Listen to pre-v4 events only if v4 is not supported. */
 +    if (dmabuf_version >= ZWP_LINUX_DMABUF_V1_GET_DEFAULT_FEEDBACK_SINCE_VERSION)
 +        wayland_dmabuf_feedback_init(&dmabuf->feedback, zwp_linux_dmabuf_v1);
 +    else
@@ -10091,19 +10729,41 @@ index 00000000000..5e904c853e8
 + */
 +void wayland_dmabuf_deinit(struct wayland_dmabuf *dmabuf)
 +{
-+    struct wayland_dmabuf_format *format, *tmp;
++    if (dmabuf->feedback.zwp_linux_dmabuf_feedback_v1)
++        wayland_dmabuf_feedback_deinit(&dmabuf->feedback);
 +
-+    wayland_dmabuf_feedback_deinit(&dmabuf->feedback);
++    dmabuf_format_list_release(&dmabuf->formats);
 +
 +    if (dmabuf->zwp_linux_dmabuf_v1)
 +        zwp_linux_dmabuf_v1_destroy(dmabuf->zwp_linux_dmabuf_v1);
++}
 +
-+    wl_list_for_each_safe(format, tmp, &dmabuf->formats, link)
++/***********************************************************************
++ *           wayland_dmabuf_find_format
++ */
++struct wayland_dmabuf_format *wayland_dmabuf_find_format(struct wayland_dmabuf *dmabuf,
++                                                         uint32_t format)
++{
++    uint32_t dmabuf_version =
++        wl_proxy_get_version((struct wl_proxy *)dmabuf->zwp_linux_dmabuf_v1);
++    struct wayland_dmabuf_format *dmabuf_format = NULL;
++
++    if (dmabuf_version >= ZWP_LINUX_DMABUF_V1_GET_DEFAULT_FEEDBACK_SINCE_VERSION)
 +    {
-+        wl_array_release(&format->modifiers);
-+        wl_list_remove(&format->link);
-+        free(format);
++        struct wayland_dmabuf_feedback_tranche *tranche;
++
++        wl_array_for_each(tranche, &dmabuf->feedback.tranches)
++        {
++            if ((dmabuf_format = dmabuf_format_list_find_format(&tranche->formats, format)))
++                break;
++        }
 +    }
++    else
++    {
++        dmabuf_format = dmabuf_format_list_find_format(&dmabuf->formats, format);
++    }
++
++    return dmabuf_format;
 +}
 +
 +/**********************************************************************
@@ -10184,7 +10844,7 @@ index 00000000000..5e904c853e8
 +}
 diff --git a/dlls/winewayland.drv/wayland_keyboard.c b/dlls/winewayland.drv/wayland_keyboard.c
 new file mode 100644
-index 00000000000..aa7a1741fb9
+index 00000000000..a58c358ea4c
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_keyboard.c
 @@ -0,0 +1,1309 @@
@@ -10216,6 +10876,10 @@ index 00000000000..aa7a1741fb9
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#define NONAMELESSUNION
 +#define NONAMELESSSTRUCT
@@ -10571,8 +11235,6 @@ index 00000000000..aa7a1741fb9
 +    char utf8[64];
 +    int utf8_len;
 +    WCHAR wchars[8];
-+    WCHAR normalized[8];
-+    int normalized_len = ARRAY_SIZE(normalized);
 +    int wbytes;
 +
 +    utf8_len = _xkb_keysyms_to_utf8(syms, nsyms, utf8, sizeof(utf8));
@@ -10580,11 +11242,9 @@ index 00000000000..aa7a1741fb9
 +    if (RtlUTF8ToUnicodeN(wchars, sizeof(wchars), (DWORD *)&wbytes, utf8, utf8_len))
 +        return 0;
 +
-+    if (RtlNormalizeString(NormalizationC, wchars, wbytes / sizeof(WCHAR), normalized,
-+                           &normalized_len) || normalized_len != 1)
-+        return 0;
++    /* TODO: normalize the keysym unicode representation. */
 +
-+    return normalized[0];
++    return wchars[0];
 +}
 +
 +static SHORT _xkb_mod_mask_to_win32(struct xkb_keymap *xkb_keymap,
@@ -10884,7 +11544,7 @@ index 00000000000..aa7a1741fb9
 +        goto out;
 +
 +    keymap_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-+    if (!keymap_str)
++    if (keymap_str == MAP_FAILED)
 +        goto out;
 +
 +    xkb_keymap = xkb_keymap_new_from_string(wayland->keyboard.xkb_context,
@@ -10974,12 +11634,12 @@ index 00000000000..aa7a1741fb9
 +                 * to get those effects properly applied, deactivate the window
 +                 * now, so it can be properly reactivated after restoration. */
 +                if (foreground == toplevel->hwnd)
-+                    NtUserSetForegroundWindow(NtUserGetDesktopWindow(), FALSE);
++                    NtUserSetForegroundWindow(NtUserGetDesktopWindow());
 +                NtUserShowWindow(toplevel->hwnd, SW_RESTORE);
 +                NtUserShowOwnedPopups(toplevel->hwnd, TRUE);
 +            }
 +
-+            NtUserSetForegroundWindow(toplevel->hwnd, FALSE);
++            NtUserSetForegroundWindow(toplevel->hwnd);
 +        }
 +    }
 +}
@@ -10997,7 +11657,7 @@ index 00000000000..aa7a1741fb9
 +     * We only drop the foreground state if it's ours to drop, i.e., some
 +     * other window hasn't become foreground in the meantime. */
 +    if (!wayland->keyboard.focused_surface && NtUserGetForegroundWindow() == hwnd)
-+        NtUserSetForegroundWindow(NtUserGetDesktopWindow(), FALSE);
++        NtUserSetForegroundWindow(NtUserGetDesktopWindow());
 +
 +    NtUserKillTimer(hwnd, timer_id);
 +}
@@ -11499,10 +12159,10 @@ index 00000000000..aa7a1741fb9
 +}
 diff --git a/dlls/winewayland.drv/wayland_keyboard_layout.c b/dlls/winewayland.drv/wayland_keyboard_layout.c
 new file mode 100644
-index 00000000000..f3a01b15517
+index 00000000000..6d192b23ed6
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_keyboard_layout.c
-@@ -0,0 +1,288 @@
+@@ -0,0 +1,292 @@
 +/*
 + * Wayland keyboard driver layouts, adapted from X11 driver.
 + *
@@ -11528,6 +12188,10 @@ index 00000000000..f3a01b15517
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -12765,10 +13429,10 @@ index 00000000000..f6ee87dc040
 +#endif /* __WINE_WAYLANDDRV_WAYLAND_KEYBOARD_LAYOUT_H */
 diff --git a/dlls/winewayland.drv/wayland_mutex.c b/dlls/winewayland.drv/wayland_mutex.c
 new file mode 100644
-index 00000000000..cbb4af18bdc
+index 00000000000..e0f4c0e9656
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_mutex.c
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,137 @@
 +/*
 + * Wayland mutex
 + *
@@ -12788,6 +13452,10 @@ index 00000000000..cbb4af18bdc
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -12904,10 +13572,10 @@ index 00000000000..cbb4af18bdc
 +}
 diff --git a/dlls/winewayland.drv/wayland_native_buffer.c b/dlls/winewayland.drv/wayland_native_buffer.c
 new file mode 100644
-index 00000000000..875db7b63de
+index 00000000000..1519e8bbb00
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_native_buffer.c
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,126 @@
 +/*
 + * Copyright 2022 Alexandros Frantzis for Collabora Ltd
 + *
@@ -12925,6 +13593,10 @@ index 00000000000..875db7b63de
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -13032,10 +13704,10 @@ index 00000000000..875db7b63de
 +}
 diff --git a/dlls/winewayland.drv/wayland_output.c b/dlls/winewayland.drv/wayland_output.c
 new file mode 100644
-index 00000000000..b6a6fc274c0
+index 00000000000..7808b3f91cc
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_output.c
-@@ -0,0 +1,618 @@
+@@ -0,0 +1,627 @@
 +/*
 + * Wayland output handling
 + *
@@ -13055,6 +13727,10 @@ index 00000000000..b6a6fc274c0
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -13114,6 +13790,8 @@ index 00000000000..b6a6fc274c0
 +    {5120, 2880}, /* 5K 16:9 */
 +    {7680, 4320}, /* 8K 16:9 */
 +};
++
++static const int32_t default_refresh = 60000;
 +
 +/**********************************************************************
 + *          Output handling
@@ -13206,7 +13884,7 @@ index 00000000000..b6a6fc274c0
 +    int32_t max_width = 0;
 +    int32_t max_height = 0;
 +    int32_t current_refresh =
-+        output->current_mode ? output->current_mode->refresh : 60000;
++        output->current_mode ? output->current_mode->refresh : default_refresh;
 +
 +    /* Remove all existing virtual modes and get the maximum native
 +     * mode size. */
@@ -13340,7 +14018,7 @@ index 00000000000..b6a6fc274c0
 +    if (option_hidpi_scaling == WAYLAND_HIDPI_SCALING_COMPOSITOR)
 +    {
 +        int32_t current_refresh =
-+            output->current_mode ? output->current_mode->refresh : 60000;
++            output->current_mode ? output->current_mode->refresh : default_refresh;
 +        wayland_output_clear_modes(output);
 +        wayland_output_add_mode_all_bpp(output, output->logical_w, output->logical_h,
 +                                        current_refresh, TRUE, TRUE);
@@ -13391,6 +14069,9 @@ index 00000000000..b6a6fc274c0
 +     * and height (see wayland_output_handle()). */
 +    if (option_hidpi_scaling == WAYLAND_HIDPI_SCALING_COMPOSITOR)
 +        return;
++
++    /* Windows apps don't expect a zero refresh rate, so use a default value. */
++    if (refresh == 0) refresh = default_refresh;
 +
 +    wayland_output_add_mode_all_bpp(output, width, height, refresh,
 +                                    (flags & WL_OUTPUT_MODE_CURRENT),
@@ -13610,7 +14291,7 @@ index 00000000000..b6a6fc274c0
 +
 +    wl_list_for_each(output, &wayland->output_list, link)
 +    {
-+        if (!lstrcmpiW(wine_name, output->wine_name))
++        if (!wcsicmp(wine_name, output->wine_name))
 +            return output;
 +    }
 +
@@ -13656,10 +14337,10 @@ index 00000000000..b6a6fc274c0
 +}
 diff --git a/dlls/winewayland.drv/wayland_pointer.c b/dlls/winewayland.drv/wayland_pointer.c
 new file mode 100644
-index 00000000000..bfe2f3c4cf3
+index 00000000000..7159dabeddb
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_pointer.c
-@@ -0,0 +1,343 @@
+@@ -0,0 +1,347 @@
 +/*
 + * Wayland input handling
 + *
@@ -13679,6 +14360,10 @@ index 00000000000..bfe2f3c4cf3
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -14005,10 +14690,10 @@ index 00000000000..bfe2f3c4cf3
 +}
 diff --git a/dlls/winewayland.drv/wayland_remote.c b/dlls/winewayland.drv/wayland_remote.c
 new file mode 100644
-index 00000000000..b3a1824220d
+index 00000000000..708d4a2aaec
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_remote.c
-@@ -0,0 +1,964 @@
+@@ -0,0 +1,972 @@
 +/*
 + * Wayland remote (cross-process) rendering
 + *
@@ -14028,6 +14713,10 @@ index 00000000000..b3a1824220d
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -14409,7 +15098,11 @@ index 00000000000..b3a1824220d
 +    }
 +
 +    data = mmap(NULL, size, PROT_READ, MAP_SHARED, shm_fd, 0);
-+    if (!data) ERR("Failed to map SHM fd.\n");
++    if (data == MAP_FAILED)
++    {
++        ERR("Failed to map SHM fd.\n");
++        data = NULL;
++    }
 +
 +out:
 +    if (shm_fd >= 0) close(shm_fd);
@@ -14774,7 +15467,7 @@ index 00000000000..b3a1824220d
 +    params_fd = wayland_shmfd_create("wayland-remote-surface-create-glvk", sizeof(*params));
 +    if (params_fd < 0) goto err;
 +    params = mmap(NULL, sizeof(*params), PROT_WRITE, MAP_SHARED, params_fd, 0);
-+    if (!params) goto err;
++    if (params == MAP_FAILED) goto err;
 +    params->type = proxy->type;
 +    munmap(params, sizeof(*params));
 +
@@ -14813,7 +15506,7 @@ index 00000000000..b3a1824220d
 +    params_fd = wayland_shmfd_create("wayland-remote-surface-destroy", sizeof(*params));
 +    if (params_fd < 0) goto out;
 +    params = mmap(NULL, sizeof(*params), PROT_WRITE, MAP_SHARED, params_fd, 0);
-+    if (!params) goto out;
++    if (params == MAP_FAILED) goto out;
 +    params->type = proxy->type;
 +    munmap(params, sizeof(*params));
 +
@@ -14845,7 +15538,7 @@ index 00000000000..b3a1824220d
 +                                         HANDLE *throttle_event_out)
 +{
 +    int params_fd;
-+    struct params_buffer *params = 0;
++    struct params_buffer *params = MAP_FAILED;
 +    HANDLE local_released_event = 0;
 +    HANDLE local_throttle_event = 0;
 +    HANDLE remote_params_handle;
@@ -14859,7 +15552,7 @@ index 00000000000..b3a1824220d
 +    params_fd = wayland_shmfd_create("wayland-remote-surface-commit", sizeof(*params));
 +    if (params_fd < 0) goto err;
 +    params = mmap(NULL, sizeof(*params), PROT_WRITE, MAP_SHARED, params_fd, 0);
-+    if (!params) goto err;
++    if (params == MAP_FAILED) goto err;
 +
 +    /* Populate buffer params */
 +    params->params_type.type = proxy->type;
@@ -14927,7 +15620,7 @@ index 00000000000..b3a1824220d
 +    return TRUE;
 +
 +err:
-+    if (params)
++    if (params != MAP_FAILED)
 +    {
 +        for (i = 0; i < native->plane_count; i++)
 +            if (params->fds[i]) NtClose(params->fds[i]);
@@ -14958,7 +15651,7 @@ index 00000000000..b3a1824220d
 +    params_fd = wayland_shmfd_create("wayland-remote-surface-dispatch", sizeof(*params));
 +    if (params_fd < 0) goto out;
 +    params = mmap(NULL, sizeof(*params), PROT_WRITE, MAP_SHARED, params_fd, 0);
-+    if (!params) goto out;
++    if (params == MAP_FAILED) goto out;
 +    params->type = proxy->type;
 +    munmap(params, sizeof(*params));
 +
@@ -14975,10 +15668,10 @@ index 00000000000..b3a1824220d
 +}
 diff --git a/dlls/winewayland.drv/wayland_shm.c b/dlls/winewayland.drv/wayland_shm.c
 new file mode 100644
-index 00000000000..898372d8be1
+index 00000000000..ef2b65abb2d
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_shm.c
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,224 @@
 +/*
 + * Wayland SHM buffers
 + *
@@ -14998,6 +15691,10 @@ index 00000000000..898372d8be1
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -15201,10 +15898,10 @@ index 00000000000..898372d8be1
 +}
 diff --git a/dlls/winewayland.drv/wayland_shmfd.c b/dlls/winewayland.drv/wayland_shmfd.c
 new file mode 100644
-index 00000000000..58dd7511716
+index 00000000000..b2e69be33e4
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_shmfd.c
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,86 @@
 +/*
 + * Wayland SHM fd
 + *
@@ -15224,6 +15921,10 @@ index 00000000000..58dd7511716
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -15289,10 +15990,10 @@ index 00000000000..58dd7511716
 +}
 diff --git a/dlls/winewayland.drv/wayland_surface.c b/dlls/winewayland.drv/wayland_surface.c
 new file mode 100644
-index 00000000000..4f59e181d9c
+index 00000000000..05d140480a0
 --- /dev/null
 +++ b/dlls/winewayland.drv/wayland_surface.c
-@@ -0,0 +1,1603 @@
+@@ -0,0 +1,1607 @@
 +/*
 + * Wayland surfaces
 + *
@@ -15312,6 +16013,10 @@ index 00000000000..4f59e181d9c
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -16898,10 +17603,10 @@ index 00000000000..4f59e181d9c
 +}
 diff --git a/dlls/winewayland.drv/waylanddrv.h b/dlls/winewayland.drv/waylanddrv.h
 new file mode 100644
-index 00000000000..089ea446280
+index 00000000000..00e76630463
 --- /dev/null
 +++ b/dlls/winewayland.drv/waylanddrv.h
-@@ -0,0 +1,802 @@
+@@ -0,0 +1,835 @@
 +/*
 + * Wayland driver
 + *
@@ -16949,7 +17654,10 @@ index 00000000000..089ea446280
 +#include "wingdi.h"
 +#include "ntuser.h"
 +
++#include "unixlib.h"
 +#include "wine/gdi_driver.h"
++
++#define WAYLANDDRV_CLIENT_CALL(func, params, size) waylanddrv_client_call(waylanddrv_client_func_ ## func, params, size)
 +
 +/**********************************************************************
 + *          Globals
@@ -16957,6 +17665,8 @@ index 00000000000..089ea446280
 +
 +extern struct wl_display *process_wl_display DECLSPEC_HIDDEN;
 +extern struct gbm_device *process_gbm_device DECLSPEC_HIDDEN;
++extern NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
++                                                    BOOLEAN,const LARGE_INTEGER*) DECLSPEC_HIDDEN;
 +extern const struct user_driver_funcs waylanddrv_funcs DECLSPEC_HIDDEN;
 +extern char *option_drm_device DECLSPEC_HIDDEN;
 +extern enum wayland_hidpi_scaling option_hidpi_scaling DECLSPEC_HIDDEN;
@@ -17088,10 +17798,28 @@ index 00000000000..089ea446280
 +    struct wl_array modifiers;
 +};
 +
++struct wayland_dmabuf_feedback_tranche
++{
++    struct wl_list formats;
++    uint32_t flags;
++    dev_t device;
++};
++
++struct wayland_dmabuf_feedback_format_table_entry
++{
++    uint32_t format;
++    uint32_t padding; /* unused */
++    uint64_t modifier;
++};
++
 +struct wayland_dmabuf_feedback
 +{
 +    struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1;
 +    dev_t main_device;
++    uint32_t format_table_size;
++    struct wayland_dmabuf_feedback_format_table_entry *format_table_entries;
++    struct wayland_dmabuf_feedback_tranche pending_tranche;
++    struct wl_array tranches;
 +};
 +
 +struct wayland_dmabuf
@@ -17448,7 +18176,6 @@ index 00000000000..089ea446280
 +void wayland_dmabuf_init(struct wayland_dmabuf *dmabuf,
 +                         struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf_v1) DECLSPEC_HIDDEN;
 +void wayland_dmabuf_deinit(struct wayland_dmabuf *dmabuf) DECLSPEC_HIDDEN;
-+BOOL wayland_dmabuf_has_format_list(struct wayland_dmabuf *dmabuf) DECLSPEC_HIDDEN;
 +struct wayland_dmabuf_format *wayland_dmabuf_find_format(struct wayland_dmabuf *dmabuf,
 +                                                         uint32_t format) DECLSPEC_HIDDEN;
 +struct wayland_dmabuf_buffer *wayland_dmabuf_buffer_create_from_native(struct wayland *wayland,
@@ -17651,6 +18378,17 @@ index 00000000000..089ea446280
 +}
 +
 +/**********************************************************************
++ *          PE/unixlib support
++ */
++
++NTSTATUS waylanddrv_client_call(enum waylanddrv_client_func func, const void *params,
++                                ULONG size) DECLSPEC_HIDDEN;
++NTSTATUS waylanddrv_unix_clipboard_message(void *arg) DECLSPEC_HIDDEN;
++NTSTATUS waylanddrv_unix_data_offer_accept_format(void *arg) DECLSPEC_HIDDEN;
++NTSTATUS waylanddrv_unix_data_offer_enum_formats(void *arg) DECLSPEC_HIDDEN;
++NTSTATUS waylanddrv_unix_data_offer_import_format(void *arg) DECLSPEC_HIDDEN;
++
++/**********************************************************************
 + *          USER driver functions
 + */
 +
@@ -17704,17 +18442,59 @@ index 00000000000..089ea446280
 +                             struct bitblt_coords *dst, DWORD rop) DECLSPEC_HIDDEN;
 +
 +#endif /* __WINE_WAYLANDDRV_H */
+diff --git a/dlls/winewayland.drv/waylanddrv_dll.h b/dlls/winewayland.drv/waylanddrv_dll.h
+new file mode 100644
+index 00000000000..f46eab3612d
+--- /dev/null
++++ b/dlls/winewayland.drv/waylanddrv_dll.h
+@@ -0,0 +1,38 @@
++/*
++ * Wayland driver DLL definitions
++ *
++ * Copyright 2022 Alexandros Frantzis for Collabora Ltd
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#ifndef __WINE_WAYLANDDRV_DLL_H
++#define __WINE_WAYLANDDRV_DLL_H
++
++#include <stdarg.h>
++#include "windef.h"
++#include "winbase.h"
++
++#include "unixlib.h"
++
++/* FIXME: Use __wine_unix_call instead */
++extern NTSTATUS (CDECL *waylanddrv_unix_call)(enum waylanddrv_unix_func func, void *params) DECLSPEC_HIDDEN;
++#define WAYLANDDRV_UNIX_CALL(func, params) waylanddrv_unix_call(waylanddrv_unix_func_ ## func, params)
++extern BOOL option_show_systray DECLSPEC_HIDDEN;
++
++NTSTATUS WINAPI waylanddrv_client_create_clipboard_window(void *arg, ULONG size);
++NTSTATUS WINAPI waylanddrv_client_dnd(void *params, ULONG size);
++
++#endif /* __WINE_WAYLANDDRV_DLL_H */
 diff --git a/dlls/winewayland.drv/waylanddrv_main.c b/dlls/winewayland.drv/waylanddrv_main.c
 new file mode 100644
-index 00000000000..e351ac60c4a
+index 00000000000..9e291394b82
 --- /dev/null
 +++ b/dlls/winewayland.drv/waylanddrv_main.c
-@@ -0,0 +1,201 @@
+@@ -0,0 +1,225 @@
 +/*
 + * WAYLANDDRV initialization code
 + *
-+ * Copyright 1998 Patrik Stridvall
-+ * Copyright 2000 Alexandre Julliard
 + * Copyright 2020 Alexandre Frantzis for Collabora Ltd
 + *
 + * This library is free software; you can redistribute it and/or
@@ -17732,28 +18512,34 @@ index 00000000000..e351ac60c4a
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
 +
++#if 0
++#pragma makedep unix
++#endif
++
 +#include "config.h"
++
++#include "ntstatus.h"
++#define WIN32_NO_STATUS
 +
 +#include "waylanddrv.h"
 +
 +#include "wine/debug.h"
 +#include "wine/server.h"
 +
-+#include "winuser.h"
-+
 +#include <stdlib.h>
 +
 +WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 +WINE_DECLARE_DEBUG_CHANNEL(winediag);
 +
-+static DWORD WINAPI wayland_read_thread(void *arg)
-+{
-+    while (wayland_read_events_and_dispatch_process()) continue;
-+    /* This thread terminates only if an unrecoverable error occured during
-+     * event reading. */
-+    NtTerminateProcess(0, 1);
-+    return 0;
-+}
++/* We use use pointer to call NtWaitForMultipleObjects to make it go through
++ * syscall dispatcher. We need that because win32u bypasses syscall thunks and
++ * if we called NtWaitForMultipleObjects directly, it wouldn't be able to handle
++ * user APCs. This will be removed as soon as we may use syscall interface
++ * for NtUserMsgWaitForMultipleObjectsEx. */
++NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG, const HANDLE *, BOOLEAN,
++                                             BOOLEAN, const LARGE_INTEGER*);
++
++static NTSTATUS CDECL waylanddrv_unix_call(enum waylanddrv_unix_func func, void *params);
 +
 +static void set_queue_fd(struct wayland *wayland)
 +{
@@ -17873,50 +18659,70 @@ index 00000000000..e351ac60c4a
 +    .pwine_get_wgl_driver = WAYLAND_wine_get_wgl_driver,
 +};
 +
-+/***********************************************************************
-+ *           WAYLANDDRV process initialisation routine
-+ */
-+static BOOL process_attach(void)
++static NTSTATUS waylanddrv_unix_init(void *arg)
 +{
-+    DWORD id;
++    struct waylanddrv_unix_init_params *params = arg;
++
++    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
 +
 +    __wine_set_user_driver(&waylanddrv_funcs, WINE_GDI_DRIVER_VERSION);
 +
 +    wayland_read_options_from_registry();
 +
-+    if (!wayland_init_set_cursor()) return FALSE;
++    wayland_data_device_init_formats();
 +
-+    if (!wayland_process_init()) return FALSE;
++    if (!wayland_init_set_cursor()) return STATUS_UNSUCCESSFUL;
 +
-+    /* Read wayland events from a dedicated thread. */
-+    CreateThread(NULL, 0, wayland_read_thread, NULL, 0, &id);
++    if (!wayland_process_init()) return STATUS_UNSUCCESSFUL;
 +
-+    return TRUE;
++    params->unix_call = waylanddrv_unix_call;
++    params->option_show_systray = option_show_systray;
++
++    return 0;
++}
++
++static NTSTATUS waylanddrv_unix_read_events(void *arg)
++{
++    while (wayland_read_events_and_dispatch_process()) continue;
++    /* This function only returns on a fatal error, e.g., if our connection
++     * to the Wayland server is lost. */
++    return STATUS_UNSUCCESSFUL;
++}
++
++const unixlib_entry_t __wine_unix_call_funcs[] =
++{
++    waylanddrv_unix_init,
++    waylanddrv_unix_read_events,
++    waylanddrv_unix_clipboard_message,
++    waylanddrv_unix_data_offer_accept_format,
++    waylanddrv_unix_data_offer_enum_formats,
++    waylanddrv_unix_data_offer_import_format,
++};
++
++C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == waylanddrv_unix_func_count);
++
++/* FIXME: Use __wine_unix_call instead */
++static NTSTATUS CDECL waylanddrv_unix_call(enum waylanddrv_unix_func func, void *params)
++{
++    return __wine_unix_call_funcs[func](params);
 +}
 +
 +/***********************************************************************
-+ *           WAYLANDDRV initialisation routine
++ *           waylanddrv_client_call
 + */
-+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
++NTSTATUS waylanddrv_client_call(enum waylanddrv_client_func func, const void *params,
++                                ULONG size)
 +{
-+    BOOL ret = TRUE;
-+
-+    switch(reason)
-+    {
-+    case DLL_PROCESS_ATTACH:
-+        DisableThreadLibraryCalls(hinst);
-+        ret = process_attach();
-+        break;
-+    }
-+
-+    return ret;
++    void *ret_ptr;
++    ULONG ret_len;
++    return KeUserModeCallback(func, params, size, &ret_ptr, &ret_len);
 +}
 diff --git a/dlls/winewayland.drv/window.c b/dlls/winewayland.drv/window.c
 new file mode 100644
-index 00000000000..d4eaf4dd4ef
+index 00000000000..da74021c7eb
 --- /dev/null
 +++ b/dlls/winewayland.drv/window.c
-@@ -0,0 +1,1730 @@
+@@ -0,0 +1,1734 @@
 +/*
 + * Window related functions
 + *
@@ -17939,6 +18745,10 @@ index 00000000000..d4eaf4dd4ef
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -18672,7 +19482,7 @@ index 00000000000..d4eaf4dd4ef
 +    {
 +        if (flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN)
 +            area = &mi.rcMonitor;
-+        else if (flags & WAYLAND_CONFIGURE_FLAG_FULLSCREEN)
++        else if (flags & WAYLAND_CONFIGURE_FLAG_MAXIMIZED)
 +            area = &mi.rcWork;
 +    }
 +
@@ -19649,10 +20459,10 @@ index 00000000000..d4eaf4dd4ef
 +}
 diff --git a/dlls/winewayland.drv/window_surface.c b/dlls/winewayland.drv/window_surface.c
 new file mode 100644
-index 00000000000..c9a6baa2aa2
+index 00000000000..a74a3f7151e
 --- /dev/null
 +++ b/dlls/winewayland.drv/window_surface.c
-@@ -0,0 +1,687 @@
+@@ -0,0 +1,691 @@
 +/*
 + * Wayland window surface implementation
 + *
@@ -19675,6 +20485,10 @@ index 00000000000..c9a6baa2aa2
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include "config.h"
 +
@@ -20350,10 +21164,10 @@ index 00000000000..5f086f5c4e5
 +@ cdecl wine_notify_icon(long ptr)
 diff --git a/dlls/winewayland.drv/xkb_util.c b/dlls/winewayland.drv/xkb_util.c
 new file mode 100644
-index 00000000000..2a33c7ba564
+index 00000000000..475af4b5bd6
 --- /dev/null
 +++ b/dlls/winewayland.drv/xkb_util.c
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,80 @@
 +/*
 + * XKB related utility functions
 + *
@@ -20373,6 +21187,10 @@ index 00000000000..2a33c7ba564
 + * License along with this library; if not, write to the Free Software
 + * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 + */
++
++#if 0
++#pragma makedep unix
++#endif
 +
 +#include <xkbcommon/xkbcommon.h>
 +
@@ -20478,7 +21296,7 @@ index de1bf6c61eb..58f7ec6c3fd 100644
  #undef HAVE_XRENDERCREATELINEARGRADIENT
  
 diff --git a/include/wine/gdi_driver.h b/include/wine/gdi_driver.h
-index 52fd6fe49d3..04f86d782ab 100644
+index 998aa3ed3e9..d9a18ba312b 100644
 --- a/include/wine/gdi_driver.h
 +++ b/include/wine/gdi_driver.h
 @@ -217,6 +217,7 @@ struct window_surface
@@ -20517,7 +21335,7 @@ index 96673adc254..afa711a8dbf 100644
  static BOOL using_root;
  
 diff --git a/tools/makedep.c b/tools/makedep.c
-index 83e4844050a..20fdb34d198 100644
+index c5d4a37a422..eac8f6b4570 100644
 --- a/tools/makedep.c
 +++ b/tools/makedep.c
 @@ -164,6 +164,7 @@ static const char *msgfmt;
@@ -20528,7 +21346,7 @@ index 83e4844050a..20fdb34d198 100644
  
  struct makefile
  {
-@@ -496,6 +497,15 @@ static char *replace_filename( const char *path, const char *name )
+@@ -497,6 +498,15 @@ static char *replace_filename( const char *path, const char *name )
      return ret;
  }
  
@@ -20544,7 +21362,7 @@ index 83e4844050a..20fdb34d198 100644
  
  /*******************************************************************
   *         replace_substr
-@@ -1380,6 +1390,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
+@@ -1381,6 +1391,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
          if ((file = open_local_generated_file( make, pFile, ".ico", ".svg" ))) return file;
      }
  
@@ -20554,7 +21372,7 @@ index 83e4844050a..20fdb34d198 100644
      /* check for extra targets */
      if (strarray_exists( &make->extra_targets, pFile->name ))
      {
-@@ -1838,6 +1851,19 @@ static void add_generated_sources( struct makefile *make )
+@@ -1839,6 +1852,23 @@ static void add_generated_sources( struct makefile *make )
              strarray_addall_uniq( &make->extra_imports,
                                    get_expanded_file_local_var( make, obj, "IMPORTS" ));
          }
@@ -20564,8 +21382,12 @@ index 83e4844050a..20fdb34d198 100644
 +            char *code_filename = replace_extension ( filename , ".xml", "-protocol.c" );
 +            char *header_filename = replace_extension ( filename , ".xml", "-client-protocol.h" );
 +
-+            add_generated_source( make, code_filename, NULL );
-+            add_generated_source( make, header_filename, NULL );
++            file = add_generated_source( make, code_filename, NULL );
++            file->file->flags |= FLAG_C_UNIX;
++            file->use_msvcrt = 0;
++            file = add_generated_source( make, header_filename, NULL );
++            file->file->flags |= FLAG_C_UNIX;
++            file->use_msvcrt = 0;
 +
 +            free( filename );
 +            free( code_filename );
@@ -20574,7 +21396,7 @@ index 83e4844050a..20fdb34d198 100644
      }
      if (make->testdll)
      {
-@@ -2968,6 +2994,15 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
+@@ -2971,6 +3001,15 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
      output( "\n" );
  }
  
@@ -20590,7 +21412,7 @@ index 83e4844050a..20fdb34d198 100644
  
  /*******************************************************************
   *         output_source_default
-@@ -3087,6 +3122,7 @@ static const struct
+@@ -3091,6 +3130,7 @@ static const struct
      { "in", output_source_in },
      { "x", output_source_x },
      { "spec", output_source_spec },
@@ -20598,7 +21420,7 @@ index 83e4844050a..20fdb34d198 100644
      { NULL, output_source_default }
  };
  
-@@ -3990,6 +4026,7 @@ static void output_silent_rules(void)
+@@ -3995,6 +4035,7 @@ static void output_silent_rules(void)
          "MSG",
          "SED",
          "TEST",
@@ -20606,7 +21428,7 @@ index 83e4844050a..20fdb34d198 100644
          "WIDL",
          "WMC",
          "WRC"
-@@ -4089,6 +4126,7 @@ static void load_sources( struct makefile *make )
+@@ -4094,6 +4135,7 @@ static void load_sources( struct makefile *make )
          "IN_SRCS",
          "PO_SRCS",
          "MANPAGES",
@@ -20614,7 +21436,7 @@ index 83e4844050a..20fdb34d198 100644
          NULL
      };
      const char **var;
-@@ -4324,6 +4362,7 @@ int main( int argc, char *argv[] )
+@@ -4341,6 +4383,7 @@ int main( int argc, char *argv[] )
      msgfmt             = get_expanded_make_variable( top_makefile, "MSGFMT" );
      sed_cmd            = get_expanded_make_variable( top_makefile, "SED_CMD" );
      ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
