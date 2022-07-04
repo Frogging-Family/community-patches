@@ -1,2 +1,3 @@
 - lru_5.18.mypatch - Multigenerational LRU framework (v11) patchset, improving memory pressure handling - https://lore.kernel.org/lkml/20220518014632.922072-1-yuzhao@google.com/
 - OpenRGB.mypatch - Patch to add OpenRGB compatibility for certain i2c controllers - https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/OpenRGB.patch
+- amdgpu-si-cik-default.patch - Enables support for Southern Islands (SI) and Sea Islands (CIK) cards by default
