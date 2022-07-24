@@ -1,1 +1,1 @@
-- lru_5.19.mypatch - Multigenerational LRU framework (v13) patchset, improving memory pressure handling - https://lore.kernel.org/lkml/20220706220022.968789-1-yuzhao@google.com/
+- OpenRGB.mypatch - Patch to add OpenRGB compatibility for certain i2c controllers - https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/OpenRGB.patch
