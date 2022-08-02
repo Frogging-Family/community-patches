@@ -37,6 +37,7 @@
 - unprivileged_ICMP.mypatch - Notably fixes missing ping in BF4 (which could lead to kicks on some servers) - https://source.winehq.org/patches/data/207990
 - EA_desktop_fix.mypatch - Allows EA desktop to run - Patch by Esdras Tarsis - https://bugs.winehq.org/show_bug.cgi?id=49887
 - ffxiv_mac.mypatch : Add support for using Final Fantasy XIV with Mac authentication (without HideWineExports)
+- RtlCreateTimer_fix.mypatch: Fix race condition in RtlCreateTimer - affect Guild Wars 2 with Arcdps (no other cases known yet). Since aug.28.2021 there is a temporary workaround on the Arcdps side (just some extra delays have been added, but this may not work for specific hardware) until https://bugs.winehq.org/show_bug.cgi?id=51683 is resolved.
 
 ## Misc
 - 0001-rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
