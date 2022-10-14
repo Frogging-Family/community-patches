@@ -80,18 +80,16 @@ index ef91096f258..99776aebc3d 100644
  /* undocumented RtlWalkHeap structure */
  
  struct rtl_heap_entry
-@@ -187,6 +194,7 @@ struct heap
+@@ -187,5 +194,6 @@ struct heap
      /* end of the Windows 10 compatible struct layout */
  
-     BOOL             shared;        /* System shared heap */
 +    LONG             compat_info;   /* HeapCompatibilityInformation / heap frontend type */
      struct list      entry;         /* Entry in process heap list */
      struct list      subheap_list;  /* Sub-heap list */
      struct list      large_list;    /* Large blocks list */
-@@ -956,6 +964,7 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
+@@ -956,5 +964,6 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
          heap->auto_flags    = (flags & HEAP_GROWABLE);
          heap->flags         = (flags & ~HEAP_SHARED);
-         heap->shared        = (flags & HEAP_SHARED) != 0;
 +        heap->compat_info   = HEAP_STD;
          heap->magic         = HEAP_MAGIC;
          heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
