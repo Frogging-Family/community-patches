@@ -14,9 +14,9 @@ index 739d0517339..2885cff4d10 100644
 @@ -49,6 +49,7 @@ MANPAGES = \
  	wineserver.fr.UTF-8.man.in \
  	wineserver.man.in
- 
--EXTRALIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
-+EXTRALIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS) -flto=auto -flto-partition=one -fdevirtualize-at-ltrans $(CFLAGS)
+
+-UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
++UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS) -flto=auto -flto-partition=one -fdevirtualize-at-ltrans $(CFLAGS)
 +EXTRADEFS = -flto=auto -flto-partition=one -fdevirtualize-at-ltrans
  
  unicode_EXTRADEFS = -DNLSDIR="\"${nlsdir}\"" -DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\"

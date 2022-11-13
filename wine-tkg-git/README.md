@@ -67,5 +67,5 @@
 - 0001-actctx-Use-build_assembly_dir-to-assign-a-directory.mypatch : Allow some applications to properly find some assemblies.
 - 0001-Allow-revocation-check-to-use-the-net.mypatch : Some application that use CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION in bitwise OR with other flags need a full net revocation check. Rustup is affected
 - 0001-Revert-server-Handle-the-entire-IOCTL_AFD_POLL-ioctl.mypatch : Revert the commit that moved IOCTL_AFD_POLL serverside. Rustup (and possible other application that use this routine) need this revert to properly park/unpark the thread.
-- 0001-Execute-hooks-callbacks-even-when-init_window_call_p.mypatch : Execute WH_CALLWNDPROC and WH_CALLWNDPROCRET even if the widget doesn't have  a WinProc associated
+- win32-Initialize-params-for-WndProc-after-WH_CALLWNDPROC.mypatch : Initalize parameters for WndProc procedure after WH_CALLWNDPROC hook is called. (Required )
 - 0001-Force-full-erase-when-WM_PAINT-in-LVS_EX_DOUBLEBUFFE.mypatch : Force a background erase on LVS_EX_DOUBLEBUFFERED listviews. Fix black background for listviews on some apps.
