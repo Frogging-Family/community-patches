@@ -11,14 +11,13 @@ diff --git a/server/Makefile.in b/server/Makefile.in
 index 739d0517339..2885cff4d10 100644
 --- a/server/Makefile.in
 +++ b/server/Makefile.in
-@@ -50,7 +50,8 @@ MANPAGES = \
-	wineserver.de.UTF-8.man.in \
+@@ -48,6 +48,7 @@ wineserver.de.UTF-8.man.in \
  	wineserver.fr.UTF-8.man.in \
  	wineserver.man.in
- 
+
 -UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
-+UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS) -flto=auto $(CFLAGS)
-+EXTRADEFS = -flto=auto
++UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS) -flto=auto -flto-partition=one -fdevirtualize-at-ltrans $(CFLAGS)
++EXTRADEFS = -flto=auto -flto-partition=one -fdevirtualize-at-ltrans
  
  unicode_EXTRADEFS = -DNLSDIR="\"${nlsdir}\"" -DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\"
 -- 
