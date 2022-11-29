@@ -13,13 +13,14 @@ index a4bba1c68489cccdb7935ec4220a42489d89931e..16999c24ebda3c412cb2b8786e22e4c0
  @ stdcall -import CreateDirectoryW(wstr ptr)
  @ stdcall -import CreateEventA(ptr long long str)
  @ stdcall -import CreateEventExA(ptr str long long)
-@@ -283,11 +283,13 @@
+@@ -283,12 +283,14 @@
  @ stdcall -import CreateFiberEx(long long long ptr ptr)
  @ stdcall -import CreateFile2(wstr long long long ptr)
  @ stdcall -import CreateFileA(str long long ptr long long long)
 +@ stdcall -import CreateFileTransactedA(str long long ptr long long long ptr ptr ptr)
  @ stdcall CreateFileMappingA(long ptr long long long str)
  # @ stub CreateFileMappingNumaA
+ @ stdcall CreateFileMappingFromApp(long ptr long int64 wstr) kernelbase.CreateFileMappingFromApp
  @ stdcall -import CreateFileMappingNumaW(long ptr long long long wstr long)
  @ stdcall -import CreateFileMappingW(long ptr long long long wstr)
  @ stdcall -import CreateFileW(wstr long long ptr long long long)
