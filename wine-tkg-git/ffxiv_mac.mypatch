@@ -7,8 +7,8 @@ index 4052d28f644..f044341b49f 100644
          struct utsname buf;
  
 -        uname( &buf );
--        len = strlen(version) + strlen(wine_build) + strlen(buf.sysname) + strlen(buf.release) + 4;
 -        snprintf( info, size, "%s%c%s%c%s%c%s", version, 0, wine_build, 0, buf.sysname, 0, buf.release );
+-        len = strlen(version) + strlen(wine_build) + strlen(buf.sysname) + strlen(buf.release) + 4;
 +        //uname( &buf );
 +        len = strlen(version) + strlen(wine_build) + strlen("Darwin") + strlen("Darwin Kernel") + 4;
 +        snprintf( info, size, "%s%c%s%c%s%c%s", version, 0, wine_build, 0, "Darwin", 0, "Darwin Kernel" );
