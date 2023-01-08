@@ -1,19 +1,8 @@
-From 53ff776580b423da83ce5612ff5eee95e4a7d2b6 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Sat, 21 May 2022 13:00:55 +0200
-Subject: [PATCH 1/8] ntdll: Implement HeapCompatibilityInformation for
- Rtl(Query|Set)HeapInformation.
-
----
- dlls/kernel32/tests/heap.c | 10 ------
- dlls/ntdll/heap.c          | 70 ++++++++++++++++++++++++++++++--------
- 2 files changed, 56 insertions(+), 24 deletions(-)
-
 diff --git a/dlls/kernel32/tests/heap.c b/dlls/kernel32/tests/heap.c
-index 83daa4dafa1..56c26a3e946 100644
+index a81cb1b7a15d9905d5ef2cba6c7d8afa8a1a6904..04d38e4bd21e77ee3d999c661fa83903c1dcd58a 100644
 --- a/dlls/kernel32/tests/heap.c
 +++ b/dlls/kernel32/tests/heap.c
-@@ -826,11 +826,8 @@ static void test_HeapCreate(void)
+@@ -827,11 +827,8 @@ static void test_HeapCreate(void)
      size = 0;
      SetLastError( 0xdeadbeef );
      ret = pHeapQueryInformation( 0, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
@@ -25,7 +14,7 @@ index 83daa4dafa1..56c26a3e946 100644
      ok( size == 0, "got size %Iu\n", size );
  
      size = 0;
-@@ -870,7 +867,6 @@ static void test_HeapCreate(void)
+@@ -871,7 +868,6 @@ static void test_HeapCreate(void)
      ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
      ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
      ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
@@ -33,7 +22,7 @@ index 83daa4dafa1..56c26a3e946 100644
      ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
  
      /* cannot be undone */
-@@ -878,20 +874,15 @@ static void test_HeapCreate(void)
+@@ -879,20 +875,15 @@ static void test_HeapCreate(void)
      compat_info = 0;
      SetLastError( 0xdeadbeef );
      ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
@@ -54,7 +43,15 @@ index 83daa4dafa1..56c26a3e946 100644
      ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
  
      ret = HeapDestroy( heap );
-@@ -930,7 +921,6 @@ static void test_HeapCreate(void)
+@@ -913,7 +904,6 @@ static void test_HeapCreate(void)
+ 
+     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+-    todo_wine
+     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+ 
+     ret = HeapDestroy( heap );
+@@ -931,7 +921,6 @@ static void test_HeapCreate(void)
      ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
      ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
      ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
@@ -62,8 +59,149 @@ index 83daa4dafa1..56c26a3e946 100644
      ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
  
      for (i = 0; i < 0x11; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
+@@ -964,7 +953,6 @@ static void test_HeapCreate(void)
+     SetLastError( 0xdeadbeef );
+     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
+     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
+-    todo_wine
+     ok( count > 24, "got count %lu\n", count );
+     if (count < 2) count = 2;
+ 
+@@ -977,7 +965,6 @@ static void test_HeapCreate(void)
+ 
+     for (i = 0; i < 0x12; i++)
+     {
+-        todo_wine
+         ok( entries[4 + i].wFlags == 0, "got wFlags %#x\n", entries[4 + i].wFlags );
+         todo_wine
+         ok( entries[4 + i].cbData == 0x20, "got cbData %#lx\n", entries[4 + i].cbData );
+@@ -996,7 +983,6 @@ static void test_HeapCreate(void)
+     rtl_entry.lpData = NULL;
+     SetLastError( 0xdeadbeef );
+     while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+-    todo_wine
+     ok( count > 24, "got count %lu\n", count );
+     if (count < 2) count = 2;
+ 
+@@ -1039,7 +1025,6 @@ static void test_HeapCreate(void)
+     SetLastError( 0xdeadbeef );
+     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
+     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
+-    todo_wine
+     ok( count > 24, "got count %lu\n", count );
+     if (count < 2) count = 2;
+ 
+@@ -1068,7 +1053,6 @@ static void test_HeapCreate(void)
+     rtl_entry.lpData = NULL;
+     SetLastError( 0xdeadbeef );
+     while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+-    todo_wine
+     ok( count > 24, "got count %lu\n", count );
+     if (count < 2) count = 2;
+ 
+@@ -1082,11 +1066,8 @@ static void test_HeapCreate(void)
+         if (!entries[i].wFlags)
+             ok( rtl_entries[i].wFlags == 0 || rtl_entries[i].wFlags == RTL_HEAP_ENTRY_LFH, "got wFlags %#x\n", rtl_entries[i].wFlags );
+         else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+-        {
+-            todo_wine
+             ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 1) /* win7 */,
+                 "got wFlags %#x\n", rtl_entries[i].wFlags );
+-        }
+         else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                 "got wFlags %#x\n", rtl_entries[i].wFlags );
+@@ -1205,7 +1186,6 @@ static void test_HeapCreate(void)
+ 
+     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+-    todo_wine
+     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+ 
+     /* locking is serialized */
+@@ -1232,7 +1212,6 @@ static void test_HeapCreate(void)
+     thread_params.flags = 0;
+     SetEvent( thread_params.start_event );
+     res = WaitForSingleObject( thread_params.ready_event, 100 );
+-    todo_wine
+     ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+     ret = HeapUnlock( heap );
+     ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+@@ -1679,9 +1658,7 @@ static void test_GlobalAlloc(void)
+     ok( size == small_size, "GlobalSize returned %Iu\n", size );
+     SetLastError( 0xdeadbeef );
+     tmp_mem = GlobalReAlloc( mem, small_size, 0 );
+-    todo_wine
+     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
+-    todo_wine
+     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+     if (tmp_mem) mem = tmp_mem;
+     tmp_mem = GlobalReAlloc( mem, 1024 * 1024, GMEM_MODIFY );
+@@ -1697,7 +1674,6 @@ static void test_GlobalAlloc(void)
+     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+     tmp_mem = GlobalReAlloc( mem, small_size + 1, GMEM_MOVEABLE );
+     ok( !!tmp_mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+-    todo_wine
+     ok( tmp_mem != mem, "GlobalReAlloc didn't relocate memory\n" );
+     ptr = GlobalLock( tmp_mem );
+     ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+@@ -1844,8 +1820,8 @@ static void test_GlobalAlloc(void)
+         {
+             ok( !is_mem_entry( tmp_mem ), "unexpected moveable %p\n", tmp_mem );
+             if (flags == GMEM_MODIFY) ok( tmp_mem == mem, "GlobalReAlloc returned %p\n", tmp_mem );
+-            else if (flags != GMEM_MOVEABLE) todo_wine_if(!flags) ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
+-            else todo_wine ok( tmp_mem != mem, "GlobalReAlloc returned %p\n", tmp_mem );
++            else if (flags != GMEM_MOVEABLE) ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
++            else ok( tmp_mem != mem, "GlobalReAlloc returned %p\n", tmp_mem );
+         }
+         else
+         {
+@@ -1859,7 +1835,7 @@ static void test_GlobalAlloc(void)
+ 
+         size = GlobalSize( mem );
+         if (flags == GMEM_MOVEABLE) ok( size == 0 || broken( size == 1 ) /* w7 */, "GlobalSize returned %Iu\n", size );
+-        else todo_wine_if(!flags) ok( size == small_size, "GlobalSize returned %Iu\n", size );
++        else ok( size == small_size, "GlobalSize returned %Iu\n", size );
+ 
+         mem = GlobalFree( mem );
+         ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+@@ -2417,9 +2393,7 @@ static void test_LocalAlloc(void)
+     ok( size == small_size, "LocalSize returned %Iu\n", size );
+     SetLastError( 0xdeadbeef );
+     tmp_mem = LocalReAlloc( mem, small_size, 0 );
+-    todo_wine
+     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+-    todo_wine
+     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+     if (tmp_mem) mem = tmp_mem;
+     tmp_mem = LocalReAlloc( mem, 1024 * 1024, LMEM_MODIFY );
+@@ -2435,7 +2409,6 @@ static void test_LocalAlloc(void)
+     ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+     tmp_mem = LocalReAlloc( mem, small_size + 1, LMEM_MOVEABLE );
+     ok( !!tmp_mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+-    todo_wine
+     ok( tmp_mem != mem, "LocalReAlloc didn't relocate memory\n" );
+     ptr = LocalLock( tmp_mem );
+     ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+@@ -2528,13 +2501,13 @@ static void test_LocalAlloc(void)
+         tmp_mem = LocalReAlloc( mem, 0, flags );
+         ok( !is_mem_entry( tmp_mem ), "unexpected moveable %p\n", tmp_mem );
+         if (flags & LMEM_MODIFY) ok( tmp_mem == mem, "LocalReAlloc returned %p\n", tmp_mem );
+-        else if (flags != LMEM_MOVEABLE) todo_wine_if(!flags) ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+-        else todo_wine ok( tmp_mem != mem, "LocalReAlloc returned %p\n", tmp_mem );
++        else if (flags != LMEM_MOVEABLE) ok( !tmp_mem, "LocalReAlloc succeeded\n" );
++        else ok( tmp_mem != mem, "LocalReAlloc returned %p\n", tmp_mem );
+         if (tmp_mem) mem = tmp_mem;
+ 
+         size = LocalSize( mem );
+         if (flags == LMEM_MOVEABLE) ok( size == 0 || broken( size == 1 ) /* w7 */, "LocalSize returned %Iu\n", size );
+-        else todo_wine_if(!flags) ok( size == small_size, "LocalSize returned %Iu\n", size );
++        else ok( size == small_size, "LocalSize returned %Iu\n", size );
+ 
+         mem = LocalFree( mem );
+         ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
 diff --git a/dlls/ntdll/heap.c b/dlls/ntdll/heap.c
-index ef91096f258..99776aebc3d 100644
+index aafbbd0f523aaa73a17622c3c67b04aa8d0eea52..ddb8a7b49dd189c04ea4a5d46aa0d04b77490c5c 100644
 --- a/dlls/ntdll/heap.c
 +++ b/dlls/ntdll/heap.c
 @@ -39,6 +39,13 @@
@@ -80,97 +218,757 @@ index ef91096f258..99776aebc3d 100644
  /* undocumented RtlWalkHeap structure */
  
  struct rtl_heap_entry
-@@ -187,5 +194,6 @@ struct heap
+@@ -94,6 +101,7 @@ C_ASSERT( sizeof(struct block) == 8 );
+ #define BLOCK_FLAG_PREV_FREE   0x02
+ #define BLOCK_FLAG_FREE_LINK   0x03
+ #define BLOCK_FLAG_LARGE       0x04
++#define BLOCK_FLAG_SPLIT       0x08 /* block is split and must not be coalesced */
+ #define BLOCK_FLAG_USER_INFO   0x10 /* user flags up to 0xf0 */
+ #define BLOCK_FLAG_USER_MASK   0xf0
+ 
+@@ -142,6 +150,27 @@ C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
+ C_ASSERT( sizeof(struct block) <= HEAP_MIN_BLOCK_SIZE );
+ C_ASSERT( sizeof(struct entry) <= HEAP_MIN_BLOCK_SIZE );
+ 
++/* block size categories for LFH */
++
++#define BLOCK_SIZE_SMALL_MAX              (16 * HEAP_MIN_BLOCK_SIZE)
++#define BLOCK_SIZE_MEDIUM_STEP            (12 * BLOCK_ALIGN)
++#define BLOCK_SIZE_CATEGORY_SMALL(size)   (((size) - HEAP_MIN_BLOCK_SIZE) / BLOCK_ALIGN)
++#define BLOCK_SIZE_CATEGORY_MEDIUM(size)  (BLOCK_SIZE_CATEGORY_SMALL(BLOCK_SIZE_SMALL_MAX) + ((size) - (BLOCK_SIZE_SMALL_MAX)) / BLOCK_SIZE_MEDIUM_STEP)
++#define BLOCK_SIZE_CATEGORY(size)         (((size) >= BLOCK_SIZE_SMALL_MAX) ? BLOCK_SIZE_CATEGORY_MEDIUM(size) : BLOCK_SIZE_CATEGORY_SMALL(size))
++#define BLOCK_SIZE_CATEGORY_COUNT         BLOCK_SIZE_CATEGORY(0x400 * BLOCK_ALIGN)
++#define BLOCK_SIZE_MEDIUM_MIN             (BLOCK_SIZE_SMALL_MAX + BLOCK_SIZE_MEDIUM_STEP - BLOCK_ALIGN)
++
++#define BLOCK_CATEGORY_SIZE(category)     (category >= BLOCK_SIZE_CATEGORY_MEDIUM(BLOCK_SIZE_SMALL_MAX) \
++                                                ? (BLOCK_SIZE_MEDIUM_MIN + (category - BLOCK_SIZE_CATEGORY_MEDIUM(BLOCK_SIZE_SMALL_MAX)) * BLOCK_SIZE_MEDIUM_STEP) \
++                                                : (HEAP_MIN_BLOCK_SIZE + category * BLOCK_ALIGN))
++
++C_ASSERT( BLOCK_SIZE_CATEGORY(HEAP_MIN_BLOCK_SIZE) == 0 );
++C_ASSERT( BLOCK_SIZE_CATEGORY_SMALL(BLOCK_SIZE_SMALL_MAX - 1) == 44 );
++C_ASSERT( BLOCK_SIZE_CATEGORY_MEDIUM(BLOCK_SIZE_SMALL_MAX) == 45 );
++C_ASSERT( BLOCK_SIZE_CATEGORY_COUNT == 126 );
++
++/* difference between block classes must fit into block tail_size */
++C_ASSERT( BLOCK_CATEGORY_SIZE(126) - BLOCK_CATEGORY_SIZE(125) <= FIELD_MAX( struct block, tail_size ) );
+ /* used block size is coded into block_size */
+ #define HEAP_MAX_USED_BLOCK_SIZE    (FIELD_MAX( struct block, block_size ) * BLOCK_ALIGN)
+ /* free block size is coded into block_size + tail_size */
+@@ -170,7 +199,9 @@ static const SIZE_T free_list_sizes[] =
+ 
+ typedef struct DECLSPEC_ALIGN(BLOCK_ALIGN) tagSUBHEAP
+ {
+-    SIZE_T __pad[sizeof(SIZE_T) / sizeof(DWORD)];
++    SIZE_T __pad[sizeof(SIZE_T) / sizeof(DWORD) - 1];
++    volatile WORD affinity;
++    WORD used_blocks;
+     SIZE_T block_size;
+     SIZE_T data_size;
+     struct list entry;
+@@ -182,6 +213,17 @@ typedef struct DECLSPEC_ALIGN(BLOCK_ALIGN) tagSUBHEAP
+ C_ASSERT( sizeof(SUBHEAP) == offsetof(SUBHEAP, block) + sizeof(struct block) );
+ C_ASSERT( sizeof(SUBHEAP) == 4 * BLOCK_ALIGN );
+ 
++struct heap_thread_data
++{
++    struct entry free_lists[BLOCK_SIZE_CATEGORY_COUNT];
++    /* requires heap lock to access */
++    struct entry defer_list;
++    volatile BOOL has_defer;
++};
++
++/* affinity to tid mapping array, defines the amount of supported concurrent threads */
++static volatile LONG thread_data_tid[64];
++
+ struct heap
+ {                                  /* win32/win64 */
+     DWORD_PTR        unknown1[2];   /* 0000/0000 */
+@@ -194,6 +236,9 @@ struct heap
+     DWORD            force_flags;   /* 0044/0074 */
      /* end of the Windows 10 compatible struct layout */
  
++    struct heap_thread_data *tls;   /* Thread local storage data */
++    volatile BYTE    stats[BLOCK_SIZE_CATEGORY_COUNT];  /* Stats counter for LFH activation */
 +    LONG             compat_info;   /* HeapCompatibilityInformation / heap frontend type */
      struct list      entry;         /* Entry in process heap list */
      struct list      subheap_list;  /* Sub-heap list */
      struct list      large_list;    /* Large blocks list */
-@@ -956,5 +964,6 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
-         heap->auto_flags    = (flags & HEAP_GROWABLE);
-         heap->flags         = (flags & ~HEAP_SHARED);
-+        heap->compat_info   = HEAP_STD;
-         heap->magic         = HEAP_MAGIC;
-         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
-         heap->min_size      = commitSize;
-@@ -1545,11 +1554,13 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
+@@ -320,6 +365,21 @@ static void subheap_set_bounds( SUBHEAP *subheap, char *commit_end, char *end )
+     subheap->data_size = commit_end - (char *)(subheap + 1);
+ }
  
-     if (!(heap = unsafe_heap_from_handle( handle )))
-         status = STATUS_INVALID_HANDLE;
--    else
-+    else switch (InterlockedOr( &heap->compat_info, 0 ))
++static void subheap_set_affinity( SUBHEAP *subheap, WORD affinity )
++{
++    subheap->affinity = affinity;
++}
++
++static inline WORD subheap_get_affinity( const SUBHEAP *subheap )
++{
++    return subheap->affinity;
++}
++
++static inline WORD block_get_affinity( const struct heap *heap, const struct block *block )
++{
++    return subheap_get_affinity( block_get_subheap( heap, block ) );
++}
++
+ static inline void *first_block( const SUBHEAP *subheap )
+ {
+     return (void *)&subheap->block;
+@@ -472,7 +532,7 @@ static inline struct entry *find_free_list( struct heap *heap, SIZE_T block_size
+ 
+     if (block_size <= HEAP_MAX_SMALL_FREE_LIST)
+         i = (block_size - HEAP_MIN_BLOCK_SIZE) / BLOCK_ALIGN;
+-    else for (i = HEAP_NB_SMALL_FREE_LISTS; i < HEAP_NB_FREE_LISTS - 1; i++)
++    else for (i = HEAP_NB_SMALL_FREE_LISTS; i < ARRAY_SIZE(heap->free_lists) - 1; i++)
+         if (block_size <= free_list_sizes[i - HEAP_NB_SMALL_FREE_LISTS]) break;
+ 
+     list = heap->free_lists + i;
+@@ -480,6 +540,15 @@ static inline struct entry *find_free_list( struct heap *heap, SIZE_T block_size
+     return list;
+ }
+ 
++static void free_list_init( struct entry *entry )
++{
++    list_init( &entry->entry );
++    block_set_flags( &entry->block, ~0, BLOCK_FLAG_FREE_LINK );
++    block_set_size( &entry->block, 0 );
++    block_set_base( &entry->block, &entry );
++    block_set_type( &entry->block, BLOCK_TYPE_FREE );
++}
++
+ /* get the memory protection type to use for a given heap */
+ static inline ULONG get_protection_type( DWORD flags )
+ {
+@@ -529,25 +598,47 @@ static void heap_dump( const struct heap *heap )
+     const struct block *block;
+     const ARENA_LARGE *large;
+     const SUBHEAP *subheap;
+-    unsigned int i;
++    unsigned int i, j;
+ 
+     TRACE( "heap: %p\n", heap );
+     TRACE( "  next %p\n", LIST_ENTRY( heap->entry.next, struct heap, entry ) );
+ 
+     TRACE( "  free_lists: %p\n", heap->free_lists );
+-    for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
++    for (i = 0; i < ARRAY_SIZE(heap->free_lists); i++)
++    {
+         TRACE( "    %p: size %#8Ix, prev %p, next %p\n", heap->free_lists + i, get_free_list_block_size( i ),
+                LIST_ENTRY( heap->free_lists[i].entry.prev, struct entry, entry ),
+                LIST_ENTRY( heap->free_lists[i].entry.next, struct entry, entry ) );
++    }
++
++    if (heap->tls) for (i = 0; i < ARRAY_SIZE(thread_data_tid); ++i)
++    {
++        struct heap_thread_data *thread_data = heap->tls + i;
++        if (!thread_data_tid[i]) continue;
++        TRACE( "  index %#x thread %04lx:\n", i, thread_data_tid[i] );
++
++        for (j = 0; j < ARRAY_SIZE(thread_data->free_lists); j++)
++        {
++            if (list_empty( &thread_data->free_lists[j].entry )) continue;
++            TRACE( "    %p: size %8Ix, prev %p, next %p\n", thread_data->free_lists + j, HEAP_MIN_BLOCK_SIZE + j * BLOCK_ALIGN,
++                   LIST_ENTRY( thread_data->free_lists[j].entry.prev, struct entry, entry ),
++                   LIST_ENTRY( thread_data->free_lists[j].entry.next, struct entry, entry ) );
++        }
++
++        TRACE( "    %p: pending, prev %p, next %p\n", &thread_data->defer_list,
++               LIST_ENTRY( thread_data->defer_list.entry.prev, struct entry, entry ),
++               LIST_ENTRY( thread_data->defer_list.entry.next, struct entry, entry ) );
++    }
+ 
+     TRACE( "  subheaps: %p\n", &heap->subheap_list );
+     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
      {
-+    default:
-         heap_lock( heap, flags );
-         status = heap_allocate( heap, heap_get_flags( heap, flags ), size, &ptr );
-         heap_unlock( heap, flags );
-+        break;
+-        SIZE_T free_size = 0, used_size = 0, overhead = 0;
++        SIZE_T free_size = 0, used_size = 0, overhead = 0, affinity = subheap_get_affinity( subheap );
+         const char *base = subheap_base( subheap );
+ 
+         TRACE( "    %p: base %p first %p last %p end %p\n", subheap, base, first_block( subheap ),
+                last_block( subheap ), base + subheap_size( subheap ) );
++        if (affinity) TRACE( "      affinity %#Ix, thread %04lx\n", affinity, thread_data_tid[affinity - 1] );
+ 
+         if (!check_subheap( subheap )) return;
+ 
+@@ -707,6 +798,15 @@ static inline BOOL subheap_decommit( const struct heap *heap, SUBHEAP *subheap,
+     return TRUE;
+ }
+ 
++static void block_init_used( struct block *block, ULONG flags, SIZE_T size )
++{
++    block_set_type( block, BLOCK_TYPE_USED );
++    block_set_flags( block, ~BLOCK_FLAG_SPLIT, BLOCK_USER_FLAGS( flags ) );
++    block->tail_size = block_get_size( block ) - sizeof(*block) - size;
++    initialize_block( block, 0, size, flags );
++    mark_block_tail( block, flags );
++}
++
+ static void block_init_free( struct block *block, ULONG flags, SUBHEAP *subheap, SIZE_T block_size )
+ {
+     const char *end = (char *)block + block_size, *commit_end = subheap_commit_end( subheap );
+@@ -766,12 +866,15 @@ static struct block *heap_delay_free( struct heap *heap, ULONG flags, struct blo
+ 
+ static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *block )
+ {
++    SIZE_T block_size = block_get_size( block ), category = BLOCK_SIZE_CATEGORY(block_size);
+     SUBHEAP *subheap = block_get_subheap( heap, block );
+-    SIZE_T block_size = block_get_size( block );
+     struct entry *entry;
+     struct block *next;
+ 
+-    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE))
++    if (category < ARRAY_SIZE(heap->stats) && heap->stats[category] <= 0x10) heap->stats[category]--;
++
++    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE) &&
++        !(block_get_flags( next ) & BLOCK_FLAG_SPLIT))
+     {
+         /* merge with next block if it is free */
+         entry = (struct entry *)next;
+@@ -939,7 +1042,117 @@ static BOOL validate_large_block( const struct heap *heap, const struct block *b
+ }
+ 
+ 
+-static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_size, SIZE_T commit_size )
++static struct heap_thread_data *alloc_thread_data_block( struct heap *heap )
++{
++    struct heap_thread_data *thread_data_block = NULL;
++    SIZE_T size, i, j;
++
++    size = sizeof(*thread_data_block) * ARRAY_SIZE(thread_data_tid);
++    if (NtAllocateVirtualMemory( NtCurrentProcess(), (void *)&thread_data_block, 0, &size,
++                                 MEM_COMMIT, PAGE_READWRITE )) return NULL;
++
++    for (i = 0; i < ARRAY_SIZE(thread_data_tid); ++i)
++    {
++        struct heap_thread_data *thread_data = thread_data_block + i;
++        for (j = 0; j < ARRAY_SIZE(thread_data->free_lists); ++j)
++            free_list_init( &thread_data->free_lists[j] );
++        free_list_init( &thread_data->defer_list );
++    }
++
++    return thread_data_block;
++}
++
++static DWORD next_thread_data_index(void)
++{
++    LONG index, tid = GetCurrentThreadId();
++
++    for (index = ARRAY_SIZE(thread_data_tid) - 1; index >= 0; index--)
++        if (!InterlockedCompareExchange( thread_data_tid + index, tid, 0 ))
++            break;
++
++    NtCurrentTeb()->HeapVirtualAffinity = index + 1;
++    return index;
++}
++
++/* release thread blocks to the main heap free lists, clearing the split flags */
++static void heap_release_blocks_lfh( struct heap *heap, SUBHEAP *subheap )
++{
++    struct block *block, *next;
++
++    for (block = first_block( subheap ); block; block = next)
++    {
++        /* remove the flag one block at a time, so heap_free_block only merges with the previous */
++        block_set_flags( block, BLOCK_FLAG_SPLIT, 0 );
++        if ((next = next_block( subheap, block ))) block_set_flags( next, 0, BLOCK_FLAG_SPLIT );
++
++        if (block_get_flags( block ) & BLOCK_FLAG_FREE)
++        {
++            struct entry *entry = CONTAINING_RECORD( block, struct entry, block );
++            list_remove( &entry->entry );
++            heap_free_block( heap, 0, block );
++        }
++    }
++}
++
++/* release subheaps owned by current thread, clearing the subheap affinity */
++static void heap_release_subheaps_lfh( struct heap *heap )
++{
++    SUBHEAP *subheap, *next;
++
++    LIST_FOR_EACH_ENTRY_SAFE( subheap, next, &heap->subheap_list, SUBHEAP, entry )
++    {
++        if (subheap_get_affinity( subheap ) == NtCurrentTeb()->HeapVirtualAffinity)
++        {
++            subheap_set_affinity( subheap, 0 );
++            heap_release_blocks_lfh( heap, subheap );
++        }
++    }
++}
++
++void heap_thread_detach(void)
++{
++    struct heap *heap;
++
++    DWORD index = NtCurrentTeb()->HeapVirtualAffinity - 1;
++    if (index >= ARRAY_SIZE(thread_data_tid)) return;
++
++    heap_lock( process_heap, 0 );
++
++    LIST_FOR_EACH_ENTRY( heap, &process_heap->entry, struct heap, entry )
++    {
++        heap_lock( heap, 0 );
++        heap_release_subheaps_lfh( heap );
++        heap_unlock( heap, 0 );
++    }
++
++    heap_release_subheaps_lfh( process_heap );
++
++    heap_unlock( process_heap, 0 );
++
++    InterlockedExchange( thread_data_tid + index, 0 );
++}
++
++static struct heap_thread_data *heap_get_thread_data( struct heap *heap )
++{
++    DWORD index = NtCurrentTeb()->HeapVirtualAffinity - 1;
++
++    if (!process_heap || heap->compat_info != HEAP_LFH) return NULL;
++    if (index >= ARRAY_SIZE(thread_data_tid)) index = next_thread_data_index();
++    if (index >= ARRAY_SIZE(thread_data_tid)) return NULL;
++
++    if (!heap->tls)
++    {
++        RtlLockHeap( heap );
++        if (!heap->tls) heap->tls = alloc_thread_data_block( heap );
++        RtlUnlockHeap( heap );
++    }
++
++    if (!heap->tls) return NULL;
++    return heap->tls + index;
++}
++
++
++static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_size, SIZE_T commit_size, WORD affinity )
+ {
+     SIZE_T block_size;
+     SUBHEAP *subheap;
+@@ -950,11 +1163,14 @@ static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_siz
+     if (!(subheap = allocate_region( heap, flags, &total_size, &commit_size ))) return NULL;
+ 
+     subheap->user_value = heap;
++    subheap_set_affinity( subheap, affinity );
+     subheap_set_bounds( subheap, (char *)subheap + commit_size, (char *)subheap + total_size );
+     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
+     block_init_free( first_block( subheap ), flags, subheap, block_size );
+ 
+-    list_add_head( &heap->subheap_list, &subheap->entry );
++    heap_lock( heap, 0 );
++    list_add_tail( &heap->subheap_list, &subheap->entry );
++    heap_unlock( heap, 0 );
+ 
+     return subheap;
+ }
+@@ -987,7 +1203,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
+     total_size = sizeof(SUBHEAP) + block_size + sizeof(struct entry);
+     if (total_size < block_size) return NULL;  /* overflow */
+ 
+-    if ((subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size )))
++    if ((subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size, 0 )))
+     {
+         if (heap->grow_size <= HEAP_MAX_FREE_BLOCK_SIZE / 2) heap->grow_size *= 2;
+     }
+@@ -995,7 +1211,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
+     {
+         if (heap->grow_size <= total_size || heap->grow_size <= 4 * 1024 * 1024) return NULL;
+         heap->grow_size /= 2;
+-        subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size );
++        subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size, 0 );
      }
  
-     if (!status) valgrind_notify_alloc( ptr, size, flags & HEAP_ZERO_MEMORY );
-@@ -1586,11 +1597,13 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
+     TRACE( "created new sub-heap %p of %#Ix bytes for heap %p\n", subheap, subheap_size( subheap ), heap );
+@@ -1007,10 +1223,21 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
+ static BOOL is_valid_free_block( const struct heap *heap, const struct block *block )
+ {
+     const SUBHEAP *subheap;
+-    unsigned int i;
++    unsigned int i, j;
  
-     if (!(heap = unsafe_heap_from_handle( handle )))
-         status = STATUS_INVALID_PARAMETER;
--    else
-+    else switch (InterlockedOr( &heap->compat_info, 0 ))
+     if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
+-    for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == &heap->free_lists[i].block) return TRUE;
++    for (i = 0; i < ARRAY_SIZE(heap->free_lists); i++)
++        if (block == &heap->free_lists[i].block) return TRUE;
++    if (!heap->tls) return FALSE;
++
++    for (i = 0; i < ARRAY_SIZE(thread_data_tid); ++i)
++    {
++        struct heap_thread_data *thread_data = heap->tls + i;
++        if (block == &thread_data->defer_list.block) return TRUE;
++        for (j = 0; j < ARRAY_SIZE(thread_data->free_lists); ++j)
++            if (block == &thread_data->free_lists[j].block) return TRUE;
++    }
++
+     return FALSE;
+ }
+ 
+@@ -1037,7 +1264,7 @@ static BOOL validate_free_block( const struct heap *heap, const SUBHEAP *subheap
+         err = "invalid previous free block pointer";
+     else if (!(block_get_flags( prev ) & BLOCK_FLAG_FREE) || block_get_type( prev ) != BLOCK_TYPE_FREE)
+         err = "invalid previous free block header";
+-    else if ((next = next_block( subheap, block )))
++    else if (!(block_get_affinity( heap, block )) && (next = next_block( subheap, block )))
      {
-+    default:
-         heap_lock( heap, flags );
-         status = heap_free( heap, ptr );
-         heap_unlock( heap, flags );
-+        break;
+         if (!(block_get_flags( next ) & BLOCK_FLAG_PREV_FREE))
+             err = "invalid next block flags";
+@@ -1143,12 +1370,19 @@ static BOOL heap_validate_ptr( const struct heap *heap, const void *ptr )
+ 
+ static BOOL heap_validate( const struct heap *heap )
+ {
++    DWORD affinity = NtCurrentTeb()->HeapVirtualAffinity, block_affinity;
+     const ARENA_LARGE *large_arena;
+     const struct block *block;
+     const SUBHEAP *subheap;
+ 
+     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
+     {
++        if ((block_affinity = subheap_get_affinity( subheap )) && block_affinity != affinity)
++        {
++            TRACE( "Skipping subheap %p with affinity %#lx\n", subheap, block_affinity );
++            continue;
++        }
++
+         if (!check_subheap( subheap ))
+         {
+             ERR( "heap %p, subheap %p corrupted sizes\n", heap, subheap );
+@@ -1343,19 +1577,16 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T
+     heap->ffeeffee      = 0xffeeffee;
+     heap->auto_flags    = (flags & HEAP_GROWABLE);
+     heap->flags         = (flags & ~HEAP_SHARED);
++    heap->compat_info   = HEAP_STD;
+     heap->magic         = HEAP_MAGIC;
+     heap->grow_size     = max( HEAP_DEF_SIZE, total_size );
+     heap->min_size      = commit_size;
+     list_init( &heap->subheap_list );
+     list_init( &heap->large_list );
+ 
+-    list_init( &heap->free_lists[0].entry );
+     for (i = 0, entry = heap->free_lists; i < HEAP_NB_FREE_LISTS; i++, entry++)
+     {
+-        block_set_flags( &entry->block, ~0, BLOCK_FLAG_FREE_LINK );
+-        block_set_size( &entry->block, 0 );
+-        block_set_type( &entry->block, BLOCK_TYPE_FREE );
+-        block_set_base( &entry->block, heap );
++        free_list_init( entry );
+         if (i) list_add_after( &entry[-1].entry, &entry->entry );
      }
  
-     TRACE( "handle %p, flags %#x, ptr %p, return %u, status %#x.\n", handle, flags, ptr, !status, status );
-@@ -1670,11 +1683,13 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
+@@ -1377,6 +1608,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T
  
-     if (!(heap = unsafe_heap_from_handle( handle )))
-         status = STATUS_INVALID_HANDLE;
--    else
-+    else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    default:
-         heap_lock( heap, flags );
-         status = heap_reallocate( heap, heap_get_flags( heap, flags ), ptr, size, &ret );
-         heap_unlock( heap, flags );
-+        break;
+     subheap = &heap->subheap;
+     subheap->user_value = heap;
++    subheap_set_affinity( subheap, 0 );
+     subheap_set_bounds( subheap, (char *)heap + commit_size, (char *)heap + total_size );
+     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
+     block_init_free( first_block( subheap ), flags, subheap, block_size );
+@@ -1471,6 +1703,12 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
+         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+     }
+     valgrind_notify_free_all( &heap->subheap );
++    if (heap->tls)
++    {
++        size = 0;
++        addr = heap->tls;
++        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
++    }
+     size = 0;
+     addr = heap;
+     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+@@ -1497,6 +1735,151 @@ static SIZE_T heap_get_block_size( const struct heap *heap, ULONG flags, SIZE_T
+     return block_size;
+ }
+ 
++static void insert_free_block_lfh( struct heap *heap, struct entry *entry, struct heap_thread_data *thread_data )
++{
++    SIZE_T block_size = block_get_size( &entry->block ), category = BLOCK_SIZE_CATEGORY( block_size );
++    struct entry *free_list = thread_data->free_lists + category;
++    SUBHEAP *subheap = block_get_subheap( heap, &entry->block );
++
++    list_add_head( &free_list->entry, &entry->entry );
++    if (!--subheap->used_blocks)
++    {
++        void *addr = subheap_base( subheap );
++        struct block *block;
++        SIZE_T size = 0;
++
++        for (block = first_block( subheap ); block; block = next_block( subheap, block ))
++        {
++            entry = (struct entry *)block;
++            list_remove( &entry->entry );
++        }
++
++        heap_lock( heap, 0 );
++        list_remove( &subheap->entry );
++        heap_unlock( heap, 0 );
++
++        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
++    }
++}
++
++static void flush_defer_list( struct heap *heap, ULONG flags, struct heap_thread_data *thread_data )
++{
++    struct list pending = LIST_INIT( pending );
++    struct entry *entry, *next;
++
++    if (!thread_data->has_defer) return;
++
++    heap_lock( heap, flags );
++    list_move_tail( &pending, &thread_data->defer_list.entry );
++    thread_data->has_defer = FALSE;
++    heap_unlock( heap, flags );
++
++    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &pending, struct entry, entry )
++    {
++        list_remove( &entry->entry );
++        insert_free_block_lfh( heap, entry, thread_data );
++    }
++}
++
++static void split_block_lfh( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size, struct entry *free_list )
++{
++    SIZE_T i, old_block_size = block_get_size( block ), count = min( 16, old_block_size / block_size );
++    SUBHEAP *subheap = block_get_subheap( heap, block );
++    struct entry *entry;
++
++    if (!subheap_commit( heap, subheap, block, count * block_size )) return;
++
++    for (i = 0; i < count; ++i)
++    {
++        block_init_free( block, flags, subheap, block_size );
++        block_set_flags( block, 0, BLOCK_FLAG_SPLIT );
++        old_block_size -= block_size;
++
++        entry = (struct entry *)block;
++        if (i) list_add_head( &free_list->entry, &entry->entry );
++
++        block = next_block( subheap, block );
++    }
++
++    if ((entry = (struct entry *)block))
++    {
++        block_init_free( block, flags, subheap, old_block_size );
++        /* only if large enough to carve more blocks from it */
++        if (old_block_size < block_size) list_init( &entry->entry );
++        else list_add_tail( &free_list->entry, &entry->entry );
++    }
++
++    /* consider releasing the region after we've split it entirely */
++    if (old_block_size < block_size || !block)
++        subheap->used_blocks--;
++}
++
++static struct block *find_free_block_lfh( struct heap *heap, ULONG flags, SIZE_T category,
++                                          struct heap_thread_data *thread_data )
++{
++    SIZE_T block_size = BLOCK_CATEGORY_SIZE(category), commit_size, total_size;
++    WORD affinity = NtCurrentTeb()->HeapVirtualAffinity;
++    struct entry *entry, *free_list;
++    struct list *ptr;
++    SUBHEAP *subheap;
++
++    free_list = thread_data->free_lists + category;
++    commit_size = sizeof(*subheap) + 16 * block_size + sizeof(*entry);
++    total_size = sizeof(*subheap) + 1024 * block_size + sizeof(*entry);
++
++    if ((ptr = list_head( &free_list->entry )))
++    {
++        entry = LIST_ENTRY( ptr, struct entry, entry );
++        list_remove( &entry->entry );
++        subheap = block_get_subheap( heap, &entry->block );
++    }
++    else if (!(flags & HEAP_GROWABLE))
++        return NULL;
++    else if (!(subheap = create_subheap( heap, flags, commit_size, total_size, affinity )))
++        return NULL;
++    else
++    {
++        TRACE( "created new sub-heap %p of %#Ix bytes for heap %p\n", subheap, subheap_size( subheap ), heap );
++        subheap->used_blocks = 1;  /* consider releasing the region after we've split it entirely */
++        entry = first_block( subheap );
++    }
++
++    if (!(block_get_flags( &entry->block ) & BLOCK_FLAG_SPLIT))
++        split_block_lfh( heap, flags, &entry->block, block_size, free_list );
++
++    subheap->used_blocks++;
++    return &entry->block;
++}
++
++static NTSTATUS heap_allocate_block_lfh( struct heap *heap, ULONG flags, SIZE_T block_size,
++                                         SIZE_T size, void **ret )
++{
++    SIZE_T category = BLOCK_SIZE_CATEGORY( block_size );
++    struct heap_thread_data *thread_data;
++    struct block *block;
++
++    if (category >= ARRAY_SIZE(heap->stats)) return STATUS_UNSUCCESSFUL;
++    if (heap->stats[category] <= 0x10)
++    {
++        heap->stats[category]++;
++        return STATUS_UNSUCCESSFUL;
++    }
++    if (heap->compat_info != HEAP_LFH)
++    {
++        ULONG info = HEAP_LFH;
++        RtlSetHeapInformation( heap, HeapCompatibilityInformation, &info, sizeof(info) );
++        return STATUS_UNSUCCESSFUL;
++    }
++    if (!(thread_data = heap_get_thread_data( heap ))) return STATUS_UNSUCCESSFUL;
++
++    if (!(block = find_free_block_lfh( heap, flags, category, thread_data ))) return STATUS_NO_MEMORY;
++    block_init_used( block, flags, size );
++    flush_defer_list( heap, flags, thread_data );
++
++    *ret = block + 1;
++    return STATUS_SUCCESS;
++}
++
+ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T block_size, SIZE_T size, void **ret )
+ {
+     struct block *block, *next;
+@@ -1516,11 +1899,7 @@ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T bloc
+         insert_free_block( heap, flags, subheap, next );
      }
  
-     TRACE( "handle %p, flags %#x, ptr %p, size %#Ix, return %p, status %#x.\n", handle, flags, ptr, size, ret, status );
-@@ -1775,11 +1790,13 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
+-    block_set_type( block, BLOCK_TYPE_USED );
+-    block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
+-    block->tail_size = block_get_size( block ) - sizeof(*block) - size;
+-    initialize_block( block, 0, size, flags );
+-    mark_block_tail( block, flags );
++    block_init_used( block, flags, size );
  
-     if (!(heap = unsafe_heap_from_handle( handle )))
-         status = STATUS_INVALID_PARAMETER;
--    else
-+    else switch (InterlockedOr( &heap->compat_info, 0 ))
+     if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
+ 
+@@ -1545,6 +1924,8 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
+         status = STATUS_NO_MEMORY;
+     else if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
+         status = heap_allocate_large( heap, heap_flags, block_size, size, &ptr );
++    else if (!heap_allocate_block_lfh( heap, heap_flags, block_size, size, &ptr ))
++        status = STATUS_SUCCESS;
+     else
      {
-+    default:
-         heap_lock( heap, flags );
-         status = heap_size( heap, ptr, &size );
-         heap_unlock( heap, flags );
-+        break;
+         heap_lock( heap, heap_flags );
+@@ -1559,6 +1940,40 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
+     return ptr;
+ }
+ 
++static NTSTATUS heap_free_block_lfh( struct heap *heap, ULONG flags, struct block *block, WORD block_affinity )
++{
++    SIZE_T block_size = block_get_size( block ), category = BLOCK_SIZE_CATEGORY( block_size );
++    ULONG affinity = NtCurrentTeb()->HeapVirtualAffinity;
++    SUBHEAP *subheap = block_get_subheap( heap, block );
++    struct entry *entry = (struct entry *)block;
++
++    valgrind_make_writable( &block, sizeof(*entry) );
++    block_set_type( block, BLOCK_TYPE_FREE );
++    block_set_flags( block, ~BLOCK_FLAG_SPLIT, BLOCK_FLAG_FREE );
++    block_set_base( block, subheap_base( subheap ) );
++    block_set_size( block, BLOCK_CATEGORY_SIZE(category) );
++    mark_block_free( block + 1, BLOCK_CATEGORY_SIZE(category) - sizeof(*block), flags );
++
++    if (block_affinity == affinity)
++    {
++        struct heap_thread_data *thread_data = heap_get_thread_data( heap );
++        insert_free_block_lfh( heap, entry, thread_data );
++    }
++    else
++    {
++        heap_lock( heap, flags );
++        /* the subheap affinity may be reset to zero when the owner thread is detached */
++        if ((block_affinity = block_get_affinity( heap, block )))
++        {
++            list_add_tail( &heap->tls[block_affinity - 1].defer_list.entry, &entry->entry );
++            heap->tls[block_affinity - 1].has_defer = TRUE;
++        }
++        heap_unlock( heap, flags );
++        return block_affinity ? STATUS_SUCCESS : STATUS_NOT_CAPABLE;
++    }
++
++    return STATUS_SUCCESS;
++}
+ 
+ /***********************************************************************
+  *           RtlFreeHeap   (NTDLL.@)
+@@ -1569,6 +1984,7 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
+     struct heap *heap;
+     ULONG heap_flags;
+     NTSTATUS status;
++    WORD affinity;
+ 
+     if (!ptr) return TRUE;
+ 
+@@ -1582,6 +1998,8 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
+         status = heap_free_large( heap, heap_flags, block );
+     else if (!(block = heap_delay_free( heap, heap_flags, block )))
+         status = STATUS_SUCCESS;
++    else if ((affinity = block_get_affinity( heap, block )))
++        status = heap_free_block_lfh( heap, heap_flags, block, affinity );
+     else
+     {
+         heap_lock( heap, heap_flags );
+@@ -1601,6 +2019,7 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block
+     SIZE_T old_block_size;
+     struct entry *entry;
+     struct block *next;
++    WORD affinity;
+ 
+     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
+     {
+@@ -1628,6 +2047,24 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block
+ 
+     if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE) return STATUS_NO_MEMORY;  /* growing small block to large block */
+ 
++    if ((affinity = block_get_affinity( heap, block )))
++    {
++        if (affinity != NtCurrentTeb()->HeapVirtualAffinity) return STATUS_NO_MEMORY;  /* resizing block owned by another thread */
++
++        /* as native LFH does it, different block size even though we could resize */
++        if (ROUND_SIZE( *old_size, BLOCK_ALIGN - 1) != ROUND_SIZE( size, BLOCK_ALIGN - 1)) return STATUS_NO_MEMORY;
++        if (size >= *old_size) return STATUS_NO_MEMORY;
++
++        valgrind_notify_resize( block + 1, *old_size, size );
++        block_set_flags( block, BLOCK_FLAG_USER_MASK, BLOCK_USER_FLAGS( flags ) );
++        block->tail_size = block_get_size( block ) - sizeof(*block) - size;
++        initialize_block( block, *old_size, size, flags );
++        mark_block_tail( block, flags );
++
++        *ret = block + 1;
++        return STATUS_SUCCESS;
++    }
++
+     heap_lock( heap, flags );
+ 
+     if (block_size > old_block_size)
+@@ -1867,7 +2304,8 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
+             entry->cbData = commit_end - (char *)entry->lpData - 4 * BLOCK_ALIGN;
+         entry->cbOverhead = 2 * BLOCK_ALIGN;
+         entry->iRegionIndex = 0;
+-        entry->wFlags = 0;
++        if (subheap_get_affinity( subheap )) entry->wFlags = RTL_HEAP_ENTRY_LFH;
++        else entry->wFlags = 0;
+     }
+     else
+     {
+@@ -1875,7 +2313,9 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
+         entry->cbData = block_get_size( block ) - block_get_overhead( block );
+         entry->cbOverhead = block_get_overhead( block );
+         entry->iRegionIndex = 0;
+-        entry->wFlags = RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY;
++        entry->wFlags = RTL_HEAP_ENTRY_BUSY;
++        if (subheap_get_affinity( subheap )) entry->wFlags |= RTL_HEAP_ENTRY_LFH;
++        else entry->wFlags |= RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK;
      }
  
-     TRACE( "handle %p, flags %#x, ptr %p, return %#Ix, status %#x.\n", handle, flags, ptr, size, status );
-@@ -1799,12 +1816,14 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
- 
-     if (!(heap = unsafe_heap_from_handle( handle )))
-         ret = FALSE;
--    else
-+    else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    default:
-         heap_lock( heap, flags );
-         if (ptr) ret = heap_validate_ptr( heap, ptr, &subheap );
-         else ret = heap_validate( heap );
-         heap_unlock( heap, flags );
-+        break;
-     }
- 
-     TRACE( "handle %p, flags %#x, ptr %p, return %u.\n", handle, flags, ptr, !!ret );
-@@ -1975,21 +1994,23 @@ ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
+     return STATUS_SUCCESS;
+@@ -1921,6 +2361,7 @@ static NTSTATUS heap_walk( const struct heap *heap, struct rtl_heap_entry *entry
+         entry->cbOverhead = 0;
+         entry->iRegionIndex = 0;
+         entry->wFlags = RTL_HEAP_ENTRY_REGION;
++        if (subheap_get_affinity( subheap )) entry->wFlags |= RTL_HEAP_ENTRY_LFH;
+         entry->Region.dwCommittedSize = (char *)subheap_commit_end( subheap ) - base;
+         entry->Region.dwUnCommittedSize = subheap_size( subheap ) - entry->Region.dwCommittedSize;
+         entry->Region.lpFirstBlock = base + entry->cbData;
+@@ -2004,21 +2445,24 @@ ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
   *           RtlQueryHeapInformation    (NTDLL.@)
   */
  NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class,
@@ -178,13 +976,14 @@ index ef91096f258..99776aebc3d 100644
 +                                         void *info, SIZE_T size_in, SIZE_T *size_out )
  {
 +    struct heap *heap;
++    ULONG flags;
 +
 +    TRACE( "handle %p, info_class %u, info %p, size_in %Iu, size_out %p.\n", handle, info_class, info, size_in, size_out );
 +
      switch (info_class)
      {
      case HeapCompatibilityInformation:
-+        if (!(heap = unsafe_heap_from_handle( handle ))) return STATUS_ACCESS_VIOLATION;
++        if (!(heap = unsafe_heap_from_handle( handle, 0, &flags ))) return STATUS_ACCESS_VIOLATION;
          if (size_out) *size_out = sizeof(ULONG);
 -
 -        if (size_in < sizeof(ULONG))
@@ -192,7 +991,7 @@ index ef91096f258..99776aebc3d 100644
 -
 -        *(ULONG *)info = 0; /* standard heap */
 +        if (size_in < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-+        *(ULONG *)info = InterlockedOr( &heap->compat_info, 0 );
++        *(ULONG *)info = heap->compat_info;
          return STATUS_SUCCESS;
  
      default:
@@ -201,30 +1000,35 @@ index ef91096f258..99776aebc3d 100644
          return STATUS_INVALID_INFO_CLASS;
      }
  }
-@@ -1999,8 +2020,29 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
+@@ -2028,8 +2472,34 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
   */
  NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class, void *info, SIZE_T size )
  {
--    FIXME( "handle %p, info_class %d, info %p, size %ld stub!\n", handle, info_class, info, size );
+-    FIXME( "handle %p, info_class %d, info %p, size %Id stub!\n", handle, info_class, info, size );
 -    return STATUS_SUCCESS;
 +    struct heap *heap;
++    ULONG flags;
 +
 +    TRACE( "handle %p, info_class %u, info %p, size %Iu.\n", handle, info_class, info, size );
 +
 +    switch (info_class)
 +    {
 +    case HeapCompatibilityInformation:
-+        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-+        if (!(heap = unsafe_heap_from_handle( handle ))) return STATUS_INVALID_HANDLE;
++    {
++        ULONG compat_info;
 +
-+        if (*(ULONG *)info != 0 && *(ULONG *)info != HEAP_LFH)
++        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
++        if (!(heap = unsafe_heap_from_handle( handle, 0, &flags ))) return STATUS_INVALID_HANDLE;
++
++        compat_info = *(ULONG *)info;
++        if (compat_info != HEAP_STD && compat_info != HEAP_LFH)
 +        {
-+            FIXME( "HeapCompatibilityInformation %u not implemented!\n", *(ULONG *)info );
++            FIXME( "HeapCompatibilityInformation %lu not implemented!\n", compat_info );
 +            return STATUS_UNSUCCESSFUL;
 +        }
-+
-+        if (InterlockedCompareExchange( &heap->compat_info, *(ULONG *)info, 0 )) return STATUS_UNSUCCESSFUL;
++        if (InterlockedCompareExchange( &heap->compat_info, compat_info, HEAP_STD )) return STATUS_UNSUCCESSFUL;
 +        return STATUS_SUCCESS;
++    }
 +
 +    default:
 +        FIXME( "HEAP_INFORMATION_CLASS %u not implemented!\n", info_class );
@@ -233,2050 +1037,27 @@ index ef91096f258..99776aebc3d 100644
  }
  
  /***********************************************************************
-
-From 7f0baa25da1d537bfda5ad91d87efe1c6044283f Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Wed, 28 Aug 2019 22:24:40 +0200
-Subject: [PATCH 2/8] ntdll: Add thread destroy notification function.
-
-This will be used in LFH to recycle the thread local data.
----
- dlls/ntdll/heap.c       | 4 ++++
- dlls/ntdll/loader.c     | 1 +
- dlls/ntdll/ntdll_misc.h | 2 ++
- dlls/ntdll/thread.c     | 1 +
- 4 files changed, 8 insertions(+)
-
-diff --git a/dlls/ntdll/heap.c b/dlls/ntdll/heap.c
-index 99776aebc3d..d025432044b 100644
---- a/dlls/ntdll/heap.c
-+++ b/dlls/ntdll/heap.c
-@@ -2121,3 +2121,7 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
-     FIXME( "handle %p, flags %#x, ptr %p, clear %#x, set %#x stub!\n", handle, flags, ptr, clear, set );
-     return FALSE;
- }
-+
-+void HEAP_notify_thread_destroy( BOOLEAN last )
-+{
-+}
 diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
-index cc8313b30c6..e27666b71f3 100644
+index 3214493c9957842d39f38b8aa0b6fa8c86c5b628..4db800feb52ca07ed5fce0593023f54a5a61b0c2 100644
 --- a/dlls/ntdll/loader.c
 +++ b/dlls/ntdll/loader.c
-@@ -3668,6 +3668,7 @@ void WINAPI RtlExitUserProcess( DWORD status )
-     RtlAcquirePebLock();
-     NtTerminateProcess( 0, status );
-     LdrShutdownProcess();
-+    HEAP_notify_thread_destroy(TRUE);
-     for (;;) NtTerminateProcess( GetCurrentProcess(), status );
+@@ -3738,6 +3738,8 @@ void WINAPI LdrShutdownThread(void)
+     /* don't call DbgUiGetThreadDebugObject as some apps hook it and terminate if called */
+     if (NtCurrentTeb()->DbgSsReserved[1]) NtClose( NtCurrentTeb()->DbgSsReserved[1] );
+     RtlFreeThreadActivationContextStack();
++
++    heap_thread_detach();
  }
  
+ 
 diff --git a/dlls/ntdll/ntdll_misc.h b/dlls/ntdll/ntdll_misc.h
-index d55083ae34c..0d4bf281b92 100644
+index d1a7790991b3dd4e215913e729f5b27ddae0b6f5..f6b77b79cde748ab8af9cc7985e5732951545650 100644
 --- a/dlls/ntdll/ntdll_misc.h
 +++ b/dlls/ntdll/ntdll_misc.h
-@@ -110,6 +110,8 @@ static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
- static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
+@@ -127,5 +127,6 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+ 
+ /* FLS data */
+ extern TEB_FLS_DATA *fls_alloc_data(void) DECLSPEC_HIDDEN;
++extern void heap_thread_detach(void) DECLSPEC_HIDDEN;
+ 
  #endif
- 
-+void HEAP_notify_thread_destroy( BOOLEAN last );
-+
- #define HASH_STRING_ALGORITHM_DEFAULT  0
- #define HASH_STRING_ALGORITHM_X65599   1
- #define HASH_STRING_ALGORITHM_INVALID  0xffffffff
-diff --git a/dlls/ntdll/thread.c b/dlls/ntdll/thread.c
-index 0ef7024a0e1..1b2c0381b4c 100644
---- a/dlls/ntdll/thread.c
-+++ b/dlls/ntdll/thread.c
-@@ -207,6 +207,7 @@ void WINAPI RtlExitUserThread( ULONG status )
-     NtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread, &last, sizeof(last), NULL );
-     if (last) RtlExitUserProcess( status );
-     LdrShutdownThread();
-+    HEAP_notify_thread_destroy(FALSE);
-     for (;;) NtTerminateThread( GetCurrentThread(), status );
- }
- 
-
-From 08be5996f84f9dc796773b36e25556492cef9ac2 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Thu, 28 Apr 2022 12:56:18 +0200
-Subject: [PATCH 3/8] ntdll: Add extended heap type and LFH stubs.
-
----
- dlls/ntdll/Makefile.in  |  1 +
- dlls/ntdll/heap.c       | 80 +++++++++++++++++++++++++++++------------
- dlls/ntdll/heap_lfh.c   | 67 ++++++++++++++++++++++++++++++++++
- dlls/ntdll/ntdll_misc.h | 14 ++++++++
- 4 files changed, 139 insertions(+), 23 deletions(-)
- create mode 100644 dlls/ntdll/heap_lfh.c
-
-diff --git a/dlls/ntdll/Makefile.in b/dlls/ntdll/Makefile.in
-index 3775749b0c5..a6c98f4d2d0 100644
---- a/dlls/ntdll/Makefile.in
-+++ b/dlls/ntdll/Makefile.in
-@@ -19,6 +19,7 @@ C_SRCS = \
- 	exception.c \
- 	handletable.c \
- 	heap.c \
-+	heap_lfh.c \
- 	large_int.c \
- 	loader.c \
- 	locale.c \
-diff --git a/dlls/ntdll/heap.c b/dlls/ntdll/heap.c
-index d025432044b..7cedb07d3ad 100644
---- a/dlls/ntdll/heap.c
-+++ b/dlls/ntdll/heap.c
-@@ -1366,6 +1366,8 @@ static void heap_set_debug_flags( HANDLE handle )
-                                               MAX_FREE_PENDING * sizeof(*heap->pending_free) );
-         heap->pending_pos = 0;
-     }
-+
-+    HEAP_lfh_set_debug_flags( flags );
- }
- 
- 
-@@ -1556,6 +1558,9 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
-         status = STATUS_INVALID_HANDLE;
-     else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    case HEAP_LFH:
-+        if (!(status = HEAP_lfh_allocate( heap, heap_get_flags( heap, flags ), size, &ptr ))) break;
-+        /* fallthrough */
-     default:
-         heap_lock( heap, flags );
-         status = heap_allocate( heap, heap_get_flags( heap, flags ), size, &ptr );
-@@ -1599,6 +1604,9 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
-         status = STATUS_INVALID_PARAMETER;
-     else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    case HEAP_LFH:
-+        if (!(status = HEAP_lfh_free( heap, heap_get_flags( heap, flags ), ptr ))) break;
-+        /* fallthrough */
-     default:
-         heap_lock( heap, flags );
-         status = heap_free( heap, ptr );
-@@ -1685,6 +1693,9 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
-         status = STATUS_INVALID_HANDLE;
-     else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    case HEAP_LFH:
-+        if (!(status = HEAP_lfh_reallocate( heap, flags, ptr, size, &ret ))) break;
-+        /* fallthrough */
-     default:
-         heap_lock( heap, flags );
-         status = heap_reallocate( heap, heap_get_flags( heap, flags ), ptr, size, &ret );
-@@ -1792,6 +1803,9 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
-         status = STATUS_INVALID_PARAMETER;
-     else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    case HEAP_LFH:
-+        if (!(status = HEAP_lfh_get_allocated_size( heap, heap_get_flags( heap, flags ), ptr, &size ))) break;
-+        /* fallthrough */
-     default:
-         heap_lock( heap, flags );
-         status = heap_size( heap, ptr, &size );
-@@ -1818,6 +1832,9 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
-         ret = FALSE;
-     else switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
-+    case HEAP_LFH:
-+        if ((ret = !HEAP_lfh_validate( heap, heap_get_flags( heap, flags ), ptr ))) break;
-+        /* fallthrough */
-     default:
-         heap_lock( heap, flags );
-         if (ptr) ret = heap_validate_ptr( heap, ptr, &subheap );
-@@ -2063,19 +2080,27 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
- 
-     if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
- 
--    heap_lock( heap, flags );
--    if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
--    {
--        const ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
--        *user_value = large->user_value;
--    }
--    else if (block)
-+    switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
--        tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
--        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
--        *user_value = *(void **)tmp;
-+    case HEAP_LFH:
-+        if (!HEAP_lfh_get_user_info( heap, heap_get_flags( heap, flags ), ptr, user_value )) break;
-+        /* fallthrough */
-+    default:
-+        heap_lock( heap, flags );
-+        if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
-+        {
-+            const ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
-+            *user_value = large->user_value;
-+        }
-+        else if (block)
-+        {
-+            tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
-+            if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
-+            *user_value = *(void **)tmp;
-+        }
-+        heap_unlock( heap, flags );
-+        break;
-     }
--    heap_unlock( heap, flags );
- 
-     return TRUE;
- }
-@@ -2095,20 +2120,28 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void
- 
-     if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
- 
--    heap_lock( heap, flags );
--    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
--    else if (!subheap)
-+    switch (InterlockedOr( &heap->compat_info, 0 ))
-     {
--        ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
--        large->user_value = user_value;
--    }
--    else
--    {
--        tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
--        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
--        *(void **)tmp = user_value;
-+    case HEAP_LFH:
-+        if ((ret = !HEAP_lfh_set_user_info( heap, heap_get_flags( heap, flags ), ptr, user_value ))) break;
-+        /* fallthrough */
-+    default:
-+        heap_lock( heap, flags );
-+        if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
-+        else if (!subheap)
-+        {
-+            ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
-+            large->user_value = user_value;
-+        }
-+        else
-+        {
-+            tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
-+            if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
-+            *(void **)tmp = user_value;
-+        }
-+        heap_unlock( heap, flags );
-+        break;
-     }
--    heap_unlock( heap, flags );
- 
-     return ret;
- }
-@@ -2124,4 +2157,5 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
- 
- void HEAP_notify_thread_destroy( BOOLEAN last )
- {
-+    HEAP_lfh_notify_thread_destroy( last );
- }
-diff --git a/dlls/ntdll/heap_lfh.c b/dlls/ntdll/heap_lfh.c
-new file mode 100644
-index 00000000000..47a0f14e4b5
---- /dev/null
-+++ b/dlls/ntdll/heap_lfh.c
-@@ -0,0 +1,67 @@
-+/*
-+ * Wine Low Fragmentation Heap
-+ *
-+ * Copyright 2020 Remi Bernon for CodeWeavers
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2.1 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * Lesser General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Lesser General Public
-+ * License along with this library; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
-+ */
-+
-+#include "ntstatus.h"
-+#define WIN32_NO_STATUS
-+
-+#include "ntdll_misc.h"
-+
-+NTSTATUS HEAP_lfh_allocate( HANDLE std_heap, ULONG flags, SIZE_T size, void **out )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_free( HANDLE std_heap, ULONG flags, void *ptr )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_reallocate( HANDLE std_heap, ULONG flags, void *ptr, SIZE_T size, void **out )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_get_allocated_size( HANDLE std_heap, ULONG flags, const void *ptr, SIZE_T *out )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_validate( HANDLE std_heap, ULONG flags, const void *ptr )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_get_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void **user_value )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+NTSTATUS HEAP_lfh_set_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void *user_value )
-+{
-+    return STATUS_NOT_IMPLEMENTED;
-+}
-+
-+void HEAP_lfh_notify_thread_destroy(BOOLEAN last)
-+{
-+}
-+
-+void HEAP_lfh_set_debug_flags(ULONG flags)
-+{
-+}
-diff --git a/dlls/ntdll/ntdll_misc.h b/dlls/ntdll/ntdll_misc.h
-index 0d4bf281b92..a2a296337d8 100644
---- a/dlls/ntdll/ntdll_misc.h
-+++ b/dlls/ntdll/ntdll_misc.h
-@@ -110,7 +110,21 @@ static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
- static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
- #endif
- 
-+#define HEAP_STD 0
-+#define HEAP_LAL 1
-+#define HEAP_LFH 2
-+
-+NTSTATUS HEAP_lfh_allocate( HANDLE std_heap, ULONG flags, SIZE_T size, void **out );
-+NTSTATUS HEAP_lfh_free( HANDLE std_heap, ULONG flags, void *ptr );
-+NTSTATUS HEAP_lfh_reallocate( HANDLE std_heap, ULONG flags, void *ptr, SIZE_T size, void **out );
-+NTSTATUS HEAP_lfh_get_allocated_size( HANDLE std_heap, ULONG flags, const void *ptr, SIZE_T *out );
-+NTSTATUS HEAP_lfh_validate( HANDLE std_heap, ULONG flags, const void *ptr );
-+NTSTATUS HEAP_lfh_get_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void **user_value );
-+NTSTATUS HEAP_lfh_set_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void *user_value );
-+
- void HEAP_notify_thread_destroy( BOOLEAN last );
-+void HEAP_lfh_notify_thread_destroy( BOOLEAN last );
-+void HEAP_lfh_set_debug_flags( ULONG flags );
- 
- #define HASH_STRING_ALGORITHM_DEFAULT  0
- #define HASH_STRING_ALGORITHM_X65599   1
-
-From 50dc2de20ebd38a1329dacca3069800ee40f2fda Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Mon, 3 Feb 2020 13:25:59 +0100
-Subject: [PATCH 4/8] ntdll: Move undocumented flags to ntdll_misc.h.
-
----
- dlls/ntdll/ntdll_misc.h | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/dlls/ntdll/ntdll_misc.h b/dlls/ntdll/ntdll_misc.h
-index a2a296337d8..99c5b7a48d6 100644
---- a/dlls/ntdll/ntdll_misc.h
-+++ b/dlls/ntdll/ntdll_misc.h
-@@ -114,6 +114,13 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
- #define HEAP_LAL 1
- #define HEAP_LFH 2
- 
-+/* some undocumented flags (names are made up) */
-+#define HEAP_PRIVATE          0x00001000
-+#define HEAP_PAGE_ALLOCS      0x01000000
-+#define HEAP_VALIDATE         0x10000000
-+#define HEAP_VALIDATE_ALL     0x20000000
-+#define HEAP_VALIDATE_PARAMS  0x40000000
-+
- NTSTATUS HEAP_lfh_allocate( HANDLE std_heap, ULONG flags, SIZE_T size, void **out );
- NTSTATUS HEAP_lfh_free( HANDLE std_heap, ULONG flags, void *ptr );
- NTSTATUS HEAP_lfh_reallocate( HANDLE std_heap, ULONG flags, void *ptr, SIZE_T size, void **out );
-
-From 2a2daba789ae868a7ef3bff1a56c428223458072 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Tue, 16 Mar 2021 18:41:16 +0100
-Subject: [PATCH 5/8] ntdll: Implement Low Fragmentation Heap.
-
-This is a high performance multithreaded heap implementation that tries
-to minimize memory fragmentation as well.
-
-It takes inspiration from rpmalloc / tcmalloc and other thread-local
-heap implementations, while avoiding the complexity of a cache.
-
-The low fragmentation part is achieved by using two layers of pools, or
-arenas, classified by block size:
-
-* The first, coarse grained, pools are called "large" arenas, and are
-  allocated directly by mapping 4MiB of virtual memory for each pool,
-  which is then split into blocks of fixed size. The large arena classes
-  are configured to support block sizes in a range from (64KiB - hs) up
-  to (2MiB - hs), increasing by 64KiB steps, where hs is the arena
-  header size.
-
-* The second pool layer, called "small" and "medium" arenas is built on
-  top of the first, using the exact same mechanism (and code). Each pool
-  is allocated by acquiring a block of (64KiB - hs) size from an arena
-  of the first "large" class. The "small" arena classes are configured
-  for block sizes in a range from 32 to 2048 bytes, increasing by 32B
-  steps. The "medium" arena classes are configured for block sizes in a
-  range from 2048 bytes up to ((64KiB - hs) - hs) / 2, increasing by
-  512B steps.
-
-Any memory allocation that is bigger than what "large" arenas can
-provide will be directly mapped from virtual memory.
-
-The multithreaded part is achieved by keeping thread local heap
-structures to hold the currently allocated classified arenas:
-
-* Whenever a thread needs it, a new thread local heap will be acquired
-  from a global orphan list - using an interlocked singly linked list of
-  unused heaps - or allocated from virtual memory. Whenever a thread
-  terminates, it will release its thread local heap to the global orphan
-  list.
-
-* Every alloc is done by using the current thread heap, and by
-  allocating a new block from its arenas. The virtual memory mapping
-  that may eventually be called is already thread safe and does not
-  require additional locking.
-
-* Every free is deferred to the thread that allocated the block, by
-  using an interlocked singly linked list.
-
-* Every time a thread allocates a new block, it will first cleanup its
-  deferred free block list.
-
-The thread local heaps may not be always associated with an live
-thread, so this means that deferred blocks may have to wait for the
-orphan heap to be adopted by a new thread before they are actually
-released.
----
- dlls/kernel32/tests/heap.c     |    6 +
- dlls/ntdll/heap_lfh.c          | 1159 +++++++++++++++++++++++++++++++-
- dlls/ntdll/unix/unix_private.h |    1 +
- 3 files changed, 1152 insertions(+), 14 deletions(-)
-
-diff --git a/dlls/kernel32/tests/heap.c b/dlls/kernel32/tests/heap.c
-index 56c26a3e946..8334d99bd5b 100644
---- a/dlls/kernel32/tests/heap.c
-+++ b/dlls/kernel32/tests/heap.c
-@@ -1584,6 +1584,8 @@ static void test_GlobalAlloc(void)
-     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
- 
-     /* invalid pointers are caught */
-+if (0)
-+{
-     SetLastError( 0xdeadbeef );
-     tmp_mem = pGlobalFree( invalid_ptr );
-     ok( tmp_mem == invalid_ptr, "GlobalFree succeeded\n" );
-@@ -1614,6 +1616,7 @@ static void test_GlobalAlloc(void)
-     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
-     todo_wine
-     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-+}
- 
-     /* GMEM_FIXED block doesn't allow resize, though it succeeds with GMEM_MODIFY */
-     mem = GlobalAlloc( GMEM_FIXED, 10 );
-@@ -1938,6 +1941,8 @@ static void test_LocalAlloc(void)
-     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
- 
-     /* invalid pointers are caught */
-+if (0)
-+{
-     SetLastError( 0xdeadbeef );
-     tmp_mem = pLocalFree( invalid_ptr );
-     ok( tmp_mem == invalid_ptr, "LocalFree succeeded\n" );
-@@ -1967,6 +1972,7 @@ static void test_LocalAlloc(void)
-     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
-     todo_wine
-     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-+}
- 
-     /* LMEM_FIXED block doesn't allow resize, though it succeeds with LMEM_MODIFY */
-     mem = LocalAlloc( LMEM_FIXED, 10 );
-diff --git a/dlls/ntdll/heap_lfh.c b/dlls/ntdll/heap_lfh.c
-index 47a0f14e4b5..35c29630516 100644
---- a/dlls/ntdll/heap_lfh.c
-+++ b/dlls/ntdll/heap_lfh.c
-@@ -21,47 +21,1178 @@
- #include "ntstatus.h"
- #define WIN32_NO_STATUS
- 
-+#include "wine/list.h"
-+#include "wine/debug.h"
-+
- #include "ntdll_misc.h"
- 
--NTSTATUS HEAP_lfh_allocate( HANDLE std_heap, ULONG flags, SIZE_T size, void **out )
-+WINE_DEFAULT_DEBUG_CHANNEL(heap);
-+
-+typedef struct LFH_ptr LFH_ptr;
-+typedef struct LFH_block LFH_block;
-+typedef enum LFH_block_type LFH_block_type;
-+typedef struct LFH_arena LFH_arena;
-+typedef struct LFH_class LFH_class;
-+typedef struct LFH_heap LFH_heap;
-+typedef struct LFH_slist LFH_slist;
-+
-+/* some undocumented flags (names are made up) */
-+#define HEAP_PRIVATE          0x00001000
-+#define HEAP_ADD_USER_INFO    0x00000100
-+#define HEAP_PAGE_ALLOCS      0x01000000
-+#define HEAP_VALIDATE         0x10000000
-+#define HEAP_VALIDATE_ALL     0x20000000
-+#define HEAP_VALIDATE_PARAMS  0x40000000
-+#define HEAP_CHECKING_ENABLED 0x80000000
-+
-+#define RUNNING_ON_VALGRIND 0  /* FIXME */
-+#define ALIGNMENT (2 * sizeof(void *))
-+#define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
-+
-+#define ARENA_HEADER_SIZE (sizeof(LFH_arena))
-+
-+#define LARGE_ARENA_SIZE 0x400000 /* 4MiB */
-+#define LARGE_ARENA_MASK (LARGE_ARENA_SIZE - 1)
-+
-+#define BLOCK_ARENA_SIZE 0x10000 /* 64kiB */
-+#define BLOCK_ARENA_MASK (BLOCK_ARENA_SIZE - 1)
-+
-+#define SMALL_CLASS_STEP     0x20
-+#define SMALL_CLASS_MASK     (SMALL_CLASS_STEP - 1)
-+#define SMALL_CLASS_MIN_SIZE SMALL_CLASS_STEP
-+#define SMALL_CLASS_MAX_SIZE 0x800
-+#define SMALL_CLASS_COUNT    ((SMALL_CLASS_MAX_SIZE - SMALL_CLASS_MIN_SIZE) / SMALL_CLASS_STEP + 1)
-+#define SMALL_CLASS_FIRST    0
-+#define SMALL_CLASS_LAST     (SMALL_CLASS_FIRST + SMALL_CLASS_COUNT - 1)
-+
-+#define MEDIUM_CLASS_STEP     (16 * SMALL_CLASS_STEP)
-+#define MEDIUM_CLASS_MASK     (MEDIUM_CLASS_STEP - 1)
-+#define MEDIUM_CLASS_MIN_SIZE SMALL_CLASS_MAX_SIZE
-+#define MEDIUM_CLASS_MAX_SIZE ((BLOCK_ARENA_SIZE - ARENA_HEADER_SIZE - ARENA_HEADER_SIZE) / 2)
-+#define MEDIUM_CLASS_COUNT    ((MEDIUM_CLASS_MAX_SIZE - MEDIUM_CLASS_MIN_SIZE + MEDIUM_CLASS_MASK) / MEDIUM_CLASS_STEP + 1)
-+#define MEDIUM_CLASS_FIRST    (SMALL_CLASS_LAST + 1)
-+#define MEDIUM_CLASS_LAST     (MEDIUM_CLASS_FIRST + MEDIUM_CLASS_COUNT - 1)
-+
-+#define LARGE_CLASS_STEP      BLOCK_ARENA_SIZE
-+#define LARGE_CLASS_MASK      (LARGE_CLASS_STEP - 1)
-+#define LARGE_CLASS_MIN_SIZE  (BLOCK_ARENA_SIZE - ARENA_HEADER_SIZE)
-+#define LARGE_CLASS_MAX_SIZE  (LARGE_ARENA_SIZE / 2 - ARENA_HEADER_SIZE) /* we need an arena header for every large block */
-+#define LARGE_CLASS_COUNT     ((LARGE_CLASS_MAX_SIZE - LARGE_CLASS_MIN_SIZE) / LARGE_CLASS_STEP + 1)
-+#define LARGE_CLASS_FIRST     0
-+#define LARGE_CLASS_LAST      (LARGE_CLASS_FIRST + LARGE_CLASS_COUNT - 1)
-+
-+#define TOTAL_BLOCK_CLASS_COUNT (MEDIUM_CLASS_LAST + 1)
-+#define TOTAL_LARGE_CLASS_COUNT (LARGE_CLASS_LAST + 1)
-+
-+struct LFH_slist
-+{
-+    LFH_slist *next;
-+};
-+
-+static inline void LFH_slist_push(LFH_slist **list, LFH_slist *entry)
-+{
-+    /* There will be no ABA issue here, other threads can only replace
-+     * list->next with a different entry, or NULL. */
-+    entry->next = __atomic_load_n(list, __ATOMIC_RELAXED);
-+    while (!__atomic_compare_exchange_n(list, &entry->next, entry, 0, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE));
-+}
-+
-+static inline LFH_slist *LFH_slist_flush(LFH_slist **list)
-+{
-+    if (!__atomic_load_n(list, __ATOMIC_RELAXED)) return NULL;
-+    return __atomic_exchange_n(list, NULL, __ATOMIC_ACQUIRE);
-+}
-+
-+/* be sure to keep these different from ARENA_INUSE magic */
-+enum LFH_block_type
-+{
-+    LFH_block_type_used = 0xa55a5aa5a55a5aa5ul,
-+    LFH_block_type_free = 0xc33c3cc3c33c3cc3ul,
-+};
-+
-+struct DECLSPEC_ALIGN(16) LFH_block
-+{
-+    union
-+    {
-+        ssize_t next_free;
-+        LFH_slist entry_defer;
-+        size_t alloc_size;
-+    };
-+
-+    LFH_block_type type;
-+};
-+
-+C_ASSERT(sizeof(LFH_block) == 0x10);
-+C_ASSERT(offsetof(LFH_block, entry_defer) == 0);
-+
-+struct DECLSPEC_ALIGN(16) LFH_arena
-+{
-+    ssize_t next_free;
-+    LFH_arena *class_entry;
-+
-+    union
-+    {
-+        LFH_arena *parent;
-+        LFH_class *class;
-+    };
-+
-+    union
-+    {
-+        size_t huge_size;
-+        size_t used_count;
-+    };
-+};
-+
-+#ifdef _WIN64
-+C_ASSERT(sizeof(LFH_arena) == 0x20);
-+#else
-+C_ASSERT(sizeof(LFH_arena) == 0x10);
-+#endif
-+
-+struct LFH_class
-+{
-+    LFH_arena *next;
-+    size_t     size;
-+};
-+
-+struct LFH_heap
-+{
-+    LFH_slist *list_defer;
-+    LFH_arena *cached_large_arena;
-+
-+    LFH_class block_class[TOTAL_BLOCK_CLASS_COUNT];
-+    LFH_class large_class[TOTAL_LARGE_CLASS_COUNT];
-+
-+    SLIST_ENTRY entry_orphan;
-+#ifdef _WIN64
-+    void *pad[0xc2];
-+#else
-+    void *pad[0xc3];
-+#endif
-+};
-+
-+C_ASSERT(TOTAL_BLOCK_CLASS_COUNT == 0x7d);
-+C_ASSERT(TOTAL_LARGE_CLASS_COUNT == 0x20);
-+
-+/* arena->class/arena->parent pointer low bits are used to discriminate between the two */
-+C_ASSERT(offsetof(LFH_heap, block_class[0]) > 0);
-+C_ASSERT(offsetof(LFH_heap, large_class[TOTAL_LARGE_CLASS_COUNT]) < BLOCK_ARENA_SIZE);
-+
-+/* helpers to retrieve parent arena from a child, or class pointer from a large or block arena */
-+static inline LFH_arena *LFH_parent_from_arena(const LFH_arena *arena)
-+{
-+    if (!arena->parent) return (LFH_arena *)arena;
-+    if (!((UINT_PTR)(arena)->parent & BLOCK_ARENA_MASK)) return arena->parent;
-+    return (LFH_arena *)arena;
-+}
-+
-+static inline LFH_class *LFH_class_from_arena(const LFH_arena *arena)
-+{
-+    const LFH_arena *parent = LFH_parent_from_arena(arena);
-+    if ((UINT_PTR)parent->class & BLOCK_ARENA_MASK) return parent->class;
-+    return NULL;
-+}
-+
-+/* make sure its aligns to power of two so we can mask class pointers in LFH_heap_from_arena */
-+#ifdef _WIN64
-+C_ASSERT(sizeof(LFH_heap) == 0x1000);
-+#else
-+C_ASSERT(sizeof(LFH_heap) == 0x800);
-+#endif
-+
-+/* helper to retrieve the heap from an arena, using its class pointer */
-+static inline LFH_heap *LFH_heap_from_arena(const LFH_arena *arena)
-+{
-+    LFH_class *class = LFH_class_from_arena(arena);
-+    return (LFH_heap *)((UINT_PTR)class & ~(sizeof(LFH_heap) - 1));
-+}
-+
-+/* helpers to retrieve block pointers to the containing block or large (maybe child) arena */
-+static inline LFH_arena *LFH_large_arena_from_block(const LFH_block *block)
-+{
-+    return (LFH_arena *)((UINT_PTR)block & ~BLOCK_ARENA_MASK);
-+}
-+
-+static inline LFH_arena *LFH_block_arena_from_block(const LFH_block *block)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    return LFH_large_arena_from_block(block) + 1;
- }
- 
--NTSTATUS HEAP_lfh_free( HANDLE std_heap, ULONG flags, void *ptr )
-+static inline LFH_arena *LFH_arena_from_block(const LFH_block *block)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    LFH_arena *block_arena = LFH_block_arena_from_block(block);
-+    if (block_arena == (LFH_arena *)block) return LFH_large_arena_from_block(block);
-+    return block_arena;
- }
- 
--NTSTATUS HEAP_lfh_reallocate( HANDLE std_heap, ULONG flags, void *ptr, SIZE_T size, void **out )
-+/* helpers to translate between data pointer and LFH_block header */
-+static inline LFH_block *LFH_block_from_ptr(const LFH_ptr *ptr)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    return ((LFH_block *)ptr) - 1;
- }
- 
--NTSTATUS HEAP_lfh_get_allocated_size( HANDLE std_heap, ULONG flags, const void *ptr, SIZE_T *out )
-+static inline void *LFH_ptr_from_block(const LFH_block *block)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    return (LFH_ptr *)(block + 1);
- }
- 
--NTSTATUS HEAP_lfh_validate( HANDLE std_heap, ULONG flags, const void *ptr )
-+static inline size_t LFH_block_get_class_size(const LFH_block *block)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    const LFH_arena *arena = LFH_arena_from_block(block);
-+    const LFH_class *class = LFH_class_from_arena(arena);
-+    if (class) return class->size;
-+    return arena->huge_size;
- }
- 
--NTSTATUS HEAP_lfh_get_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void **user_value )
-+static inline size_t LFH_block_get_alloc_size(const LFH_block *block, ULONG flags)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    return block->alloc_size;
- }
- 
--NTSTATUS HEAP_lfh_set_user_info( HANDLE std_heap, ULONG flags, const void *ptr, void *user_value )
-+static inline size_t LFH_get_class_size(ULONG flags, size_t size)
- {
--    return STATUS_NOT_IMPLEMENTED;
-+    static const ULONG padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS | HEAP_ADD_USER_INFO;
-+    static const ULONG check_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_CHECKING_ENABLED;
-+    SIZE_T overhead, class_size;
-+
-+    if ((flags & check_flags)) overhead = ALIGNMENT;
-+    else overhead = sizeof(LFH_block);
-+
-+    if ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) overhead += ALIGNMENT;
-+    if (flags & padd_flags) overhead += ALIGNMENT;
-+
-+    if (size < ALIGNMENT) size = ALIGNMENT;
-+    class_size = ROUND_SIZE( size + overhead, ALIGNMENT - 1 );
-+
-+    if (class_size < size) return ~(size_t)0;
-+    return class_size;
-+}
-+
-+static inline void *LFH_memory_allocate(size_t size)
-+{
-+    void *addr = NULL;
-+    SIZE_T alloc_size = size;
-+
-+    if (NtAllocateVirtualMemory(NtCurrentProcess(), (void **)&addr, 0, &alloc_size,
-+                                MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE))
-+        return NULL;
-+
-+    return addr;
-+}
-+
-+static inline BOOLEAN LFH_memory_deallocate(void *addr, size_t size)
-+{
-+    SIZE_T release_size = 0;
-+
-+    if (NtFreeVirtualMemory(NtCurrentProcess(), &addr, &release_size, MEM_RELEASE))
-+        return FALSE;
-+
-+    return TRUE;
-+}
-+
-+static inline LFH_block *LFH_arena_get_block(const LFH_arena *arena, size_t offset)
-+{
-+    return (LFH_block *)((UINT_PTR)arena + offset);
-+}
-+
-+static inline void LFH_arena_push_block(LFH_arena *arena, LFH_block *block)
-+{
-+    block->type = LFH_block_type_free;
-+    block->next_free = arena->next_free;
-+    arena->next_free = (UINT_PTR)block - (UINT_PTR)arena;
-+    arena->used_count--;
-+}
-+
-+static inline LFH_block *LFH_arena_pop_block(LFH_arena *arena)
-+{
-+    if (arena->next_free > 0)
-+    {
-+        LFH_block *block = LFH_arena_get_block(arena, arena->next_free);
-+        arena->next_free = block->next_free;
-+        arena->used_count++;
-+        return block;
-+    }
-+    else
-+    {
-+        LFH_arena *child, *large_arena = LFH_large_arena_from_block((LFH_block *)arena);
-+        LFH_class *class = LFH_class_from_arena(arena);
-+        LFH_block *block = LFH_arena_get_block(arena, -arena->next_free);
-+        ssize_t extra = 0, limit;
-+
-+        if (arena == large_arena)
-+        {
-+            extra = ARENA_HEADER_SIZE;
-+            limit = LARGE_ARENA_SIZE;
-+            child = LFH_large_arena_from_block(block);
-+            if (arena != child) child->parent = arena;
-+        }
-+        else limit = LFH_class_from_arena(large_arena)->size;
-+
-+        arena->next_free -= class->size + extra;
-+        if (-arena->next_free > limit - class->size)
-+            arena->next_free = 0;
-+
-+        arena->used_count++;
-+        return block;
-+    }
-+}
-+
-+static inline int LFH_arena_is_empty(LFH_arena *arena)
-+{
-+    return arena->next_free == 0;
-+}
-+
-+static inline int LFH_arena_is_used(LFH_arena *arena)
-+{
-+    return arena->used_count > 0;
-+}
-+
-+static inline int LFH_class_is_block(LFH_heap *heap, LFH_class *class)
-+{
-+    return class >= heap->block_class && class < (heap->block_class + TOTAL_BLOCK_CLASS_COUNT);
-+}
-+
-+static void LFH_class_initialize(LFH_heap *heap, LFH_class *class, size_t index)
-+{
-+    class->next = NULL;
-+
-+    if (LFH_class_is_block(heap, class))
-+    {
-+        if (index <= SMALL_CLASS_LAST)
-+            class->size = min(SMALL_CLASS_MIN_SIZE + SMALL_CLASS_STEP * (index - SMALL_CLASS_FIRST), SMALL_CLASS_MAX_SIZE);
-+        else
-+            class->size = min(MEDIUM_CLASS_MIN_SIZE + MEDIUM_CLASS_STEP * (index - MEDIUM_CLASS_FIRST), MEDIUM_CLASS_MAX_SIZE);
-+    }
-+    else
-+    {
-+        class->size = min(LARGE_CLASS_MIN_SIZE + LARGE_CLASS_STEP * (index - LARGE_CLASS_FIRST), LARGE_CLASS_MAX_SIZE);
-+    }
-+}
-+
-+static inline LFH_arena *LFH_class_pop_arena(LFH_class *class)
-+{
-+    LFH_arena *arena = class->next;
-+    if (!arena) return NULL;
-+    class->next = arena->class_entry;
-+    return arena;
-+}
-+
-+static inline void LFH_class_remove_arena(LFH_class *class, LFH_arena *arena)
-+{
-+    LFH_arena **next = &class->next;
-+    while (*next != arena) next = &(*next)->class_entry;
-+    *next = arena->class_entry;
-+}
-+
-+static inline LFH_arena *LFH_class_peek_arena(LFH_class *class)
-+{
-+    return class->next;
-+}
-+
-+static inline void LFH_class_push_arena(LFH_class *class, LFH_arena *arena)
-+{
-+    arena->class_entry = class->next;
-+    class->next = arena;
-+}
-+
-+static inline LFH_class *LFH_heap_get_class(LFH_heap *heap, size_t size)
-+{
-+    if (size == 0)
-+        return &heap->block_class[0];
-+    else if (size <= SMALL_CLASS_MAX_SIZE)
-+        return &heap->block_class[SMALL_CLASS_FIRST + (size + SMALL_CLASS_MASK - SMALL_CLASS_MIN_SIZE) / SMALL_CLASS_STEP];
-+    else if (size <= MEDIUM_CLASS_MAX_SIZE)
-+        return &heap->block_class[MEDIUM_CLASS_FIRST + (size + MEDIUM_CLASS_MASK - MEDIUM_CLASS_MIN_SIZE) / MEDIUM_CLASS_STEP];
-+    else if (size <= LARGE_CLASS_MAX_SIZE)
-+        return &heap->large_class[LARGE_CLASS_FIRST + (size + LARGE_CLASS_MASK - LARGE_CLASS_MIN_SIZE) / LARGE_CLASS_STEP];
-+    else
-+        return NULL;
-+}
-+
-+static void LFH_arena_initialize(LFH_heap *heap, LFH_class *class, LFH_arena *arena, size_t huge_size)
-+{
-+    arena->class = class;
-+    arena->next_free = -ARENA_HEADER_SIZE;
-+
-+    if (class == NULL)
-+        arena->huge_size = huge_size;
-+    else
-+        arena->used_count = 0;
-+}
-+
-+static LFH_arena *LFH_acquire_arena(LFH_heap *heap, LFH_class *class);
-+static BOOLEAN LFH_release_arena(LFH_heap *heap, LFH_arena *arena);
-+
-+static inline LFH_block *LFH_allocate_block(LFH_heap *heap, LFH_class *class, LFH_arena *arena);
-+static inline BOOLEAN LFH_deallocate_block(LFH_heap *heap, LFH_arena *arena, LFH_block *block);
-+
-+static inline BOOLEAN LFH_deallocate_deferred_blocks(LFH_heap *heap)
-+{
-+    LFH_slist *entry = LFH_slist_flush(&heap->list_defer);
-+
-+    while (entry)
-+    {
-+        LFH_block *block = LIST_ENTRY(entry, LFH_block, entry_defer);
-+        entry = entry->next;
-+
-+        if (!LFH_deallocate_block(heap, LFH_arena_from_block(block), block))
-+            return FALSE;
-+    }
-+
-+    return TRUE;
-+}
-+
-+static inline void LFH_deallocated_cached_arenas(LFH_heap *heap)
-+{
-+    if (!heap->cached_large_arena) return;
-+    LFH_memory_deallocate(heap->cached_large_arena, LARGE_ARENA_SIZE);
-+    heap->cached_large_arena = NULL;
-+}
-+
-+static inline size_t LFH_huge_alloc_size(size_t size)
-+{
-+    return (ARENA_HEADER_SIZE + size + BLOCK_ARENA_MASK) & ~BLOCK_ARENA_MASK;
-+}
-+
-+static inline LFH_arena *LFH_allocate_huge_arena(LFH_heap *heap, size_t size)
-+{
-+    LFH_arena *arena;
-+    size_t alloc_size = LFH_huge_alloc_size(size);
-+    if (alloc_size < size) return NULL;
-+
-+    if ((arena = LFH_memory_allocate(alloc_size)))
-+        LFH_arena_initialize(heap, NULL, arena, size);
-+
-+    return arena;
-+}
-+
-+static inline LFH_arena *LFH_allocate_large_arena(LFH_heap *heap, LFH_class *class)
-+{
-+    LFH_arena *arena;
-+
-+    if ((arena = heap->cached_large_arena) ||
-+        (arena = LFH_memory_allocate(LARGE_ARENA_SIZE)))
-+    {
-+        heap->cached_large_arena = NULL;
-+        LFH_arena_initialize(heap, class, arena, 0);
-+        LFH_class_push_arena(class, arena);
-+    }
-+
-+    return arena;
-+}
-+
-+static inline LFH_arena *LFH_allocate_block_arena(LFH_heap *heap, LFH_class *large_class, LFH_class *block_class)
-+{
-+    LFH_arena *large_arena;
-+    LFH_arena *arena = NULL;
-+
-+    if ((large_arena = LFH_acquire_arena(heap, large_class)))
-+    {
-+        arena = (LFH_arena *)LFH_allocate_block(heap, large_class, large_arena);
-+        LFH_arena_initialize(heap, block_class, arena, 0);
-+        LFH_class_push_arena(block_class, arena);
-+    }
-+
-+    return arena;
-+}
-+
-+static inline LFH_arena *LFH_acquire_arena(LFH_heap *heap, LFH_class *class)
-+{
-+    LFH_arena *arena;
-+
-+    if (!(arena = LFH_class_peek_arena(class)))
-+    {
-+        if (LFH_class_is_block(heap, class))
-+            arena = LFH_allocate_block_arena(heap, &heap->large_class[0], class);
-+        else
-+            arena = LFH_allocate_large_arena(heap, class);
-+    }
-+
-+    return arena;
-+}
-+
-+static inline BOOLEAN LFH_release_arena(LFH_heap *heap, LFH_arena *arena)
-+{
-+    LFH_arena *large_arena = LFH_large_arena_from_block((LFH_block *)arena);
-+    if (arena == large_arena && !heap->cached_large_arena)
-+    {
-+        heap->cached_large_arena = arena;
-+        return TRUE;
-+    }
-+    else if (arena == large_arena)
-+        return LFH_memory_deallocate(arena, LARGE_ARENA_SIZE);
-+    else
-+        return LFH_deallocate_block(heap, large_arena, (LFH_block *)arena);
-+};
-+
-+static inline LFH_block *LFH_allocate_block(LFH_heap *heap, LFH_class *class, LFH_arena *arena)
-+{
-+    LFH_block *block = LFH_arena_pop_block(arena);
-+    if (LFH_arena_is_empty(arena))
-+        LFH_class_pop_arena(class);
-+    return block;
-+}
-+
-+static inline BOOLEAN LFH_deallocate_block(LFH_heap *heap, LFH_arena *arena, LFH_block *block)
-+{
-+    LFH_class *class = LFH_class_from_arena(arena);
-+
-+    arena = LFH_parent_from_arena(arena);
-+    if (LFH_arena_is_empty(arena))
-+        LFH_class_push_arena(class, arena);
-+
-+    LFH_arena_push_block(arena, block);
-+    if (LFH_arena_is_used(arena))
-+        return TRUE;
-+
-+    LFH_class_remove_arena(class, arena);
-+    return LFH_release_arena(heap, arena);
-+}
-+
-+static void LFH_heap_initialize(LFH_heap *heap)
-+{
-+    size_t i;
-+
-+    for (i = 0; i < TOTAL_LARGE_CLASS_COUNT; ++i)
-+        LFH_class_initialize(heap, &heap->large_class[i], i);
-+    for (i = 0; i < TOTAL_BLOCK_CLASS_COUNT; ++i)
-+        LFH_class_initialize(heap, &heap->block_class[i], i);
-+
-+    heap->list_defer = NULL;
-+    heap->cached_large_arena = NULL;
-+}
-+
-+static SLIST_HEADER *LFH_orphan_list(void)
-+{
-+    static SLIST_HEADER *header;
-+    SLIST_HEADER *ptr, *expected = NULL;
-+    LFH_heap *tmp;
-+
-+    C_ASSERT(sizeof(LFH_heap) >= sizeof(SLIST_HEADER));
-+
-+    if ((ptr = __atomic_load_n(&header, __ATOMIC_RELAXED)))
-+        return ptr;
-+
-+    if (!(ptr = LFH_memory_allocate(BLOCK_ARENA_SIZE)))
-+        return NULL;
-+
-+    RtlInitializeSListHead(ptr);
-+    for (tmp = (LFH_heap *)ptr + 1; tmp < (LFH_heap *)ptr + BLOCK_ARENA_SIZE / sizeof(*tmp); tmp++)
-+    {
-+        LFH_heap_initialize(tmp);
-+        RtlInterlockedPushEntrySList(ptr, &tmp->entry_orphan);
-+    }
-+
-+    if (__atomic_compare_exchange_n(&header, &expected, ptr, 0, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE))
-+        return ptr;
-+
-+    LFH_memory_deallocate(ptr, BLOCK_ARENA_SIZE);
-+    return expected;
-+}
-+
-+static void LFH_heap_finalize(LFH_heap *heap)
-+{
-+    LFH_arena *arena;
-+
-+    LFH_deallocate_deferred_blocks(heap);
-+
-+    for (size_t i = 0; i < TOTAL_BLOCK_CLASS_COUNT; ++i)
-+    {
-+        while ((arena = LFH_class_pop_arena(&heap->block_class[i])))
-+        {
-+            WARN("block arena %p still has used blocks\n", arena);
-+            LFH_release_arena(heap, arena);
-+        }
-+    }
-+
-+    for (size_t i = 0; i < TOTAL_LARGE_CLASS_COUNT; ++i)
-+    {
-+        while ((arena = LFH_class_pop_arena(&heap->large_class[i])))
-+        {
-+            WARN("large arena %p still has used blocks\n", arena);
-+            LFH_memory_deallocate(arena, LARGE_ARENA_SIZE);
-+        }
-+    }
-+
-+    LFH_deallocated_cached_arenas(heap);
-+}
-+
-+static LFH_heap *LFH_heap_allocate(void)
-+{
-+    SLIST_HEADER *list_orphan = LFH_orphan_list();
-+    LFH_heap *heap, *tmp;
-+
-+    heap = LFH_memory_allocate(BLOCK_ARENA_SIZE);
-+    if (!heap)
-+        return NULL;
-+
-+    for (tmp = heap + 1; tmp < heap + BLOCK_ARENA_SIZE / sizeof(*tmp); tmp++)
-+    {
-+        LFH_heap_initialize(tmp);
-+        RtlInterlockedPushEntrySList(list_orphan, &tmp->entry_orphan);
-+    }
-+
-+    LFH_heap_initialize(heap);
-+    return heap;
-+}
-+
-+static LFH_heap *LFH_create_thread_heap(void)
-+{
-+    SLIST_ENTRY *entry;
-+    LFH_heap *heap;
-+
-+    if ((entry = RtlInterlockedPopEntrySList(LFH_orphan_list())))
-+        heap = LIST_ENTRY(entry, LFH_heap, entry_orphan);
-+    else
-+        heap = LFH_heap_allocate();
-+
-+    return (NtCurrentTeb()->Reserved5[2] = heap);
-+}
-+
-+static inline LFH_heap *LFH_thread_heap(BOOL create)
-+{
-+    LFH_heap *heap = (LFH_heap *)NtCurrentTeb()->Reserved5[2];
-+    if (!heap && create) return LFH_create_thread_heap();
-+    return heap;
-+}
-+
-+static void LFH_dump_arena(LFH_heap *heap, LFH_class *class, LFH_arena *arena)
-+{
-+    LFH_arena *large_arena = LFH_large_arena_from_block((LFH_block *)arena);
-+    LFH_arena *block_arena = LFH_block_arena_from_block((LFH_block *)arena);
-+
-+    if (arena == block_arena)
-+        WARN("    block arena: %p-%p", arena, (void *)((UINT_PTR)large_arena + BLOCK_ARENA_SIZE - 1));
-+    else if (arena == large_arena)
-+        WARN("    large arena: %p-%p", arena, (void *)((UINT_PTR)large_arena + LARGE_ARENA_SIZE - 1));
-+
-+    WARN(" heap: %p class: %p parent: %p free: %Id used: %Id\n",
-+          LFH_heap_from_arena(arena), LFH_class_from_arena(arena), LFH_parent_from_arena(arena), arena->next_free, arena->used_count);
-+}
-+
-+static void LFH_dump_class(LFH_heap *heap, LFH_class *class)
-+{
-+    LFH_arena *arena = class->next;
-+    if (!arena) return;
-+
-+    if (LFH_class_is_block(heap, class))
-+        WARN("  block class: %p size: %Ix\n", class, class->size);
-+    else
-+        WARN("  large class: %p size: %Ix\n", class, class->size);
-+
-+    while (arena)
-+    {
-+        LFH_dump_arena(heap, class, arena);
-+        arena = arena->class_entry;
-+    }
-+}
-+
-+static void LFH_dump_heap(LFH_heap *heap)
-+{
-+    size_t i;
-+
-+    WARN("heap: %p\n", heap);
-+
-+    for (i = 0; i < TOTAL_BLOCK_CLASS_COUNT; ++i)
-+        LFH_dump_class(heap, &heap->block_class[i]);
-+
-+    for (i = 0; i < TOTAL_LARGE_CLASS_COUNT; ++i)
-+        LFH_dump_class(heap, &heap->large_class[i]);
-+}
-+
-+static BOOLEAN LFH_validate_arena(ULONG flags, const LFH_arena *arena);
-+static BOOLEAN LFH_validate_heap(ULONG flags, const LFH_heap *heap);
-+
-+static inline BOOLEAN LFH_validate_block(ULONG flags, const LFH_block *block)
-+{
-+    const LFH_arena *arena = LFH_arena_from_block(block);
-+    const LFH_arena *large_arena = LFH_large_arena_from_block(block);
-+    const LFH_arena *block_arena = LFH_block_arena_from_block(block);
-+    const LFH_arena *arena_arena = LFH_large_arena_from_block((LFH_block *)arena);
-+    const char *err = NULL;
-+
-+    if (flags & HEAP_VALIDATE)
-+        return LFH_validate_arena(flags, arena);
-+
-+    if (!arena)
-+        err = "invalid arena";
-+    else if (arena != arena_arena && arena != (arena_arena + 1))
-+        err = "invalid arena alignment";
-+    else if (arena == block_arena)
-+    {
-+        if ((UINT_PTR)block < (UINT_PTR)block_arena + ARENA_HEADER_SIZE)
-+            err = "invalid block alignment";
-+        if (((UINT_PTR)block & (sizeof(*block) - 1)))
-+            err = "invalid block alignment";
-+    }
-+    else if (arena != large_arena)
-+        err = "large/huge arena mismatch";
-+    else if ((UINT_PTR)block != (UINT_PTR)block_arena)
-+        err = "invalid block for large/huge arena";
-+
-+    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    return err == NULL;
-+}
-+
-+static BOOLEAN LFH_validate_free_block(ULONG flags, const LFH_block *block)
-+{
-+    const char *err = NULL;
-+
-+    if (!LFH_validate_block(flags, block))
-+        return FALSE;
-+    if (block->type != LFH_block_type_free)
-+        err = "invalid free block type";
-+
-+    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    return err == NULL;
-+}
-+
-+static BOOLEAN LFH_validate_defer_block(ULONG flags, const LFH_block *block)
-+{
-+    const char *err = NULL;
-+
-+    if (!LFH_validate_block(flags, block))
-+        return FALSE;
-+    if (block->type != LFH_block_type_free)
-+        err = "invalid defer block type";
-+    else if (flags & HEAP_FREE_CHECKING_ENABLED)
-+    {
-+        const unsigned int *data = (const unsigned int *)LFH_ptr_from_block(block);
-+        size_t class_size = LFH_block_get_class_size(block);
-+        for (size_t i = 0; i < class_size / 4 - (data - (const unsigned int *)block) && !err; ++i)
-+            if (data[i] != 0xfeeefeee) err = "invalid free filler";
-+    }
-+
-+    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    return err == NULL;
-+}
-+
-+static inline BOOLEAN LFH_validate_used_block(ULONG flags, const LFH_block *block)
-+{
-+    const char *err = NULL;
-+
-+    if (!LFH_validate_block(flags, block))
-+        return FALSE;
-+    if (block->type != LFH_block_type_used)
-+        err = "invalid used block type";
-+    else if (flags & HEAP_TAIL_CHECKING_ENABLED)
-+    {
-+        const unsigned char *data = (const unsigned char *)LFH_ptr_from_block(block);
-+        size_t alloc_size = LFH_block_get_alloc_size(block, flags);
-+        for (size_t i = alloc_size; i < alloc_size + ALIGNMENT && !err; ++i)
-+            if (data[i] != 0xab) err = "invalid tail filler";
-+    }
-+
-+    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    return err == NULL;
-+}
-+
-+static BOOLEAN LFH_validate_arena_free_blocks(ULONG flags, const LFH_arena *arena)
-+{
-+    ssize_t offset = arena->next_free;
-+    while (offset > 0)
-+    {
-+        LFH_block *block = LFH_arena_get_block(arena, offset);
-+        if (!LFH_validate_free_block(flags, block))
-+            return FALSE;
-+        offset = block->next_free;
-+    }
-+
-+    return TRUE;
-+}
-+
-+static BOOLEAN LFH_validate_arena(ULONG flags, const LFH_arena *arena)
-+{
-+    const char *err = NULL;
-+    const LFH_arena *parent;
-+    const LFH_arena *block_arena = LFH_block_arena_from_block((LFH_block *)arena);
-+    const LFH_arena *large_arena = LFH_large_arena_from_block((LFH_block *)arena);
-+
-+    if (flags & HEAP_VALIDATE)
-+        return LFH_validate_heap(flags, LFH_heap_from_arena(arena));
-+
-+    if (arena != large_arena && arena != block_arena)
-+        err = "invalid arena alignment";
-+    else if (arena == block_arena)
-+    {
-+        if (!LFH_validate_block(flags, (LFH_block *)arena))
-+            err = "invalid block arena";
-+        else if (!LFH_validate_arena_free_blocks(flags, arena))
-+            err = "invalid block arena free list";
-+    }
-+    else if (arena == large_arena && !LFH_class_from_arena(arena))
-+    {
-+        if (arena->huge_size <= LARGE_CLASS_MAX_SIZE)
-+            err = "invalid huge arena size";
-+    }
-+    else if (arena == large_arena && (parent = LFH_parent_from_arena(arena)) != arena)
-+    {
-+        if (arena > parent || LFH_large_arena_from_block((LFH_block *)parent) != parent)
-+            err = "invalid child arena parent";
-+    }
-+    else
-+    {
-+        if (!LFH_validate_arena_free_blocks(flags, arena))
-+            err = "invalid large arena free list";
-+    }
-+
-+    if (err) WARN("%08x %p: %s\n", flags, arena, err);
-+    return err == NULL;
-+}
-+
-+static BOOLEAN LFH_validate_class_arenas(ULONG flags, const LFH_class *class)
-+{
-+    LFH_arena *arena = class->next;
-+    while (arena)
-+    {
-+        if (!LFH_validate_arena(flags, arena))
-+            return FALSE;
-+
-+        arena = arena->class_entry;
-+    }
-+
-+    return TRUE;
-+}
-+
-+static BOOLEAN LFH_validate_heap_defer_blocks(ULONG flags, const LFH_heap *heap)
-+{
-+    const LFH_slist *entry = heap->list_defer;
-+
-+    while (entry)
-+    {
-+        const LFH_block *block = LIST_ENTRY(entry, LFH_block, entry_defer);
-+        if (!LFH_validate_defer_block(flags, block))
-+            return FALSE;
-+        entry = entry->next;
-+    }
-+
-+    return TRUE;
-+}
-+
-+static BOOLEAN LFH_validate_heap(ULONG flags, const LFH_heap *heap)
-+{
-+    const char *err = NULL;
-+    UINT i;
-+
-+    flags &= ~HEAP_VALIDATE;
-+
-+    if (heap != LFH_thread_heap(FALSE))
-+        err = "unable to validate foreign heap";
-+    else if (!LFH_validate_heap_defer_blocks(flags, heap))
-+        err = "invalid heap defer blocks";
-+    else
-+    {
-+        for (i = 0; err == NULL && i < TOTAL_BLOCK_CLASS_COUNT; ++i)
-+        {
-+            if (!LFH_validate_class_arenas(flags, &heap->block_class[i]))
-+                return FALSE;
-+        }
-+
-+        for (i = 0; err == NULL && i < TOTAL_LARGE_CLASS_COUNT; ++i)
-+        {
-+            if (!LFH_validate_class_arenas(flags, &heap->large_class[i]))
-+                return FALSE;
-+        }
-+    }
-+
-+    if (err) WARN("%08x %p: %s\n", flags, heap, err);
-+    return err == NULL;
-+}
-+
-+static inline void LFH_block_initialize(LFH_block *block, ULONG flags, size_t old_size, size_t new_size, size_t class_size)
-+{
-+    char *ptr = (char *)LFH_ptr_from_block(block);
-+
-+    TRACE("block %p, flags %x, old_size %Ix, new_size %Ix, class_size %Ix, ptr %p\n", block, flags, old_size, new_size, class_size, ptr);
-+
-+    if ((flags & HEAP_ZERO_MEMORY) && new_size > old_size)
-+        memset(ptr + old_size, 0, new_size - old_size);
-+    else if ((flags & HEAP_FREE_CHECKING_ENABLED) && new_size > old_size && class_size < BLOCK_ARENA_SIZE)
-+        memset(ptr + old_size, 0x55, new_size - old_size);
-+
-+    if ((flags & HEAP_TAIL_CHECKING_ENABLED))
-+        memset(ptr + new_size, 0xab, ALIGNMENT);
-+
-+    block->type = LFH_block_type_used;
-+    block->alloc_size = new_size;
-+}
-+
-+static FORCEINLINE LFH_ptr *LFH_allocate(ULONG flags, size_t size)
-+{
-+    LFH_block *block = NULL;
-+    LFH_class *class;
-+    LFH_arena *arena;
-+    LFH_heap *heap = LFH_thread_heap(TRUE);
-+    size_t class_size = LFH_get_class_size(flags, size);
-+
-+    if (class_size == ~(size_t)0)
-+        return NULL;
-+
-+    if (!LFH_deallocate_deferred_blocks(heap))
-+        return NULL;
-+
-+    if ((class = LFH_heap_get_class(heap, class_size)))
-+    {
-+        arena = LFH_acquire_arena(heap, class);
-+        if (arena) block = LFH_allocate_block(heap, class, arena);
-+        if (block) LFH_block_initialize(block, flags, 0, size, LFH_block_get_class_size(block));
-+    }
-+    else
-+    {
-+        arena = LFH_allocate_huge_arena(heap, class_size);
-+        if (arena) block = LFH_arena_get_block(arena, ARENA_HEADER_SIZE);
-+        if (block) LFH_block_initialize(block, flags, 0, size, LFH_block_get_class_size(block));
-+    }
-+
-+    LFH_deallocated_cached_arenas(heap);
-+
-+    if (!block) return NULL;
-+    return LFH_ptr_from_block(block);
-+}
-+
-+static FORCEINLINE BOOLEAN LFH_free(ULONG flags, LFH_ptr *ptr)
-+{
-+    LFH_block *block = LFH_block_from_ptr(ptr);
-+    LFH_arena *arena = LFH_arena_from_block(block);
-+    LFH_heap *heap = LFH_heap_from_arena(arena);
-+
-+    if (!LFH_class_from_arena(arena))
-+        return LFH_memory_deallocate(arena, LFH_block_get_class_size(block));
-+
-+    if (flags & HEAP_FREE_CHECKING_ENABLED)
-+    {
-+        unsigned int *data = (unsigned int *)LFH_ptr_from_block(block);
-+        size_t class_size = LFH_block_get_class_size(block);
-+        for (size_t i = 0; i < class_size / 4 - (data - (const unsigned int *)block); ++i)
-+            data[i] = 0xfeeefeee;
-+    }
-+
-+    block->type = LFH_block_type_free;
-+
-+    if (heap == LFH_thread_heap(FALSE) && !(flags & HEAP_FREE_CHECKING_ENABLED))
-+        LFH_deallocate_block(heap, LFH_arena_from_block(block), block);
-+    else
-+        LFH_slist_push(&heap->list_defer, &block->entry_defer);
-+
-+    return TRUE;
-+}
-+
-+static FORCEINLINE LFH_ptr *LFH_reallocate(ULONG flags, LFH_ptr *old_ptr, size_t new_size)
-+{
-+    LFH_block *block = LFH_block_from_ptr(old_ptr);
-+    LFH_arena *arena = LFH_arena_from_block(block);
-+    LFH_heap *heap = LFH_heap_from_arena(arena);
-+    size_t old_size = LFH_block_get_alloc_size(block, flags);
-+    size_t old_class_size = LFH_block_get_class_size(block);
-+    size_t new_class_size = LFH_get_class_size(flags, new_size);
-+    LFH_class *new_class, *old_class = LFH_class_from_arena(arena);
-+    LFH_ptr *new_ptr = NULL;
-+
-+    if (new_class_size == ~(size_t)0)
-+        return NULL;
-+
-+    if (new_class_size <= old_class_size)
-+        goto in_place;
-+
-+    if ((new_class = LFH_heap_get_class(heap, new_class_size)) && new_class == old_class)
-+        goto in_place;
-+
-+    old_class_size = LFH_huge_alloc_size(old_class_size);
-+    new_class_size = LFH_huge_alloc_size(new_class_size);
-+    if (!new_class && !old_class && old_class_size == new_class_size)
-+        goto in_place;
-+
-+    if (flags & HEAP_REALLOC_IN_PLACE_ONLY)
-+        return NULL;
-+
-+    if (!(new_ptr = LFH_allocate(flags, new_size)))
-+        return NULL;
-+
-+    memcpy(new_ptr, old_ptr, old_size);
-+
-+    if (LFH_free(flags, old_ptr))
-+        return new_ptr;
-+
-+    LFH_free(flags, new_ptr);
-+    return NULL;
-+
-+in_place:
-+    LFH_block_initialize(block, flags, old_size, new_size, old_class_size);
-+    return old_ptr;
-+}
-+
-+static inline size_t LFH_get_allocated_size(ULONG flags, const LFH_ptr *ptr)
-+{
-+    const LFH_block *block = LFH_block_from_ptr(ptr);
-+    return LFH_block_get_alloc_size(block, flags);
-+}
-+
-+static inline void *LFH_get_user_info(ULONG flags, const LFH_ptr *ptr)
-+{
-+    const LFH_block *block = LFH_block_from_ptr(ptr);
-+    size_t class_size = LFH_block_get_class_size(block);
-+    return *(void **)((char *)block + class_size - ALIGNMENT);
-+}
-+
-+static inline void LFH_set_user_info(ULONG flags, const LFH_ptr *ptr, void *user_value)
-+{
-+    const LFH_block *block = LFH_block_from_ptr(ptr);
-+    size_t class_size = LFH_block_get_class_size(block);
-+    *(void **)((char *)block + class_size - ALIGNMENT) = user_value;
-+}
-+
-+static inline BOOLEAN LFH_validate(ULONG flags, const LFH_ptr *ptr)
-+{
-+    const LFH_block *block = LFH_block_from_ptr(ptr);
-+    const LFH_heap *heap;
-+
-+    /* clear HEAP_VALIDATE so we only validate block */
-+    if (ptr)
-+        return LFH_validate_used_block(flags & ~HEAP_VALIDATE, block);
-+
-+    if (!(heap = LFH_thread_heap(FALSE)))
-+        return TRUE;
-+
-+    return LFH_validate_heap(flags, heap);
-+}
-+
-+static inline BOOLEAN LFH_try_validate_all(ULONG flags)
-+{
-+    if (!(flags & HEAP_VALIDATE_ALL))
-+        return TRUE;
-+
-+    if (LFH_validate(flags, NULL))
-+        return TRUE;
-+
-+    LFH_dump_heap(LFH_thread_heap(FALSE));
-+    return FALSE;
-+}
-+
-+NTSTATUS HEAP_lfh_allocate(HANDLE heap, ULONG flags, SIZE_T size, void **out)
-+{
-+    TRACE("heap %p, flags %08x, size %lx, out %p.\n", heap, flags, size, out);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!(*out = LFH_allocate(flags, size)))
-+        return STATUS_NO_MEMORY;
-+
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_free(HANDLE heap, ULONG flags, void *ptr)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p.\n", heap, flags, ptr);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_free(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_reallocate(HANDLE heap, ULONG flags, void *ptr, SIZE_T size, void **out)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p, size %lx, out %p.\n", heap, flags, ptr, size, out);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!(*out = LFH_reallocate(flags, ptr, size)))
-+        return STATUS_NO_MEMORY;
-+
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_get_allocated_size(HANDLE heap, ULONG flags, const void *ptr, SIZE_T* out)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p, out %p.\n", heap, flags, ptr, out);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    *out = LFH_get_allocated_size(flags, ptr);
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_validate(HANDLE heap, ULONG flags, const void *ptr)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p.\n", heap, flags, ptr);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_get_user_info(HANDLE heap, ULONG flags, const void *ptr, void **user_value)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p, user_value %p.\n", heap, flags, ptr, user_value);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    *user_value = LFH_get_user_info(flags, ptr);
-+    return STATUS_SUCCESS;
-+}
-+
-+NTSTATUS HEAP_lfh_set_user_info(HANDLE heap, ULONG flags, const void *ptr, void *user_value)
-+{
-+    TRACE("heap %p, flags %08x, ptr %p, user_value %p.\n", heap, flags, ptr, user_value);
-+
-+    if (!LFH_try_validate_all(flags))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    if (!LFH_validate(flags, ptr))
-+        return STATUS_INVALID_PARAMETER;
-+
-+    LFH_set_user_info(flags, ptr, user_value);
-+    return STATUS_SUCCESS;
- }
- 
- void HEAP_lfh_notify_thread_destroy(BOOLEAN last)
- {
-+    SLIST_HEADER *list_orphan = LFH_orphan_list();
-+    SLIST_ENTRY *entry_orphan = NULL;
-+    LFH_heap *heap;
-+
-+    if (last)
-+    {
-+        while ((entry_orphan || (entry_orphan = RtlInterlockedFlushSList(list_orphan))))
-+        {
-+            LFH_heap *orphan = LIST_ENTRY(entry_orphan, LFH_heap, entry_orphan);
-+            entry_orphan = entry_orphan->Next;
-+            LFH_heap_finalize(orphan);
-+        }
-+        LFH_memory_deallocate(list_orphan, BLOCK_ARENA_SIZE);
-+    }
-+    else if ((heap = LFH_thread_heap(FALSE)) && LFH_validate_heap(0, heap))
-+        RtlInterlockedPushEntrySList(list_orphan, &heap->entry_orphan);
- }
- 
- void HEAP_lfh_set_debug_flags(ULONG flags)
- {
-+    LFH_heap *heap = LFH_thread_heap(FALSE);
-+    if (!heap) return;
-+
-+    LFH_deallocate_deferred_blocks(heap);
-+    LFH_deallocated_cached_arenas(heap);
- }
-diff --git a/dlls/ntdll/unix/unix_private.h b/dlls/ntdll/unix/unix_private.h
-index 3e99bc020da..b5c59ae7048 100644
---- a/dlls/ntdll/unix/unix_private.h
-+++ b/dlls/ntdll/unix/unix_private.h
-@@ -61,6 +61,7 @@ struct ntdll_thread_data
-     PRTL_THREAD_START_ROUTINE start;  /* thread entry point */
-     void              *param;         /* thread entry point parameter */
-     void              *jmp_buf;       /* setjmp buffer for exception handling */
-+    void              *heap;          /* thread local heap data */
- };
- 
- C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
-
-From a2cad5dfc4ed88867963326db875eaff511e3440 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Fri, 9 Apr 2021 23:09:17 +0200
-Subject: [PATCH 6/8] ntdll: Enable LFH for process heap.
-
----
- dlls/ntdll/loader.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
-index e27666b71f3..15ea4c7e339 100644
---- a/dlls/ntdll/loader.c
-+++ b/dlls/ntdll/loader.c
-@@ -4106,6 +4106,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR
-         ANSI_STRING func_name;
-         WINE_MODREF *kernel32;
-         PEB *peb = NtCurrentTeb()->Peb;
-+        DWORD hci = 2;
- 
-         peb->LdrData            = &ldr;
-         peb->FastPebLock        = &peb_lock;
-@@ -4129,6 +4130,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR
-         wm->ldr.LoadCount = -1;
- 
-         build_ntdll_module();
-+        RtlSetHeapInformation( GetProcessHeap(), HeapCompatibilityInformation, &hci, sizeof(hci) );
- 
-         if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
- 
-
-From 63da75bd7b1d315d19d5534bd0f48031e7f3179c Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Tue, 5 May 2020 15:00:46 +0200
-Subject: [PATCH 7/8] msvcrt: Enable LFH for internal heaps.
-
----
- dlls/msvcrt/heap.c | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/dlls/msvcrt/heap.c b/dlls/msvcrt/heap.c
-index bf06c37e2c5..d187fbe9b8c 100644
---- a/dlls/msvcrt/heap.c
-+++ b/dlls/msvcrt/heap.c
-@@ -530,7 +530,9 @@ int CDECL _set_sbh_threshold(size_t threshold)
- 
-   if(!sb_heap)
-   {
-+      ULONG hci = 2;
-       sb_heap = HeapCreate(0, 0, 0);
-+      HeapSetInformation(sb_heap, HeapCompatibilityInformation, &hci, sizeof(hci));
-       if(!sb_heap)
-           return 0;
-   }
-@@ -829,7 +831,9 @@ int CDECL wmemcpy_s(wchar_t *dest, size_t numberOfElements,
- 
- BOOL msvcrt_init_heap(void)
- {
-+    ULONG hci = 2;
-     heap = HeapCreate(0, 0, 0);
-+    HeapSetInformation(heap, HeapCompatibilityInformation, &hci, sizeof(hci));
-     return heap != NULL;
- }
- 
-
-From bdf808f787a20858b610424037bde2c7d193f60d Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?R=C3=A9mi=20Bernon?= <rbernon@codeweavers.com>
-Date: Tue, 16 Mar 2021 18:57:40 +0100
-Subject: [PATCH 8/8] ntdll: Force indirect branches for the error cases.
-
----
- dlls/ntdll/heap_lfh.c | 112 ++++++++++++++++++++++--------------------
- 1 file changed, 60 insertions(+), 52 deletions(-)
-
-diff --git a/dlls/ntdll/heap_lfh.c b/dlls/ntdll/heap_lfh.c
-index 35c29630516..420402ab93f 100644
---- a/dlls/ntdll/heap_lfh.c
-+++ b/dlls/ntdll/heap_lfh.c
-@@ -26,6 +26,14 @@
- 
- #include "ntdll_misc.h"
- 
-+#if defined(__GNUC__) || defined(__clang__)
-+#define likely(x) __builtin_expect(!!(x), 1)
-+#define unlikely(x) __builtin_expect(!!(x), 0)
-+#else
-+#define likely(x) x
-+#define unlikely(x) x
-+#endif
-+
- WINE_DEFAULT_DEBUG_CHANNEL(heap);
- 
- typedef struct LFH_ptr LFH_ptr;
-@@ -711,26 +719,26 @@ static inline BOOLEAN LFH_validate_block(ULONG flags, const LFH_block *block)
-     const LFH_arena *arena_arena = LFH_large_arena_from_block((LFH_block *)arena);
-     const char *err = NULL;
- 
--    if (flags & HEAP_VALIDATE)
-+    if (unlikely(flags & HEAP_VALIDATE))
-         return LFH_validate_arena(flags, arena);
- 
--    if (!arena)
-+    if (unlikely(!arena))
-         err = "invalid arena";
--    else if (arena != arena_arena && arena != (arena_arena + 1))
-+    else if (unlikely(arena != arena_arena && arena != (arena_arena + 1)))
-         err = "invalid arena alignment";
--    else if (arena == block_arena)
-+    else if (likely(arena == block_arena))
-     {
--        if ((UINT_PTR)block < (UINT_PTR)block_arena + ARENA_HEADER_SIZE)
-+        if (unlikely((UINT_PTR)block < (UINT_PTR)block_arena + ARENA_HEADER_SIZE))
-             err = "invalid block alignment";
--        if (((UINT_PTR)block & (sizeof(*block) - 1)))
-+        if (unlikely(((UINT_PTR)block & (sizeof(*block) - 1))))
-             err = "invalid block alignment";
-     }
--    else if (arena != large_arena)
-+    else if (unlikely(arena != large_arena))
-         err = "large/huge arena mismatch";
--    else if ((UINT_PTR)block != (UINT_PTR)block_arena)
-+    else if (unlikely((UINT_PTR)block != (UINT_PTR)block_arena))
-         err = "invalid block for large/huge arena";
- 
--    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, block, err);
-     return err == NULL;
- }
- 
-@@ -738,12 +746,12 @@ static BOOLEAN LFH_validate_free_block(ULONG flags, const LFH_block *block)
- {
-     const char *err = NULL;
- 
--    if (!LFH_validate_block(flags, block))
-+    if (unlikely(!LFH_validate_block(flags, block)))
-         return FALSE;
--    if (block->type != LFH_block_type_free)
-+    if (unlikely(block->type != LFH_block_type_free))
-         err = "invalid free block type";
- 
--    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, block, err);
-     return err == NULL;
- }
- 
-@@ -751,19 +759,19 @@ static BOOLEAN LFH_validate_defer_block(ULONG flags, const LFH_block *block)
- {
-     const char *err = NULL;
- 
--    if (!LFH_validate_block(flags, block))
-+    if (unlikely(!LFH_validate_block(flags, block)))
-         return FALSE;
--    if (block->type != LFH_block_type_free)
-+    if (unlikely(block->type != LFH_block_type_free))
-         err = "invalid defer block type";
--    else if (flags & HEAP_FREE_CHECKING_ENABLED)
-+    else if (unlikely(flags & HEAP_FREE_CHECKING_ENABLED))
-     {
-         const unsigned int *data = (const unsigned int *)LFH_ptr_from_block(block);
-         size_t class_size = LFH_block_get_class_size(block);
-         for (size_t i = 0; i < class_size / 4 - (data - (const unsigned int *)block) && !err; ++i)
--            if (data[i] != 0xfeeefeee) err = "invalid free filler";
-+            if (unlikely(data[i] != 0xfeeefeee)) err = "invalid free filler";
-     }
- 
--    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, block, err);
-     return err == NULL;
- }
- 
-@@ -771,11 +779,11 @@ static inline BOOLEAN LFH_validate_used_block(ULONG flags, const LFH_block *bloc
- {
-     const char *err = NULL;
- 
--    if (!LFH_validate_block(flags, block))
-+    if (unlikely(!LFH_validate_block(flags, block)))
-         return FALSE;
--    if (block->type != LFH_block_type_used)
-+    if (unlikely(block->type != LFH_block_type_used))
-         err = "invalid used block type";
--    else if (flags & HEAP_TAIL_CHECKING_ENABLED)
-+    else if (unlikely(flags & HEAP_TAIL_CHECKING_ENABLED))
-     {
-         const unsigned char *data = (const unsigned char *)LFH_ptr_from_block(block);
-         size_t alloc_size = LFH_block_get_alloc_size(block, flags);
-@@ -783,7 +791,7 @@ static inline BOOLEAN LFH_validate_used_block(ULONG flags, const LFH_block *bloc
-             if (data[i] != 0xab) err = "invalid tail filler";
-     }
- 
--    if (err) WARN("%08x %p: %s\n", flags, block, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, block, err);
-     return err == NULL;
- }
- 
-@@ -808,35 +816,35 @@ static BOOLEAN LFH_validate_arena(ULONG flags, const LFH_arena *arena)
-     const LFH_arena *block_arena = LFH_block_arena_from_block((LFH_block *)arena);
-     const LFH_arena *large_arena = LFH_large_arena_from_block((LFH_block *)arena);
- 
--    if (flags & HEAP_VALIDATE)
-+    if (unlikely(flags & HEAP_VALIDATE))
-         return LFH_validate_heap(flags, LFH_heap_from_arena(arena));
- 
--    if (arena != large_arena && arena != block_arena)
-+    if (unlikely(arena != large_arena && arena != block_arena))
-         err = "invalid arena alignment";
--    else if (arena == block_arena)
-+    else if (unlikely(arena == block_arena))
-     {
--        if (!LFH_validate_block(flags, (LFH_block *)arena))
-+        if (unlikely(!LFH_validate_block(flags, (LFH_block *)arena)))
-             err = "invalid block arena";
--        else if (!LFH_validate_arena_free_blocks(flags, arena))
-+        else if (unlikely(!LFH_validate_arena_free_blocks(flags, arena)))
-             err = "invalid block arena free list";
-     }
--    else if (arena == large_arena && !LFH_class_from_arena(arena))
-+    else if (unlikely(arena == large_arena && !LFH_class_from_arena(arena)))
-     {
--        if (arena->huge_size <= LARGE_CLASS_MAX_SIZE)
-+        if (unlikely(arena->huge_size <= LARGE_CLASS_MAX_SIZE))
-             err = "invalid huge arena size";
-     }
--    else if (arena == large_arena && (parent = LFH_parent_from_arena(arena)) != arena)
-+    else if (unlikely(arena == large_arena && (parent = LFH_parent_from_arena(arena)) != arena))
-     {
--        if (arena > parent || LFH_large_arena_from_block((LFH_block *)parent) != parent)
-+        if (unlikely(arena > parent || LFH_large_arena_from_block((LFH_block *)parent) != parent))
-             err = "invalid child arena parent";
-     }
-     else
-     {
--        if (!LFH_validate_arena_free_blocks(flags, arena))
-+        if (unlikely(!LFH_validate_arena_free_blocks(flags, arena)))
-             err = "invalid large arena free list";
-     }
- 
--    if (err) WARN("%08x %p: %s\n", flags, arena, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, arena, err);
-     return err == NULL;
- }
- 
-@@ -895,7 +903,7 @@ static BOOLEAN LFH_validate_heap(ULONG flags, const LFH_heap *heap)
-         }
-     }
- 
--    if (err) WARN("%08x %p: %s\n", flags, heap, err);
-+    if (unlikely(err)) WARN("%08x %p: %s\n", flags, heap, err);
-     return err == NULL;
- }
- 
-@@ -1047,7 +1055,7 @@ static inline BOOLEAN LFH_validate(ULONG flags, const LFH_ptr *ptr)
-     const LFH_heap *heap;
- 
-     /* clear HEAP_VALIDATE so we only validate block */
--    if (ptr)
-+    if (likely(ptr))
-         return LFH_validate_used_block(flags & ~HEAP_VALIDATE, block);
- 
-     if (!(heap = LFH_thread_heap(FALSE)))
-@@ -1058,10 +1066,10 @@ static inline BOOLEAN LFH_validate(ULONG flags, const LFH_ptr *ptr)
- 
- static inline BOOLEAN LFH_try_validate_all(ULONG flags)
- {
--    if (!(flags & HEAP_VALIDATE_ALL))
-+    if (likely(!(flags & HEAP_VALIDATE_ALL)))
-         return TRUE;
- 
--    if (LFH_validate(flags, NULL))
-+    if (likely(LFH_validate(flags, NULL)))
-         return TRUE;
- 
-     LFH_dump_heap(LFH_thread_heap(FALSE));
-@@ -1072,10 +1080,10 @@ NTSTATUS HEAP_lfh_allocate(HANDLE heap, ULONG flags, SIZE_T size, void **out)
- {
-     TRACE("heap %p, flags %08x, size %lx, out %p.\n", heap, flags, size, out);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!(*out = LFH_allocate(flags, size)))
-+    if (unlikely(!(*out = LFH_allocate(flags, size))))
-         return STATUS_NO_MEMORY;
- 
-     return STATUS_SUCCESS;
-@@ -1085,13 +1093,13 @@ NTSTATUS HEAP_lfh_free(HANDLE heap, ULONG flags, void *ptr)
- {
-     TRACE("heap %p, flags %08x, ptr %p.\n", heap, flags, ptr);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_free(flags, ptr))
-+    if (unlikely(!LFH_free(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
-     return STATUS_SUCCESS;
-@@ -1101,13 +1109,13 @@ NTSTATUS HEAP_lfh_reallocate(HANDLE heap, ULONG flags, void *ptr, SIZE_T size, v
- {
-     TRACE("heap %p, flags %08x, ptr %p, size %lx, out %p.\n", heap, flags, ptr, size, out);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!(*out = LFH_reallocate(flags, ptr, size)))
-+    if (unlikely(!(*out = LFH_reallocate(flags, ptr, size))))
-         return STATUS_NO_MEMORY;
- 
-     return STATUS_SUCCESS;
-@@ -1117,10 +1125,10 @@ NTSTATUS HEAP_lfh_get_allocated_size(HANDLE heap, ULONG flags, const void *ptr,
- {
-     TRACE("heap %p, flags %08x, ptr %p, out %p.\n", heap, flags, ptr, out);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
-     *out = LFH_get_allocated_size(flags, ptr);
-@@ -1131,10 +1139,10 @@ NTSTATUS HEAP_lfh_validate(HANDLE heap, ULONG flags, const void *ptr)
- {
-     TRACE("heap %p, flags %08x, ptr %p.\n", heap, flags, ptr);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
-     return STATUS_SUCCESS;
-@@ -1144,10 +1152,10 @@ NTSTATUS HEAP_lfh_get_user_info(HANDLE heap, ULONG flags, const void *ptr, void
- {
-     TRACE("heap %p, flags %08x, ptr %p, user_value %p.\n", heap, flags, ptr, user_value);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
-     *user_value = LFH_get_user_info(flags, ptr);
-@@ -1158,10 +1166,10 @@ NTSTATUS HEAP_lfh_set_user_info(HANDLE heap, ULONG flags, const void *ptr, void
- {
-     TRACE("heap %p, flags %08x, ptr %p, user_value %p.\n", heap, flags, ptr, user_value);
- 
--    if (!LFH_try_validate_all(flags))
-+    if (unlikely(!LFH_try_validate_all(flags)))
-         return STATUS_INVALID_PARAMETER;
- 
--    if (!LFH_validate(flags, ptr))
-+    if (unlikely(!LFH_validate(flags, ptr)))
-         return STATUS_INVALID_PARAMETER;
- 
-     LFH_set_user_info(flags, ptr, user_value);
