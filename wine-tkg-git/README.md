@@ -20,6 +20,7 @@
 - 0002-proton_LFH-staging.mypatch : Rémi Bernon's Proton Low Fragmentation Heap patchset - Improves performance in various games - staging compatible version
 - 0002-proton_LFH-staging-winesync.mypatch : Rémi Bernon's Proton Low Fragmentation Heap patchset - Improves performance in various games - staging+winesync compatible version
 - 0002-proton_QPC.mypatch : Rémi Bernon's Qpc timer bypass patchset - Improves timing and performance in various games
+- winex11drv-cache-clip-window-staging.mypatch : Paul Gofman's attempt at fixing mouse capture issues and reducing overhead when using high DPI mice - Rebased by FuzzyQuils - https://github.com/ValveSoftware/wine/commit/b23d6802e3e2437be2a2d1cbc1d358fd336fc8d3
 
 
 ## Game-specific

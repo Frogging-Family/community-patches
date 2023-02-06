@@ -1,0 +1,135 @@
+commit 9951f34a3b44db0cfc46954e917242353864bfc9
+Author: FuzzyQuils <fuzzyquils@scrapyard.link>
+Date:   Sat Jan 14 23:15:28 2023 +1000
+
+    winex11.drv: Cache clip window
+    
+    Implementation of Paul Gofman's Cache Clip Window patch
+
+diff --git a/dlls/winex11.drv/mouse.c b/dlls/winex11.drv/mouse.c
+index 5e0431accbc..3b97e9f938e 100644
+--- a/dlls/winex11.drv/mouse.c
++++ b/dlls/winex11.drv/mouse.c
+@@ -155,6 +155,52 @@ MAKE_FUNCPTR(XGetDeviceButtonMapping);
+ #undef MAKE_FUNCPTR
+ #endif
+ 
++static HWND get_clip_hwnd(void)
++{
++    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
++    UNICODE_STRING class_name;
++    struct x11drv_thread_data *data = x11drv_thread_data();
++    HWND ret;
++
++    if (data->cached_clip_hwnd)
++    {
++        ret = data->cached_clip_hwnd;
++        data->cached_clip_hwnd = NULL;
++        return ret;
++    }
++
++    RtlInitUnicodeString( &class_name, messageW );
++    return NtUserCreateWindowEx( 0, &class_name, &class_name, NULL, 0, 0, 0, 0, 0,
++                                           HWND_MESSAGE, 0, NtCurrentTeb()->Peb->ImageBaseAddress,
++                                           NULL, 0, NULL, 0, FALSE );
++    /* 
++    Since Paul Gofman's Proton Experimental commit 
++    appears to be using different code for creating clip windows,
++    this has been commented out for now. 
++    
++    - FuzzyQuils
++    */
++    /* return CreateWindowW( messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
++                          GetModuleHandleW(0), NULL ); */
++}
++
++static void release_clip_hwnd( HWND hwnd )
++{
++    struct x11drv_thread_data *data = x11drv_thread_data();
++
++    /* 
++    Paul Gofman's patch uses DestroyWindow in 
++    Proton Experimental Bleeding Edge.
++
++    However, due to using NtUserCreateWindowEx earlier, 
++    it is safest to assume using NtUserDestroyWindow will
++    work instead.
++    */
++    if (data->cached_clip_hwnd)
++        NtUserDestroyWindow(data->cached_clip_hwnd);
++    data->cached_clip_hwnd = hwnd;
++}
++
+ /***********************************************************************
+  *		X11DRV_Xcursor_Init
+  *
+@@ -493,9 +539,7 @@ void x11drv_xinput_disable( Display *display, Window window, long event_mask )
+ static BOOL grab_clipping_window( const RECT *clip )
+ {
+ #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+-    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
+     struct x11drv_thread_data *data = x11drv_thread_data();
+-    UNICODE_STRING class_name;
+     Window clip_window;
+     HWND msg_hwnd = 0;
+     POINT pos;
+@@ -506,10 +550,7 @@ static BOOL grab_clipping_window( const RECT *clip )
+     if (!data) return FALSE;
+     if (!(clip_window = init_clip_window())) return TRUE;
+ 
+-    RtlInitUnicodeString( &class_name, messageW );
+-    if (!(msg_hwnd = NtUserCreateWindowEx( 0, &class_name, &class_name, NULL, 0, 0, 0, 0, 0,
+-                                           HWND_MESSAGE, 0, NtCurrentTeb()->Peb->ImageBaseAddress,
+-                                           NULL, 0, NULL, 0, FALSE )))
++    if (!(msg_hwnd = get_clip_hwnd()))
+         return TRUE;
+ 
+     if (keyboard_grabbed)
+@@ -531,7 +572,7 @@ static BOOL grab_clipping_window( const RECT *clip )
+     if (data->xi2_state != xi_enabled)
+     {
+         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
+-        NtUserDestroyWindow( msg_hwnd );
++        release_clip_hwnd( msg_hwnd );
+         NtUserClipCursor( NULL );
+         return TRUE;
+     }
+@@ -557,7 +598,7 @@ static BOOL grab_clipping_window( const RECT *clip )
+     if (!clipping_cursor)
+     {
+         x11drv_xinput_disable( data->display, DefaultRootWindow( data->display ), PointerMotionMask );
+-        NtUserDestroyWindow( msg_hwnd );
++        release_clip_hwnd( msg_hwnd );
+         return FALSE;
+     }
+     clip_rect = *clip;
+@@ -640,7 +681,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
+         data->clip_hwnd = 0;
+         data->clip_reset = NtGetTickCount();
+         x11drv_xinput_disable( data->display, DefaultRootWindow( data->display ), PointerMotionMask );
+-        NtUserDestroyWindow( hwnd );
++        release_clip_hwnd( hwnd );
+     }
+     else if (prev_clip_hwnd)
+     {
+@@ -648,7 +689,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
+          * dangling clip window.
+          */
+         TRACE( "destroying old clip hwnd %p\n", prev_clip_hwnd );
+-        NtUserDestroyWindow( prev_clip_hwnd );
++        release_clip_hwnd( hwnd );
+     }
+     return 0;
+ }
+diff --git a/dlls/winex11.drv/x11drv.h b/dlls/winex11.drv/x11drv.h
+index 0a4dcd3aa04..3e3eb2129e0 100644
+--- a/dlls/winex11.drv/x11drv.h
++++ b/dlls/winex11.drv/x11drv.h
+@@ -408,6 +408,7 @@ struct x11drv_thread_data
+     int      xi2_core_pointer;     /* XInput2 core pointer id */
+     int      xi2_rawinput_only;
+ #endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
++    HWND    cached_clip_hwnd;
+ };
+ 
+ extern struct x11drv_thread_data *x11drv_init_thread_data(void) DECLSPEC_HIDDEN;
