@@ -1,0 +1,520 @@
+diff --git a/dlls/kernelbase/registry.c b/dlls/kernelbase/registry.c
+index 30c5e9f6f3..d1fba99b05 100644
+--- a/dlls/kernelbase/registry.c
++++ b/dlls/kernelbase/registry.c
+@@ -3046,8 +3046,7 @@ LSTATUS WINAPI RegLoadAppKeyA(const char *file, HKEY *result, REGSAM sam, DWORD
+     if (!file || reserved)
+         return ERROR_INVALID_PARAMETER;
+ 
+-    *result = (HKEY)0xdeadbeef;
+-    return ERROR_SUCCESS;
++    return RegOpenKeyExA(HKEY_CURRENT_USER, "", KEY_ALL_ACCESS, 0, result);
+ }
+ 
+ /******************************************************************************
+@@ -3061,8 +3060,7 @@ LSTATUS WINAPI RegLoadAppKeyW(const WCHAR *file, HKEY *result, REGSAM sam, DWORD
+     if (!file || reserved)
+         return ERROR_INVALID_PARAMETER;
+ 
+-    *result = (HKEY)0xdeadbeef;
+-    return ERROR_SUCCESS;
++    return RegOpenKeyExW(HKEY_CURRENT_USER, L"", KEY_ALL_ACCESS, 0, result);
+ }
+ 
+ /******************************************************************************
+
+From d013a97e453e16f8a4622628835011715308716e Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Tue, 23 May 2023 00:05:34 +0200
+Subject: [PATCH] Add CS debug info to Critical Section involved in VS2019
+ deadlock
+
+---
+ dlls/ole32/moniker.c | 48 ++++++++++++++++++++++++++------------------
+ 1 file changed, 29 insertions(+), 19 deletions(-)
+
+diff --git a/dlls/ole32/moniker.c b/dlls/ole32/moniker.c
+index ec026758b2f..f2668a1edbf 100644
+--- a/dlls/ole32/moniker.c
++++ b/dlls/ole32/moniker.c
+@@ -66,7 +66,7 @@ typedef struct RunningObjectTableImpl
+ {
+     IRunningObjectTable IRunningObjectTable_iface;
+     struct list rot; /* list of ROT entries */
+-    CRITICAL_SECTION lock;
++    CRITICAL_SECTION* lock;
+ } RunningObjectTableImpl;
+ 
+ /* define the EnumMonikerImpl structure */
+@@ -417,9 +417,9 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD flags,
+     /* gives a registration identifier to the registered object*/
+     *pdwRegister = rot_entry->cookie;
+ 
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     list_add_tail(&This->rot, &rot_entry->entry);
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+     return hr;
+ }
+@@ -438,19 +438,19 @@ RunningObjectTableImpl_Revoke( IRunningObjectTable* iface, DWORD dwRegister)
+ 
+     TRACE("%p, %ld.\n", iface, dwRegister);
+ 
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+     {
+         if (rot_entry->cookie == dwRegister)
+         {
+             list_remove(&rot_entry->entry);
+-            LeaveCriticalSection(&This->lock);
++            LeaveCriticalSection(This->lock);
+ 
+             rot_entry_delete(rot_entry);
+             return S_OK;
+         }
+     }
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+     return E_INVALIDARG;
+ }
+@@ -480,7 +480,7 @@ RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjec
+         return hr;
+ 
+     hr = S_FALSE;
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, const struct rot_entry, entry)
+     {
+         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+@@ -490,7 +490,7 @@ RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjec
+             break;
+         }
+     }
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+     if (hr == S_FALSE)
+         hr = InternalIrotIsRunning(moniker_data);
+@@ -533,7 +533,7 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
+     if (hr != S_OK)
+         return hr;
+ 
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+     {
+         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+@@ -547,13 +547,13 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
+                 IStream_Release(pStream);
+             }
+ 
+-            LeaveCriticalSection(&This->lock);
++            LeaveCriticalSection(This->lock);
+             HeapFree(GetProcessHeap(), 0, moniker_data);
+ 
+             return hr;
+         }
+     }
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+     TRACE("moniker unavailable locally, calling SCM\n");
+ 
+@@ -593,20 +593,20 @@ RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
+ 
+     TRACE("%p, %ld, %p.\n", iface, dwRegister, pfiletime);
+ 
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+     {
+         if (rot_entry->cookie == dwRegister)
+         {
+             rot_entry->last_modified = *pfiletime;
+-            LeaveCriticalSection(&This->lock);
++            LeaveCriticalSection(This->lock);
+ 
+             hr = InternalIrotNoteChangeTime(dwRegister, pfiletime);
+ 
+             goto done;
+         }
+     }
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+ done:
+     TRACE("-- %#lx\n", hr);
+@@ -644,7 +644,7 @@ RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
+ 
+     hr = MK_E_UNAVAILABLE;
+ 
+-    EnterCriticalSection(&This->lock);
++    EnterCriticalSection(This->lock);
+     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, const struct rot_entry, entry)
+     {
+         if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+@@ -655,7 +655,7 @@ RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
+             break;
+         }
+     }
+-    LeaveCriticalSection(&This->lock);
++    LeaveCriticalSection(This->lock);
+ 
+     if (hr != S_OK)
+         hr = InternalIrotGetTimeOfLastChange(moniker_data, pfiletime);
+@@ -706,10 +706,20 @@ static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
+     RunningObjectTableImpl_EnumRunning
+ };
+ 
++static RTL_CRITICAL_SECTION IROT_lock;
++
++static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
++{
++    0, 0, &IROT_lock,
++    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
++      0, 0, { (DWORD_PTR)(__FILE__ ": IROT_lock") }
++};
++static RTL_CRITICAL_SECTION IROT_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
++
+ static RunningObjectTableImpl rot =
+ {
+     .IRunningObjectTable_iface.lpVtbl = &VT_RunningObjectTableImpl,
+-    .lock.LockCount = -1,
++    .lock = &IROT_lock,
+     .rot = LIST_INIT(rot.rot),
+ };
+ 
+@@ -741,13 +751,13 @@ void WINAPI DestroyRunningObjectTable(void)
+ 
+     TRACE("\n");
+ 
+-    EnterCriticalSection(&rot.lock);
++    EnterCriticalSection(rot.lock);
+     LIST_FOR_EACH_ENTRY_SAFE(rot_entry, cursor2, &rot.rot, struct rot_entry, entry)
+     {
+         list_remove(&rot_entry->entry);
+         rot_entry_delete(rot_entry);
+     }
+-    LeaveCriticalSection(&rot.lock);
++    LeaveCriticalSection(rot.lock);
+ }
+ 
+ static HRESULT get_moniker_for_progid_display_name(LPBC pbc,
+-- 
+2.40.1
+
+From b1b58f909f4cb2cf3c96d6e1920b52bc6cf9cd0a Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Tue, 23 May 2023 01:32:21 +0200
+Subject: [PATCH] unmarshal rot provided moniker outside the CS
+
+---
+ dlls/ole32/moniker.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dlls/ole32/moniker.c b/dlls/ole32/moniker.c
+index f2668a1edbf..ac9a6f61ecc 100644
+--- a/dlls/ole32/moniker.c
++++ b/dlls/ole32/moniker.c
+@@ -541,13 +541,13 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
+         {
+             IStream *pStream;
+             hr = create_stream_on_mip_ro(rot_entry->object, &pStream);
++            LeaveCriticalSection(This->lock);
+             if (hr == S_OK)
+             {
+                 hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)ppunkObject);
+                 IStream_Release(pStream);
+             }
+ 
+-            LeaveCriticalSection(This->lock);
+             HeapFree(GetProcessHeap(), 0, moniker_data);
+ 
+             return hr;
+-- 
+2.40.1
+
+From 01e297aba3b56bb56f24308fe0817f72d1b8c0df Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Tue, 23 May 2023 00:07:04 +0200
+Subject: [PATCH] add implementation of PerfSetULongCounterValue and
+ PerfSetULongLongCounterValue (for VS)
+
+---
+ dlls/advapi32/advapi32.spec     |  4 +--
+ dlls/kernelbase/kernelbase.spec |  4 +--
+ dlls/kernelbase/main.c          | 57 +++++++++++++++++++++++++++++++++
+ 3 files changed, 61 insertions(+), 4 deletions(-)
+
+diff --git a/dlls/advapi32/advapi32.spec b/dlls/advapi32/advapi32.spec
+index b69186d07a7..26622f17137 100644
+--- a/dlls/advapi32/advapi32.spec
++++ b/dlls/advapi32/advapi32.spec
+@@ -577,8 +577,8 @@
+ # @ stub PerfRegSetValue
+ @ stdcall -import PerfSetCounterRefValue(long ptr long ptr)
+ @ stdcall -import PerfSetCounterSetInfo(long ptr long)
+-# @ stub PerfSetULongCounterValue
+-# @ stub PerfSetULongLongCounterValue
++@ stdcall -import PerfSetULongCounterValue(long ptr long long)
++@ stdcall -import PerfSetULongLongCounterValue(long ptr long int64)
+ @ stdcall -import PerfStartProvider(ptr ptr ptr)
+ @ stdcall -import PerfStartProviderEx(ptr ptr ptr)
+ @ stdcall -import PerfStopProvider(long)
+diff --git a/dlls/kernelbase/kernelbase.spec b/dlls/kernelbase/kernelbase.spec
+index cee3815460b..8b18a2bf09f 100644
+--- a/dlls/kernelbase/kernelbase.spec
++++ b/dlls/kernelbase/kernelbase.spec
+@@ -1189,8 +1189,8 @@
+ # @ stub PerfQueryInstance
+ @ stdcall PerfSetCounterRefValue(long ptr long ptr)
+ @ stdcall PerfSetCounterSetInfo(long ptr long)
+-# @ stub PerfSetULongCounterValue
+-# @ stub PerfSetULongLongCounterValue
++@ stdcall PerfSetULongCounterValue(long ptr long long)
++@ stdcall PerfSetULongLongCounterValue(long ptr long int64)
+ @ stdcall PerfStartProvider(ptr ptr ptr)
+ @ stdcall PerfStartProviderEx(ptr ptr ptr)
+ @ stdcall PerfStopProvider(long)
+diff --git a/dlls/kernelbase/main.c b/dlls/kernelbase/main.c
+index 0309ec91589..70a4107897b 100644
+--- a/dlls/kernelbase/main.c
++++ b/dlls/kernelbase/main.c
+@@ -338,6 +338,63 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *i
+     return STATUS_SUCCESS;
+ }
+ 
++/***********************************************************************
++ *           PerfSetULongCounterValue   (KERNELBASE.@)
++ */
++ULONG WINAPI PerfSetULongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
++                                    ULONG counterid, ULONG value)
++{
++    struct perf_provider *prov = perf_provider_from_handle( provider );
++    struct counterset_template *template;
++    struct counterset_instance *inst;
++    unsigned int i;
++
++    FIXME( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
++           provider, instance, counterid, value );
++
++    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
++
++    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
++    template = inst->template;
++
++    for (i = 0; i < template->counterset.NumCounters; ++i)
++        if (template->counter[i].CounterId == counterid) break;
++
++    if (i == template->counterset.NumCounters) return ERROR_NOT_FOUND;
++    
++    *(ULONG*)((BYTE *)&inst->instance + sizeof(PERF_COUNTERSET_INSTANCE) + template->counter[i].Offset) = value;
++
++    return STATUS_SUCCESS;
++}
++/***********************************************************************
++ *           PerfSetULongLongCounterValue   (KERNELBASE.@)
++ */
++ULONG WINAPI PerfSetULongLongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
++                                    ULONG counterid, ULONGLONG value)
++{
++    struct perf_provider *prov = perf_provider_from_handle( provider );
++    struct counterset_template *template;
++    struct counterset_instance *inst;
++    unsigned int i;
++
++    FIXME( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
++           provider, instance, counterid, value );
++
++    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
++
++    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
++    template = inst->template;
++
++    for (i = 0; i < template->counterset.NumCounters; ++i)
++        if (template->counter[i].CounterId == counterid) break;
++
++    if (i == template->counterset.NumCounters) return ERROR_NOT_FOUND;
++    
++    *(ULONGLONG*)((BYTE *)&inst->instance + sizeof(PERF_COUNTERSET_INSTANCE) + template->counter[i].Offset) = value;
++
++    return STATUS_SUCCESS;
++}
++
+ /***********************************************************************
+  *           PerfStartProvider   (KERNELBASE.@)
+  */
+-- 
+2.40.1
+
+From 4262294bbcb5fa4b5a02396794de475d09cbf873 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Mon, 3 Jul 2023 00:52:34 +0200
+Subject: [PATCH] Partial implement SHAssocEnumHandlersForProtocolByApplication
+
+---
+ dlls/shell32/assoc.c      | 34 +++++++++++++++++++++++++++++++++-
+ dlls/shell32/shell32.spec |  1 +
+ 2 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/dlls/shell32/assoc.c b/dlls/shell32/assoc.c
+index 339be6ac445..f3d91857fb4 100644
+--- a/dlls/shell32/assoc.c
++++ b/dlls/shell32/assoc.c
+@@ -777,7 +777,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
+  * RETURNS
+  *  Success: S_OK.
+  *  Failure: An HRESULT error code indicating the error.
+- *
++ *filter
+  * NOTES
+  *  Presumably this function returns an enumerator object.
+  */
+@@ -1132,3 +1132,35 @@ HRESULT WINAPI SHAssocEnumHandlers(const WCHAR *extra, ASSOC_FILTER filter, IEnu
+     *enumhandlers = &enumassoc->IEnumAssocHandlers_iface;
+     return S_OK;
+ }
++
++
++
++/**************************************************************************
++ * SHAssocEnumHandlersForProtocolByApplication            [SHELL32.@]
++ */
++HRESULT WINAPI SHAssocEnumHandlersForProtocolByApplication(const WCHAR *protocol, REFIID riid, void **enumhandlers)
++{
++    struct enumassochandlers *enumassoc;
++
++    FIXME("(%s %d %p): stub\n", debugstr_w(protocol), debugstr_guid(riid), enumhandlers);
++    
++    if(!IsEqualIID(riid, &IID_IEnumAssocHandlers))
++    {
++        FIXME("Not implemented objects except IID_IEnumAssocHandlers\n");
++        return E_NOTIMPL;
++    }
++    
++    *enumhandlers = NULL;
++
++    enumassoc = SHAlloc(sizeof(*enumassoc));
++    if (!enumassoc)
++        return E_OUTOFMEMORY;
++
++    enumassoc->IEnumAssocHandlers_iface.lpVtbl = &enumassochandlersvtbl;
++    enumassoc->ref = 1;
++
++    *enumhandlers = &enumassoc->IEnumAssocHandlers_iface;
++    return S_OK;
++}
++
++
+diff --git a/dlls/shell32/shell32.spec b/dlls/shell32/shell32.spec
+index 2c969869722..fff0bb774eb 100644
+--- a/dlls/shell32/shell32.spec
++++ b/dlls/shell32/shell32.spec
+@@ -332,6 +332,7 @@
+ @ stdcall SHAddToRecentDocs (long ptr)
+ @ stdcall SHAppBarMessage(long ptr)
+ @ stdcall SHAssocEnumHandlers(wstr long ptr)
++@ stdcall SHAssocEnumHandlersForProtocolByApplication(wstr ptr ptr)
+ @ stdcall SHBindToFolderIDListParent(ptr ptr ptr ptr ptr)
+ @ stdcall SHBindToObject(ptr ptr ptr ptr ptr)
+ @ stdcall SHBindToParent(ptr ptr ptr ptr)
+-- 
+2.41.0
+
+From 6b62796eb5fb36e2fdbc90e6b2c1af527bfa56d8 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Wed, 5 Jul 2023 12:53:13 +0200
+Subject: [PATCH] Return Success from QueryBlanket and SetBlanket functions
+
+---
+ dlls/combase/marshal.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/dlls/combase/marshal.c b/dlls/combase/marshal.c
+index 84f57b8c1c8..d188b83971c 100644
+--- a/dlls/combase/marshal.c
++++ b/dlls/combase/marshal.c
+@@ -1388,7 +1388,7 @@ static HRESULT WINAPI ProxyCliSec_QueryBlanket(IClientSecurity *iface,
+     if (pCapabilities)
+         *pCapabilities = EOAC_NONE;
+ 
+-    return E_NOTIMPL;
++    return S_OK;
+ }
+ 
+ static HRESULT WINAPI ProxyCliSec_SetBlanket(IClientSecurity *iface,
+@@ -1402,7 +1402,7 @@ static HRESULT WINAPI ProxyCliSec_SetBlanket(IClientSecurity *iface,
+     FIXME("%p, %ld, %ld, %s, %ld, %ld, %p, %#lx: stub\n", pProxy, AuthnSvc, AuthzSvc,
+           pServerPrincName == COLE_DEFAULT_PRINCIPAL ? "<default principal>" : debugstr_w(pServerPrincName),
+           AuthnLevel, ImpLevel, pAuthInfo, Capabilities);
+-    return E_NOTIMPL;
++    return S_OK;
+ }
+ 
+ static HRESULT WINAPI ProxyCliSec_CopyProxy(IClientSecurity *iface,
+-- 
+2.41.0
+
+From 39c64dabe5306326f4f93161f04fd0773987c630 Mon Sep 17 00:00:00 2001
+From: llde <lorenzofersteam@live.it>
+Date: Mon, 3 Jul 2023 23:34:17 +0200
+Subject: [PATCH] UrlMon: try stubbing function required by wininet
+
+---
+ dlls/urlmon/sec_mgr.c     |  4 +++-
+ dlls/urlmon/urlmon.spec   |  1 +
+ dlls/urlmon/urlmon_main.c | 10 ++++++++++
+ 3 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/dlls/urlmon/sec_mgr.c b/dlls/urlmon/sec_mgr.c
+index 82266066e0f..4afc160358f 100644
+--- a/dlls/urlmon/sec_mgr.c
++++ b/dlls/urlmon/sec_mgr.c
+@@ -1155,7 +1155,9 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx2(IInternetSecurityManage
+     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
+     FIXME("(%p)->(%p %08lx %p %ld %p %ld %08lx %08Ix %p) stub\n", This, pUri, dwAction, pPolicy,
+           cbPolicy, pContext, cbContext, dwFlags, dwReserved, pdwOutFlags);
+-    return E_NOTIMPL;
++    if(!pUri || !pPolicy) return E_INVALIDARG;
++    *pPolicy =  URLPOLICY_ALLOW;
++    return S_OK;
+ }
+ 
+ static HRESULT WINAPI SecManagerImpl_GetSecurityIdEx2(IInternetSecurityManagerEx2 *iface,
+diff --git a/dlls/urlmon/urlmon.spec b/dlls/urlmon/urlmon.spec
+index 8725c8c5aeb..deb302e5179 100644
+--- a/dlls/urlmon/urlmon.spec
++++ b/dlls/urlmon/urlmon.spec
+@@ -108,6 +108,7 @@
+ 363 stdcall @(long long ptr) propsys.InitVariantFromResource
+ 387 stdcall @(ptr long) propsys.VariantToUInt32WithDefault
+ 410 stdcall @(long long) LogSqmBits
++414 stdcall @(long long) LogSqmIncrement
+ 423 stdcall @(long long long long) LogSqmUXCommandOffsetInternal
+ 444 stdcall @(long long long) MapUriToBrowserEmulationState
+ 445 stdcall -noname MapBrowserEmulationModeToUserAgent(ptr ptr)
+diff --git a/dlls/urlmon/urlmon_main.c b/dlls/urlmon/urlmon_main.c
+index 00ccc449e15..f3b93cf9cdc 100644
+--- a/dlls/urlmon/urlmon_main.c
++++ b/dlls/urlmon/urlmon_main.c
+@@ -841,3 +841,13 @@ HRESULT WINAPI GetIUriPriv(IUri *uri, void **p)
+     *p = NULL;
+     return E_NOTIMPL;
+ }
++
++/***********************************************************************
++ *            LogSqmIncrement
++ *    Undocumented
++ */
++DWORD WINAPI LogSqmIncrement(DWORD unknown1, DWORD unknown2 )
++{
++    FIXME("variable 1: %x; variable 2: %x: stub\n", unknown1, unknown2);
++    return 1;
++}
+-- 
+2.41.0
+

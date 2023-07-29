@@ -1,0 +1,582 @@
+From: Jinoh Kang <jinoh.kang.kr@gmail.com>
+Subject: [PATCH v11 1/2] kernel32/tests: Test module refcounting with forwarded exports.
+Message-Id: <a6c28b1e-4a89-0aee-3365-238182f80cbf@gmail.com>
+Date: Tue, 1 Mar 2022 22:53:37 +0900
+
+Signed-off-by: Jinoh Kang <jinoh.kang.kr@gmail.com>
+---
+
+Notes:
+    v3 -> v4:
+    - iatgas.h
+      - LLVM(Clang), ARM, ARM64 support
+      - Use __ASM_NAME macro
+      - Don't fail test on MSVC
+      - Don't end asm macros with "\n\t"
+    
+    v4 -> v5:
+    - iatgas.h
+      - mark idata sections as RO
+    - loader.c
+      - test for forward export itself
+    
+    v5 -> v6:
+    - loader.c
+      - Fix compilation warning in format string
+    
+    v6 -> v7:
+    - forward4.c
+      - fix building without MinGW
+    
+    v7 -> v8:
+    - Also do GetProcAddress for forwarded ordinal exports
+    - forward[1-3].c
+      - Call DisableThreadLibraryCalls in DllMain
+    - forward4.c: removed
+    - iatgas.h: removed
+    - sforward.c: new file
+    - loader.c
+      - test static forwarded import using shlwapi -> userenv forward
+    
+    v8 -> v9:
+    - Test with iprop (documented as an ole32 forwarder in MSDN [1])
+    
+    v9 -> v10:
+    - Test with icmp instead (documented as an iphlpapi forwarder in MSDN [2])
+    
+    v10 -> v11:
+    - rebase onto latest version
+    
+    [1] https://docs.microsoft.com/en-us/windows/win32/api/coml2api/nf-coml2api-stgopenpropstg
+    [2] https://docs.microsoft.com/en-us/windows/win32/api/icmpapi/nf-icmpapi-icmpcreatefile
+
+ dlls/icmp/Makefile.in             |   1 +
+ dlls/kernel32/tests/Makefile.in   |  14 ++-
+ dlls/kernel32/tests/forward1.c    |  19 ++++
+ dlls/kernel32/tests/forward1.spec |   2 +
+ dlls/kernel32/tests/forward2.c    |   9 ++
+ dlls/kernel32/tests/forward2.spec |   2 +
+ dlls/kernel32/tests/forward3.c    |   9 ++
+ dlls/kernel32/tests/forward3.spec |   2 +
+ dlls/kernel32/tests/loader.c      | 182 ++++++++++++++++++++++++++++++
+ dlls/kernel32/tests/sforward.c    |  18 +++
+ dlls/kernel32/tests/sforward.spec |   1 +
+ 11 files changed, 257 insertions(+), 2 deletions(-)
+ create mode 100644 dlls/kernel32/tests/forward1.c
+ create mode 100644 dlls/kernel32/tests/forward1.spec
+ create mode 100644 dlls/kernel32/tests/forward2.c
+ create mode 100644 dlls/kernel32/tests/forward2.spec
+ create mode 100644 dlls/kernel32/tests/forward3.c
+ create mode 100644 dlls/kernel32/tests/forward3.spec
+ create mode 100644 dlls/kernel32/tests/sforward.c
+ create mode 100644 dlls/kernel32/tests/sforward.spec
+
+diff --git a/dlls/icmp/Makefile.in b/dlls/icmp/Makefile.in
+index 11111111111..11111111111 100644
+--- a/dlls/icmp/Makefile.in
++++ b/dlls/icmp/Makefile.in
+@@ -1,3 +1,4 @@
+ MODULE    = icmp.dll
++IMPORTLIB = icmp
+ 
+ EXTRADLLFLAGS = -Wb,--data-only
+diff --git a/dlls/kernel32/tests/Makefile.in b/dlls/kernel32/tests/Makefile.in
+index 11111111111..11111111111 100644
+--- a/dlls/kernel32/tests/Makefile.in
++++ b/dlls/kernel32/tests/Makefile.in
+@@ -1,5 +1,7 @@
+ TESTDLL   = kernel32.dll
+-IMPORTS   = user32 advapi32
++
++# icmp is for testing export forwarding (to iphlpapi)
++IMPORTS   = user32 advapi32 icmp
+ 
+ SOURCES = \
+ 	actctx.c \
+@@ -37,4 +39,12 @@ SOURCES = \
+ 	toolhelp.c \
+ 	version.c \
+ 	virtual.c \
+-	volume.c
++	volume.c \
++	forward1.c \
++	forward1.spec \
++	forward2.c \
++	forward2.spec \
++	forward3.c \
++	forward3.spec \
++	sforward.c \
++	sforward.spec
+diff --git a/dlls/kernel32/tests/forward1.c b/dlls/kernel32/tests/forward1.c
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward1.c
+@@ -0,0 +1,19 @@
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h>
++
++BOOL WINAPI DllMain(HINSTANCE instance_new, DWORD reason, LPVOID reserved)
++{
++    if (reason == DLL_PROCESS_ATTACH)
++        DisableThreadLibraryCalls( instance_new );
++    return TRUE;
++}
++
++unsigned long forward_test_func(void)
++{
++    return 0x00005678UL;
++}
++
++unsigned long forward_test_func2(void)
++{
++    return 0x12340000UL;
++}
+diff --git a/dlls/kernel32/tests/forward1.spec b/dlls/kernel32/tests/forward1.spec
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward1.spec
+@@ -0,0 +1,2 @@
++1 cdecl forward_test_func()
++2 cdecl -noname forward_test_func2()
+diff --git a/dlls/kernel32/tests/forward2.c b/dlls/kernel32/tests/forward2.c
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward2.c
+@@ -0,0 +1,9 @@
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h>
++
++BOOL WINAPI DllMain(HINSTANCE instance_new, DWORD reason, LPVOID reserved)
++{
++    if (reason == DLL_PROCESS_ATTACH)
++        DisableThreadLibraryCalls( instance_new );
++    return TRUE;
++}
+diff --git a/dlls/kernel32/tests/forward2.spec b/dlls/kernel32/tests/forward2.spec
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward2.spec
+@@ -0,0 +1,2 @@
++1 cdecl forward_test_func() forward1.forward_test_func
++2 cdecl -noname forward_test_func2() forward1.#2
+diff --git a/dlls/kernel32/tests/forward3.c b/dlls/kernel32/tests/forward3.c
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward3.c
+@@ -0,0 +1,9 @@
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h>
++
++BOOL WINAPI DllMain(HINSTANCE instance_new, DWORD reason, LPVOID reserved)
++{
++    if (reason == DLL_PROCESS_ATTACH)
++        DisableThreadLibraryCalls( instance_new );
++    return TRUE;
++}
+diff --git a/dlls/kernel32/tests/forward3.spec b/dlls/kernel32/tests/forward3.spec
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/forward3.spec
+@@ -0,0 +1,2 @@
++1 cdecl forward_test_func() forward2.forward_test_func
++2 cdecl -noname forward_test_func2() forward2.#2
+diff --git a/dlls/kernel32/tests/loader.c b/dlls/kernel32/tests/loader.c
+index 11111111111..11111111111 100644
+--- a/dlls/kernel32/tests/loader.c
++++ b/dlls/kernel32/tests/loader.c
+@@ -1643,6 +1643,185 @@ static void test_ImportDescriptors(void)
+     }
+ }
+ 
++static void extract_resource(const char *name, const char *type, const char *path)
++{
++    DWORD written;
++    HANDLE file;
++    HRSRC res;
++    void *ptr;
++
++    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
++    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", path, GetLastError());
++
++    res = FindResourceA(NULL, name, type);
++    ok( res != 0, "couldn't find resource\n" );
++    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
++    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
++    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
++    CloseHandle( file );
++}
++
++static void test_static_forwarded_import_refs(void)
++{
++    CHAR temp_path[MAX_PATH], dir_path[MAX_PATH], sforward_path[MAX_PATH];
++    HMODULE iphlpapi, icmp, sforward;
++    FARPROC test_func_stub;
++
++    if (GetModuleHandleA( "iphlpapi.dll" ))
++    {
++        skip("cannot test since iphlpapi.dll is already loaded\n");
++        return;
++    }
++    if (GetModuleHandleA( "icmp.dll" ))
++    {
++        skip("cannot test since icmp.dll is already loaded\n");
++        return;
++    }
++
++    GetTempPathA( ARRAY_SIZE(temp_path), temp_path );
++    GetTempFileNameA( temp_path, "ldr", GetTickCount() | 1UL, dir_path );
++    ok( CreateDirectoryA( dir_path, NULL ), "failed to create dir %s, error %u\n",
++        dir_path, GetLastError() );
++
++    snprintf( sforward_path, MAX_PATH, "%s\\sforward.dll", dir_path );
++    extract_resource( "sforward.dll", "TESTDLL", sforward_path );
++
++    iphlpapi = LoadLibraryA( "iphlpapi.dll" );
++    ok( !!iphlpapi, "couldn't find iphlpapi.dll: %u\n", GetLastError() );
++    icmp = LoadLibraryA( "icmp.dll" );
++    ok( !!icmp, "couldn't find icmp.dll: %u\n", GetLastError() );
++    sforward = LoadLibraryA( sforward_path );
++    ok( !!sforward, "couldn't find %s: %u\n", sforward_path, GetLastError() );
++
++    test_func_stub = GetProcAddress( sforward, "test_func_stub" );
++    ok( !!test_func_stub, "sforward!test_func_stub not found\n" );
++
++    FreeLibrary( iphlpapi );
++    FreeLibrary( icmp );
++
++    todo_wine
++    ok( !!GetModuleHandleA( "iphlpapi.dll" ), "iphlpapi.dll unexpectedly unloaded\n" );
++    ok( !!GetModuleHandleA( "icmp.dll" ), "icmp.dll unexpectedly unloaded\n" );
++
++    FreeLibrary( sforward );
++
++    ok( !GetModuleHandleA( "iphlpapi.dll" ), "iphlpapi.dll unexpectedly kept open\n" );
++    ok( !GetModuleHandleA( "icmp.dll" ), "icmp.dll unexpectedly kept open\n" );
++    ok( !GetModuleHandleA( "sforward.dll" ), "sforward.dll unexpectedly kept open\n" );
++
++    DeleteFileA( sforward_path );
++    RemoveDirectoryA( dir_path );
++}
++
++static void test_dynamic_forwarded_import_refs(void)
++{
++    CHAR temp_path[MAX_PATH], dir_path[MAX_PATH];
++    CHAR forward1_path[MAX_PATH];
++    CHAR forward2_path[MAX_PATH];
++    CHAR forward3_path[MAX_PATH];
++    HMODULE forward1, forward2, forward3;
++    FARPROC proc1, proc2, proc3, oproc1, oproc2, oproc3;
++
++    GetTempPathA( ARRAY_SIZE(temp_path), temp_path );
++    GetTempFileNameA( temp_path, "ldr", GetTickCount() | 1UL, dir_path );
++    ok( CreateDirectoryA( dir_path, NULL ), "failed to create dir %s, error %u\n",
++        dir_path, GetLastError() );
++
++    snprintf( forward1_path, MAX_PATH, "%s\\forward1.dll", dir_path );
++    snprintf( forward2_path, MAX_PATH, "%s\\forward2.dll", dir_path );
++    snprintf( forward3_path, MAX_PATH, "%s\\forward3.dll", dir_path );
++    extract_resource( "forward1.dll", "TESTDLL", forward1_path );
++    extract_resource( "forward2.dll", "TESTDLL", forward2_path );
++    extract_resource( "forward3.dll", "TESTDLL", forward3_path );
++
++    forward1 = LoadLibraryA( forward1_path );
++    ok( !!forward1, "couldn't find %s: %u\n", forward1_path, GetLastError() );
++    forward2 = LoadLibraryA( forward2_path );
++    ok( !!forward2, "couldn't find %s: %u\n", forward2_path, GetLastError() );
++    forward3 = LoadLibraryA( forward3_path );
++    ok( !!forward3, "couldn't find %s: %u\n", forward3_path, GetLastError() );
++
++    proc1 = GetProcAddress(forward1, "forward_test_func");
++    ok( !!proc1, "cannot resolve forward1!forward_test_func\n");
++    proc2 = GetProcAddress(forward2, "forward_test_func");
++    ok( !!proc2, "cannot resolve forward2!forward_test_func\n");
++    proc3 = GetProcAddress(forward3, "forward_test_func");
++    ok( !!proc3, "cannot resolve forward3!forward_test_func\n");
++    ok( proc1 == proc3, "forward1!forward_test_func is not equal to forward3!forward_test_func\n");
++    ok( proc2 == proc3, "forward2!forward_test_func is not equal to forward3!forward_test_func\n");
++
++    oproc1 = GetProcAddress(forward1, (LPSTR)2);
++    ok( !!oproc1, "cannot resolve forward1!#2 (forward_test_func2)\n");
++    oproc2 = GetProcAddress(forward2, (LPSTR)2);
++    ok( !!oproc2, "cannot resolve forward2!#2 (forward_test_func2)\n");
++    oproc3 = GetProcAddress(forward3, (LPSTR)2);
++    ok( !!oproc3, "cannot resolve forward3!#2 (forward_test_func2)\n");
++    ok( oproc1 == oproc3, "forward1!forward_test_func2 is not equal to forward3!forward_test_func2\n");
++    ok( oproc2 == oproc3, "forward2!forward_test_func2 is not equal to forward3!forward_test_func2\n");
++
++    FreeLibrary( forward1 );
++    FreeLibrary( forward2 );
++
++    todo_wine
++    ok( !!GetModuleHandleA( "forward1.dll" ), "forward1.dll unexpectedly unloaded\n" );
++    todo_wine
++    ok( !!GetModuleHandleA( "forward2.dll" ), "forward2.dll unexpectedly unloaded\n" );
++
++    FreeLibrary( forward3 );
++
++    ok( !GetModuleHandleA( "forward1.dll" ), "forward1.dll unexpectedly kept open\n" );
++    ok( !GetModuleHandleA( "forward2.dll" ), "forward2.dll unexpectedly kept open\n" );
++    ok( !GetModuleHandleA( "forward3.dll" ), "forward3.dll unexpectedly kept open\n" );
++
++    DeleteFileA( forward1_path );
++    DeleteFileA( forward2_path );
++    DeleteFileA( forward3_path );
++    RemoveDirectoryA( dir_path );
++}
++
++static void test_dynamic_forward_export_norefs(void)
++{
++    CHAR temp_path[MAX_PATH], dir_path[MAX_PATH];
++    CHAR forward1_path[MAX_PATH];
++    CHAR forward2_path[MAX_PATH];
++    CHAR forward3_path[MAX_PATH];
++    HMODULE forward1, forward2, forward3;
++
++    GetTempPathA( ARRAY_SIZE(temp_path), temp_path );
++    GetTempFileNameA( temp_path, "ldr", GetTickCount() | 1UL, dir_path );
++    ok( CreateDirectoryA( dir_path, NULL ), "failed to create dir %s, error %u\n",
++        dir_path, GetLastError() );
++
++    snprintf( forward1_path, MAX_PATH, "%s\\forward1.dll", dir_path );
++    snprintf( forward2_path, MAX_PATH, "%s\\forward2.dll", dir_path );
++    snprintf( forward3_path, MAX_PATH, "%s\\forward3.dll", dir_path );
++    extract_resource( "forward1.dll", "TESTDLL", forward1_path );
++    extract_resource( "forward2.dll", "TESTDLL", forward2_path );
++    extract_resource( "forward3.dll", "TESTDLL", forward3_path );
++
++    forward1 = LoadLibraryA( forward1_path );
++    ok( !!forward1, "couldn't find %s: %u\n", forward1_path, GetLastError() );
++    forward2 = LoadLibraryA( forward2_path );
++    ok( !!forward2, "couldn't find %s: %u\n", forward2_path, GetLastError() );
++    forward3 = LoadLibraryA( forward3_path );
++    ok( !!forward3, "couldn't find %s: %u\n", forward3_path, GetLastError() );
++
++    FreeLibrary( forward1 );
++    FreeLibrary( forward3 );
++
++    ok( !GetModuleHandleA( "forward1.dll" ), "forward1.dll unexpectedly kept open\n" );
++    ok( !GetModuleHandleA( "forward3.dll" ), "forward3.dll unexpectedly kept open\n" );
++
++    FreeLibrary( forward2 );
++
++    ok( !GetModuleHandleA( "forward2.dll" ), "forward2.dll unexpectedly kept open\n" );
++
++    DeleteFileA( forward1_path );
++    DeleteFileA( forward2_path );
++    DeleteFileA( forward3_path );
++    RemoveDirectoryA( dir_path );
++}
++
+ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL is_dll)
+ {
+     HANDLE hfile, hmap;
+@@ -4193,9 +4372,12 @@ START_TEST(loader)
+         return;
+     }
+ 
++    test_static_forwarded_import_refs();  /* Must be first; other tests may load iphlpapi.dll */
+     test_filenames();
+     test_ResolveDelayLoadedAPI();
+     test_ImportDescriptors();
++    test_dynamic_forwarded_import_refs();
++    test_dynamic_forward_export_norefs();
+     test_section_access();
+     test_import_resolution();
+     test_ExitProcess();
+diff --git a/dlls/kernel32/tests/sforward.c b/dlls/kernel32/tests/sforward.c
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/sforward.c
+@@ -0,0 +1,18 @@
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h>
++#include <ws2tcpip.h>
++#include <iphlpapi.h>
++#include <icmpapi.h>
++
++void test_func_stub(void)
++{
++    HANDLE file = IcmpCreateFile();
++    if (file != INVALID_HANDLE_VALUE) IcmpCloseHandle( file );
++}
++
++BOOL WINAPI DllMain(HINSTANCE instance_new, DWORD reason, LPVOID reserved)
++{
++    if (reason == DLL_PROCESS_ATTACH)
++        DisableThreadLibraryCalls( instance_new );
++    return TRUE;
++}
+diff --git a/dlls/kernel32/tests/sforward.spec b/dlls/kernel32/tests/sforward.spec
+new file mode 100644
+index 00000000000..11111111111
+--- /dev/null
++++ b/dlls/kernel32/tests/sforward.spec
+@@ -0,0 +1 @@
++@ cdecl test_func_stub()
+
+-- 
+2.37.2From: Jinoh Kang <jinoh.kang.kr@gmail.com>
+Subject: [PATCH v11 2/2] ntdll: Properly track refcount with forwarded exports.
+Message-Id: <8f975196-6271-523e-2098-99bc90495cf8@gmail.com>
+Date: Tue, 1 Mar 2022 22:54:25 +0900
+In-Reply-To: <a6c28b1e-4a89-0aee-3365-238182f80cbf@gmail.com>
+References: <a6c28b1e-4a89-0aee-3365-238182f80cbf@gmail.com>
+
+Wine-Bug: https://bugs.winehq.org/show_bug.cgi?id=52094
+Signed-off-by: Jinoh Kang <jinoh.kang.kr@gmail.com>
+---
+
+Notes:
+    v10 -> v11:
+    - rebase onto latest version
+
+ dlls/kernel32/tests/loader.c |  3 --
+ dlls/ntdll/loader.c          | 69 ++++++++++++++++++++----------------
+ 2 files changed, 39 insertions(+), 33 deletions(-)
+
+diff --git a/dlls/kernel32/tests/loader.c b/dlls/kernel32/tests/loader.c
+index 11111111111..11111111111 100644
+--- a/dlls/kernel32/tests/loader.c
++++ b/dlls/kernel32/tests/loader.c
+@@ -1699,7 +1699,6 @@ static void test_static_forwarded_import_refs(void)
+     FreeLibrary( iphlpapi );
+     FreeLibrary( icmp );
+ 
+-    todo_wine
+     ok( !!GetModuleHandleA( "iphlpapi.dll" ), "iphlpapi.dll unexpectedly unloaded\n" );
+     ok( !!GetModuleHandleA( "icmp.dll" ), "icmp.dll unexpectedly unloaded\n" );
+ 
+@@ -1762,9 +1761,7 @@ static void test_dynamic_forwarded_import_refs(void)
+     FreeLibrary( forward1 );
+     FreeLibrary( forward2 );
+ 
+-    todo_wine
+     ok( !!GetModuleHandleA( "forward1.dll" ), "forward1.dll unexpectedly unloaded\n" );
+-    todo_wine
+     ok( !!GetModuleHandleA( "forward2.dll" ), "forward2.dll unexpectedly unloaded\n" );
+ 
+     FreeLibrary( forward3 );
+diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
+index 11111111111..11111111111 100644
+--- a/dlls/ntdll/loader.c
++++ b/dlls/ntdll/loader.c
+@@ -996,7 +996,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
+ {
+     const IMAGE_EXPORT_DIRECTORY *exports;
+     DWORD exp_size;
+-    WINE_MODREF *wm;
++    WINE_MODREF *wm = NULL, *imp;
+     WCHAR mod_name[256];
+     const char *end = strrchr(forward, '.');
+     FARPROC proc = NULL;
+@@ -1004,30 +1004,24 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
+     if (!end) return NULL;
+     if (build_import_name( mod_name, forward, end - forward )) return NULL;
+ 
+-    if (!(wm = find_basename_module( mod_name )))
++    imp = get_modref( module );
++    TRACE( "delay loading %s for '%s'\n", debugstr_w(mod_name), forward );
++    if (load_dll( load_path, mod_name, 0, &wm, imp->system ) == STATUS_SUCCESS &&
++        !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
+     {
+-        WINE_MODREF *imp = get_modref( module );
+-        TRACE( "delay loading %s for '%s'\n", debugstr_w(mod_name), forward );
+-        if (load_dll( load_path, mod_name, 0, &wm, imp->system ) == STATUS_SUCCESS &&
+-            !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
++        if ((imports_fixup_done || !current_modref) &&
++            process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
+         {
+-            if (!imports_fixup_done && current_modref)
+-            {
+-                add_module_dependency( current_modref->ldr.DdagNode, wm->ldr.DdagNode );
+-            }
+-            else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
+-            {
+-                LdrUnloadDll( wm->ldr.DllBase );
+-                wm = NULL;
+-            }
++            LdrUnloadDll( wm->ldr.DllBase );
++            wm = NULL;
+         }
++    }
+ 
+-        if (!wm)
+-        {
+-            ERR( "module not found for forward '%s' used by %s\n",
+-                 forward, debugstr_w(imp->ldr.FullDllName.Buffer) );
+-            return NULL;
+-        }
++    if (!wm)
++    {
++        ERR( "module not found for forward '%s' used by %s\n",
++             forward, debugstr_w(imp->ldr.FullDllName.Buffer) );
++        return NULL;
+     }
+     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.DllBase, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+@@ -1047,6 +1041,11 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
+             " If you are using builtin %s, try using the native one instead.\n",
+             forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
+             debugstr_w(get_modref(module)->ldr.BaseDllName.Buffer) );
++        if (wm) LdrUnloadDll( wm->ldr.DllBase );
++    }
++    else if (current_modref)
++    {
++        add_module_dependency( current_modref->ldr.DdagNode, wm->ldr.DdagNode );
+     }
+     return proc;
+ }
+@@ -2203,21 +2202,31 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
+     IMAGE_EXPORT_DIRECTORY *exports;
+     DWORD exp_size;
+     NTSTATUS ret = STATUS_PROCEDURE_NOT_FOUND;
++    WINE_MODREF *prev, *wm;
+ 
+     RtlEnterCriticalSection( &loader_section );
+ 
+-    /* check if the module itself is invalid to return the proper error */
+-    if (!get_modref( module )) ret = STATUS_DLL_NOT_FOUND;
+-    else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
+-                                                      IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
++    wm = get_modref( module );
++    if (!wm) ret = STATUS_DLL_NOT_FOUND;
++    else
+     {
+-        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL )
+-                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL );
+-        if (proc && !is_hidden_export( proc ))
++        prev = current_modref;
++        current_modref = wm;
++
++        /* check if the module itself is invalid to return the proper error */
++        if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
++                                                     IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+         {
+-            *address = proc;
+-            ret = STATUS_SUCCESS;
++            void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL )
++                              : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL );
++            if (proc && !is_hidden_export( proc ))
++            {
++                *address = proc;
++                ret = STATUS_SUCCESS;
++            }
+         }
++
++        current_modref = prev;
+     }
+ 
+     RtlLeaveCriticalSection( &loader_section );
+
+-- 
+2.37.2
+
+
+
