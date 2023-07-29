@@ -299,7 +299,7 @@ index 0309ec91589..70a4107897b 100644
 +    struct counterset_instance *inst;
 +    unsigned int i;
 +
-+    FIXME( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
++    TRACE( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
 +           provider, instance, counterid, value );
 +
 +    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
@@ -327,7 +327,7 @@ index 0309ec91589..70a4107897b 100644
 +    struct counterset_instance *inst;
 +    unsigned int i;
 +
-+    FIXME( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
++    TRACE( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
 +           provider, instance, counterid, value );
 +
 +    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
