@@ -69,3 +69,5 @@
 - 0001-Revert-server-Handle-the-entire-IOCTL_AFD_POLL-ioctl.mypatch : Revert the commit that moved IOCTL_AFD_POLL serverside. Rustup (and possible other application that use this routine) need this revert to properly park/unpark the thread.
 - win32-Initialize-params-for-WndProc-after-WH_CALLWNDPROC.mypatch : Initalize parameters for WndProc procedure after WH_CALLWNDPROC hook is called. (Required )
 - 0001-Force-full-erase-when-WM_PAINT-in-LVS_EX_DOUBLEBUFFE.mypatch : Force a background erase on LVS_EX_DOUBLEBUFFERED listviews. Fix black background for listviews on some apps.
+- VisualStudio2019_patches.mypatch : A series of patches for a working installation of Visual Studio 2019
+- Proper_refcount_forwarded_exports.mypatch : Allow forwarded exports to properly tracks their refcounts, avoiding spuruious DLL unloading. Needed for IDA Pro IDAPython3 

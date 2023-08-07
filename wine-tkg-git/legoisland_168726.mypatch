@@ -74,8 +74,8 @@ index 11861f2a12..3e7a2df0c4 100644
 
  /* The execute function */
  HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *execute_buffer,
--        struct d3d_device *device) DECLSPEC_HIDDEN;
-+        struct d3d_device *device, D3DRECT* pick_rect) DECLSPEC_HIDDEN;
+-        struct d3d_device *device);
++        struct d3d_device *device, D3DRECT* pick_rect);
 
  /*****************************************************************************
   * IDirect3DVertexBuffer
@@ -236,10 +236,10 @@ index 80dbdfd88b..38b9c8c62c 100644
 +        D3DVALUE bias = 0.0f;
 +
 +        /* Edge function - determines whether pixel is inside triangle */
-+        D3DVALUE w = (v2->u1.sx-v1->u1.sx)*(y-v1->u2.sy) - (v2->u2.sy-v1->u2.sy)*(x-v1->u1.sx);
++        D3DVALUE w = (v2->sx-v1->sx)*(y-v1->sy) - (v2->sy-v1->sy)*(x-v1->sx);
 +
 +        /* Force top-left rule */
-+        if ((v1->u2.sy == v2->u2.sy && v1->u1.sx > v2->u1.sx) || (v1->u2.sy < v2->u2.sy))
++        if ((v1->sy == v2->sy && v1->sx > v2->sx) || (v1->sy < v2->sy))
 +            bias = 1.0f;
 +
 +        if (w < bias)
@@ -279,8 +279,8 @@ index 80dbdfd88b..38b9c8c62c 100644
 +        D3DTLVERTEX* v2 = &verts[(i+1)%TRIANGLE_SIZE];
 +        D3DTLVERTEX* v3 = &verts[(i+2)%TRIANGLE_SIZE];
 +
-+        z1 += v3->u3.sz * (x - v1->u1.sx) * (y - v2->u2.sy) - v2->u3.sz * (x - v1->u1.sx) * (y - v3->u2.sy);
-+        z2 += (x - v1->u1.sx) * (y - v2->u2.sy) - (x - v1->u1.sx) * (y - v3->u2.sy);
++        z1 += v3->sz * (x - v1->sx) * (y - v2->sy) - v2->sz * (x - v1->sx) * (y - v3->sy);
++        z2 += (x - v1->sx) * (y - v2->sy) - (x - v1->sx) * (y - v3->sy);
 +    }
 +
 +    return z1 / z2;
@@ -348,7 +348,7 @@ index 80dbdfd88b..38b9c8c62c 100644
 @@ -174,6 +290,67 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                      {
                          case 3:
-                             indices[(i * primitive_size) + 2] = ci->u3.v3;
+                             indices[(i * primitive_size) + 2] = ci->v3;
 +
 +                            if (pick_rect != NULL) {
 +                                INT j;
@@ -358,9 +358,9 @@ index 80dbdfd88b..38b9c8c62c 100644
 +
 +                                    /* Get index of vertex from D3DTRIANGLE struct */
 +                                    switch (j) {
-+                                    case 0: box.left = vertex_size * ci->u1.v1; break;
-+                                    case 1: box.left = vertex_size * ci->u2.v2; break;
-+                                    case 2: box.left = vertex_size * ci->u3.v3; break;
++                                    case 0: box.left = vertex_size * ci->v1; break;
++                                    case 1: box.left = vertex_size * ci->v2; break;
++                                    case 2: box.left = vertex_size * ci->v3; break;
 +                                    }
 +
 +                                    box.right = box.left + vertex_size;
@@ -376,7 +376,7 @@ index 80dbdfd88b..38b9c8c62c 100644
 +                                }
 +
 +                                /* Use vertices acquired above to test for clicking */
-+                                if (d3d_execute_buffer_pick_test(pick_rect->u1.x1, pick_rect->u2.y1, verts))
++                                if (d3d_execute_buffer_pick_test(pick_rect->x1, pick_rect->y1, verts))
 +                                {
 +                                    D3DPICKRECORD* record;
 +
@@ -398,7 +398,7 @@ index 80dbdfd88b..38b9c8c62c 100644
 +                                    record->dwOffset = (DWORD)instr - (DWORD)buffer->desc.lpData - is;
 +
 +                                    /* Formula for returning the Z value at this X/Y */
-+                                    record->dvZ = d3d_execute_buffer_z_value_at_coords(pick_rect->u1.x1, pick_rect->u2.y1, verts);
++                                    record->dvZ = d3d_execute_buffer_z_value_at_coords(pick_rect->x1, pick_rect->y1, verts);
 +
 +                                    /* Point device info to new record information */
 +                                    device->pick_records = new_record_array;
@@ -412,7 +412,7 @@ index 80dbdfd88b..38b9c8c62c 100644
 +
                              /* Drop through. */
                          case 2:
-                             indices[(i * primitive_size) + 1] = ci->u2.v2;
+                             indices[(i * primitive_size) + 1] = ci->v2;
 @@ -184,14 +361,18 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
 
                  wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->index_buffer), 0);
