@@ -1,0 +1,13 @@
+diff --git a/dlls/winebus.sys/main.c b/dlls/winebus.sys/main.c
+index ae676f80565..34d72dcf27c 100644
+--- a/dlls/winebus.sys/main.c
++++ b/dlls/winebus.sys/main.c
+@@ -781,7 +781,7 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
+         mouse_device_create();
+         keyboard_device_create();
+ 
+-        if (!check_bus_option(L"Enable SDL", 1) || sdl_driver_init())
++        if (!check_bus_option(L"Enable SDL", 0) || sdl_driver_init())
+         {
+             udev_driver_init();
+             iohid_driver_init();
