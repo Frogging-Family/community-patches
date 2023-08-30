@@ -71,3 +71,4 @@
 - 0001-Force-full-erase-when-WM_PAINT-in-LVS_EX_DOUBLEBUFFE.mypatch : Force a background erase on LVS_EX_DOUBLEBUFFERED listviews. Fix black background for listviews on some apps.
 - VisualStudio2019_patches.mypatch : A series of patches for a working installation of Visual Studio 2019
 - Proper_refcount_forwarded_exports.mypatch : Allow forwarded exports to properly tracks their refcounts, avoiding spuruious DLL unloading. Needed for IDA Pro IDAPython3 
+- disable_sdl.mypatch: Disable SDL by default (controlled by DWORD `Enable SDL` at  `HKLM\\System\\CurrentControlSet\\Service\\winebus`). It resolves reinit some device on wineserver start, but may disable some gamepads for wine (to fix change this option in regedit)
