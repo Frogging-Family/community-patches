@@ -21,17 +21,17 @@ index b6d84f93272..7a425d08eab 100755
 --- a/configure
 +++ b/configure
 @@ -1141,6 +1141,7 @@ enable_api_ms_win_shell_shellcom_l1_1_0
- enable_api_ms_win_shell_shellfolders_l1_1_0
  enable_apphelp
  enable_appwiz_cpl
+ enable_appxdeploymentclient
 +enable_atiadlxx
  enable_atl
  enable_atl100
  enable_atl110
 @@ -20547,6 +20548,7 @@ wine_fn_config_makefile dlls/api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_
- wine_fn_config_makefile dlls/apphelp enable_apphelp
  wine_fn_config_makefile dlls/apphelp/tests enable_tests
  wine_fn_config_makefile dlls/appwiz.cpl enable_appwiz_cpl
+ wine_fn_config_makefile dlls/appxdeploymentclient enable_appxdeploymentclient
 +wine_fn_config_makefile dlls/atiadlxx enable_atiadlxx
  wine_fn_config_makefile dlls/atl enable_atl
  wine_fn_config_makefile dlls/atl/tests enable_tests
@@ -41,9 +41,9 @@ index c4f6d2975b3..1733a63b034 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -3076,6 +3076,7 @@ WINE_CONFIG_MAKEFILE(dlls/api-ms-win-shell-shellfolders-l1-1-0)
- WINE_CONFIG_MAKEFILE(dlls/apphelp)
  WINE_CONFIG_MAKEFILE(dlls/apphelp/tests)
  WINE_CONFIG_MAKEFILE(dlls/appwiz.cpl)
+ WINE_CONFIG_MAKEFILE(dlls/appxdeploymentclient)
 +WINE_CONFIG_MAKEFILE(dlls/atiadlxx)
  WINE_CONFIG_MAKEFILE(dlls/atl)
  WINE_CONFIG_MAKEFILE(dlls/atl/tests)
