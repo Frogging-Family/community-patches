@@ -14,8 +14,8 @@ index 706d088aec0..950d8268cb5 100644
 +++ b/dlls/dbghelp/symbol.c
 @@ -208,9 +208,9 @@ struct symt_public* symt_new_public(struct module* module,
  
-     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n",
-                          debugstr_w(module->module.ModuleName), name, address);
+     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%Ix\n",
+                          debugstr_w(module->modulename), name, address);
 -    if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
 +    /*if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
          symt_find_nearest(module, address) != NULL)
