@@ -1335,7 +1335,7 @@ index 00000000000..7545260d1de
 +IMPORTS   = vulkan-1
 +IMPORTLIB = amd_ags_x64
 +
-+C_SRCS = \
++SOURCES = \
 +	amd_ags_x64_main.c
 diff --git a/dlls/amd_ags_x64/amd_ags_x64.spec b/dlls/amd_ags_x64/amd_ags_x64.spec
 new file mode 100644
@@ -1635,7 +1635,7 @@ index 7545260d1de..aa7127e2ede 100644
  
 +EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 +
- C_SRCS = \
+ SOURCES = \
  	amd_ags_x64_main.c
 diff --git a/dlls/amd_ags_x64/amd_ags_x64_main.c b/dlls/amd_ags_x64/amd_ags_x64_main.c
 index 26b39991525..c6554a17b6f 100644

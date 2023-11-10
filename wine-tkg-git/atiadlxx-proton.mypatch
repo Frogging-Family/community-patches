@@ -57,7 +57,7 @@ index 00000000000..78af7168c20
 +MODULE = atiadlxx.dll
 +EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 +
-+C_SRCS = \
++SOURCES = \
 +	atiadlxx_main.c
 diff --git a/dlls/atiadlxx/atiadlxx.spec b/dlls/atiadlxx/atiadlxx.spec
 new file mode 100644
@@ -1391,7 +1391,7 @@ index 78af7168c20..7708c714213 100644
 +
  EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
  
- C_SRCS = \
+ SOURCES = \
 diff --git a/dlls/atiadlxx/atiadlxx.spec b/dlls/atiadlxx/atiadlxx.spec
 index e2a1f46a838..e2fb060ae8d 100644
 --- a/dlls/atiadlxx/atiadlxx.spec
