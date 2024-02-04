@@ -1,0 +1,53 @@
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index b8e9de887..382ae30ea 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -2406,6 +2406,9 @@ static int btusb_setup_csr(struct hci_dev *hdev)
+ 		set_bit(HCI_QUIRK_BROKEN_FILTER_CLEAR_ALL, &hdev->quirks);
+ 		set_bit(HCI_QUIRK_NO_SUSPEND_NOTIFIER, &hdev->quirks);
+
++		set_bit(HCI_QUIRK_BROKEN_READ_VOICE_SETTING, &hdev->quirks);
++		set_bit(HCI_QUIRK_BROKEN_READ_PAGE_SCAN_TYPE, &hdev->quirks);
++
+ 		/* Clear the reset quirk since this is not an actual
+ 		 * early Bluetooth 1.1 device from CSR.
+ 		 */
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index d85a7091a..58d90cbff 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -3523,6 +3523,8 @@ static int hci_read_local_name_sync(struct hci_dev *hdev)
+ /* Read Voice Setting */
+ static int hci_read_voice_setting_sync(struct hci_dev *hdev)
+ {
++	if (test_bit(HCI_QUIRK_BROKEN_READ_VOICE_SETTING, &hdev->quirks))
++		return 0;
+ 	return __hci_cmd_sync_status(hdev, HCI_OP_READ_VOICE_SETTING,
+ 				     0, NULL, HCI_CMD_TIMEOUT);
+ }
+@@ -3960,6 +3962,9 @@ static int hci_read_page_scan_type_sync(struct hci_dev *hdev)
+ 	if (!(hdev->commands[13] & 0x01))
+ 		return 0;
+
++	if (test_bit(HCI_QUIRK_BROKEN_READ_PAGE_SCAN_TYPE, &hdev->quirks))
++		return 0;
++
+ 	return __hci_cmd_sync_status(hdev, HCI_OP_READ_PAGE_SCAN_TYPE,
+ 				     0, NULL, HCI_CMD_TIMEOUT);
+ }
+diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
+index bdee5d649..d2f1c784c 100644
+--- a/include/net/bluetooth/hci.h
++++ b/include/net/bluetooth/hci.h
+@@ -330,6 +330,10 @@ enum {
+ 	 * during the hdev->setup vendor callback.
+ 	 */
+ 	HCI_QUIRK_BROKEN_LE_CODED,
++
++	HCI_QUIRK_BROKEN_READ_VOICE_SETTING,
++
++	HCI_QUIRK_BROKEN_READ_PAGE_SCAN_TYPE,
+ };
+
+ /* HCI device flags */
+
