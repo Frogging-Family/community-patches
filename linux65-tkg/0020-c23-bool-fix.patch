@@ -1,0 +1,38 @@
+From: Seu Nome <you@example.com>
+Date: Mon, 30 Jun 2025 23:00:00 -0300
+Subject: [PATCH] Compatibilidade C23 (bool/false) + realmode KBUILD_CFLAGS
+
+--- a/include/linux/stddef.h
++++ b/include/linux/stddef.h
+@@ -8,7 +8,12 @@
+ /*
+  * Remove old definitions when compiling under C23, onde bool/false são keywords.
+  */
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202300L
++#  include <stdbool.h>
++#else
+ enum { false = 0, true };
++#endif
+
+--- a/include/linux/types.h
++++ b/include/linux/types.h
+@@ -32,7 +32,12 @@
+ 
+ #ifndef __bool_defined
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202300L
++/* C23 já define bool em stdbool.h */
++#else
+ typedef _Bool bool;
++#endif
+ #define __bool_defined
+ #endif
+
+--- a/arch/x86/realmode/Makefile
++++ b/arch/x86/realmode/Makefile
+@@ -21,7 +21,7 @@ obj-$(CONFIG_X86) += stack.o reboot.o init.o wakemain.o trampoline_64.o header.o
+
+ $(obj)/wakemain.o: $(src)/wakemain.c $(headers-y)
+-	$(CC) -c $< -o $@
++	$(CC) $(KBUILD_CFLAGS) -c $< -o $@
+
+# (adicione receitas para stack.o, reboot.o, init.o se quiser cobrir tudo)
