@@ -72,3 +72,4 @@
 - VisualStudio2019_patches.mypatch : A series of patches for a working installation of Visual Studio 2019
 - Proper_refcount_forwarded_exports.mypatch : Allow forwarded exports to properly tracks their refcounts, avoiding spuruious DLL unloading. Needed for IDA Pro IDAPython3 
 - disable_sdl.mypatch: Disable SDL by default (controlled by DWORD `Enable SDL` at  `HKLM\\System\\CurrentControlSet\\Service\\winebus`). It resolves reinit some device on wineserver start, but may disable some gamepads for wine (to fix change this option in regedit)
+- crypt32-Preserve_authenticated_attribute_order_when_verifying_signatures.mypatch : Fix for FL Studio 26.1.4+
