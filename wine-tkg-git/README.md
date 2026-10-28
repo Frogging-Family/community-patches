@@ -5,10 +5,24 @@
 *Thank you!*
 
 ### Wine/Proton-tkg-git will auto-clone this repo two dirs up from their buildscript dir (`../../community-patches`) if valid community patches are found in their .cfg file (`_community_patches=""` array).
+
 ### Alternatively, you can also clone this repo by hand next to the `wine-tkg-git` root dir (the one containing both `wine-tkg-git` and `proton-tkg` dirs) so the build system sees it - `git clone https://github.com/Frogging-Family/community-patches.git`.
 
+## Updating patches
+
+### wine-wayland
+
+Find the latest commit from upstream (check the latest tag) and diff it with the `wayland` branch: https://gitlab.collabora.com/alf/wine
+
+
+
+```shell
+git switch wayland
+git diff last_commit_id_from_upstream_in_the_tree..HEAD > wine_wayland_driver.mypatch
+```
 
 ## Proton patches
+
 - amdags.mypatch : Add amdags dll (proton patch - wine version to apply to a wine-tkg build)
 - amdags-proton.mypatch : Add amdags dll (proton patch - proton version to apply to a proton-tkg build)
 - atiadlxx-proton.mypatch : Add atiadlxx stub dll for Blackops 3, Shadow of War and friends (proton patch - proton version to apply to a proton-tkg build - Requires `_msvcrt_nativebuiltin="true"`)
@@ -19,8 +33,8 @@
 - 0002-proton_QPC.mypatch : Rémi Bernon's Qpc timer bypass patchset - Improves timing and performance in various games
 - winex11drv-cache-clip-window-staging.mypatch : Paul Gofman's attempt at fixing mouse capture issues and reducing overhead when using high DPI mice - Rebased by FuzzyQuils - https://github.com/ValveSoftware/wine/commit/b23d6802e3e2437be2a2d1cbc1d358fd336fc8d3
 
-
 ## Game-specific
+
 - legoisland_168726.mypatch : Add functions needed by, notably, lego island - https://bugs.winehq.org/show_bug.cgi?id=10729
 - FinalFantasyXVHack.mypatch : Hack enabling Final Fantasy XV Steam to run - https://github.com/ValveSoftware/Proton/issues/74#issuecomment-553084621
 - MWSE_hack.mypatch : Hack to allow Morrowind Script Extender to work - https://bugs.winehq.org/show_bug.cgi?id=47940#c24
@@ -41,6 +55,7 @@
 - persona-5-royal_transacted-file-APIs.mypatch - Fixes Persona 5 Royal save functionality - https://gitlab.winehq.org/wine/wine/-/merge_requests/1145
 
 ## Misc
+
 - 0001-rockstarlauncher_install_fix.mypatch : Fix for rockstar launcher installer crashing - https://github.com/ValveSoftware/wine/commit/e485252dfad51a7e463643d56fe138129597e4b6 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
 - 0001-rockstarlauncher_downloads.mypatch : Hack to workaround failing downloads with rockstar launcher - https://bugs.winehq.org/show_bug.cgi?id=47843 - Doesn't apply to proton-tkg or wine builds using `_protonify="true"` (already included)
 - origin_downloads_e4ca5dbe_revert.mypatch : Workaround for Origin client game downloading issues - https://bugs.winehq.org/show_bug.cgi?id=48032
@@ -59,7 +74,7 @@
 - 0001-ntdll-Use-kernel-soft-dirty-flags-for-write-watches-.mypatch : Needed for D3D12 APITracing - Needs a patched kernel (see linux-tkg)
 - wine_wayland_driver.mypatch : Adds experimental Wayland driver by Alexandros Frantzis - https://www.winehq.org/pipermail/wine-devel/2021-June/188412.html - https://gitlab.collabora.com/alf/wine/-/tree/wayland - Requires you to start wine with `DISPLAY= WAYLAND_DISPLAY=wayland-0` (wayland-0 being your desired wayland output)
 - amd_fsr_fshack.mypatch : Replaces Proton FS hack's linear filtering with AMD FidelityFX super resolution - Thanks to dadschoorse - Kinda experimental/WIP, it might not work on all games. Depends on `_use_staging="true"` and `_proton_fs_hack="true"` in your cfg - Enable with
-`WINE_FULLSCREEN_FSR=1` env var, and tweak sharpening amount with `WINE_FULLSCREEN_FSR_STRENGTH=5` (5 is default sharpening, lower numbers mean more sharpening, 0 is max sharpening) - https://github.com/DadSchoorse/wine-proton/commits/fsr-clean
+  `WINE_FULLSCREEN_FSR=1` env var, and tweak sharpening amount with `WINE_FULLSCREEN_FSR_STRENGTH=5` (5 is default sharpening, lower numbers mean more sharpening, 0 is max sharpening) - https://github.com/DadSchoorse/wine-proton/commits/fsr-clean
 - amd_fsr_fshack-alternative.mypatch : Variation of the above fsr implementation with additions from GloriousEggroll to workaround the problem of missing resolutions when too many are available in some games/displays configurations - See https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/GE-Proton7-24 for how to enable/use.
 - proton_winex11_Let_the_WM_focus_our_windows_by_default.mypatch : Proton patch that is supposed to fix game windows not being in focus when first started and when exiting, which can cause surprising keyboard behavior (e.g. accidentally Alt-F4ing Steam itself, which is in the background). However, it breaks some apps (see https://github.com/Frogging-Family/wine-tkg-git/issues/466) while being seemingly not needed with most DEs.
 - revert_return_correct_color_depth_for_display_DCs_in_GetDeviceCaps.mypatch : Fixes issue where some users with Nvidia GPUs and multi-monitor setups using DVI see Xorg pin their CPU to 100% usage whenever using Wine after upstream commit d171d11 - https://bugs.winehq.org/show_bug.cgi?id=51420
